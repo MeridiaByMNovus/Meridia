@@ -1,0 +1,194 @@
+.wrapper-component > .footer-section {
+  border-top: 0.3px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+}
+
+.wrapper-component > .footer-section > div {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  color: var(--sidebar-text-color);
+}
+
+.wrapper-component > .footer-section > div svg {
+  width: 15px;
+  height: 15px;
+}
+
+.wrapper-component > .footer-section > div > div {
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+}
+
+.wrapper-component > .footer-section > div > div > span {
+  display: flex;
+  align-items: center;
+  padding: 3px;
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+.wrapper-component > .footer-section > div > div > span:hover {
+  background: var(--file-list-bg);
+}
+
+.wrapper-component > .footer-section .remove-item {
+  width: 20px;
+  height: 100%;
+  background-color: var(--blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+.wrapper-component > .footer-section .remove-item svg,
+.wrapper-component > .footer-section .bigger-icon svg {
+  width: 13px !important;
+  height: 13px !important;
+}
+
+.wrapper-component > .footer-section .remove-item svg path {
+  fill: white;
+}
+
+.wrapper-component > .footer-section > div svg path {
+  fill: var(--sidebar-text-color);
+}
+
+.notification-model {
+  position: absolute;
+  background: #1e1e1e;
+  max-width: 500px;
+  min-width: 500px;
+  max-height: 300px;
+  min-height: 300px;
+  right: 10px;
+  border: 1px solid var(--main-border-color);
+  border-radius: 6px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+}
+
+.notifications-wrapper {
+  max-height: 250px;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.notifications-wrapper::-webkit-scrollbar {
+  width: 8px;
+}
+
+.notifications-wrapper::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.notifications-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}
+
+.notifications-wrapper::-webkit-scrollbar-track {
+  background: #333;
+  border-radius: 4px;
+}
+
+.notifications-wrapper {
+  scrollbar-color: #888 #333;
+  scrollbar-width: thin;
+}
+
+.notification-model .title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.notification-model .title p {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.notification-model .title button {
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 4px 10px;
+  transition: background 0.2s ease-in-out;
+}
+
+.notification-model .title button:hover {
+  background: var(--file-list-bg);
+}
+
+.notification-model .title button svg {
+  width: 16px;
+  height: auto;
+}
+
+.notification-model .notification {
+  height: 80px;
+  padding: 10px;
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--main-border-color);
+  transition: background 0.2s ease;
+  cursor: pointer;
+}
+
+.notification-model .notification:hover {
+  background: var(--file-list-bg);
+}
+
+.notification-model .notification:last-child {
+  border: none;
+}
+
+.notification-model .notification .actions button {
+  background: transparent;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease-in-out;
+}
+
+.notification-model .notification .actions button svg {
+  width: 14px;
+  height: auto;
+}
+
+.notification-model .notification .actions button:hover {
+  background: var(--file-list-bg);
+}
+
+.notification-model .notification .info-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.notification-model .notification .info-section p {
+  font-size: 16px;
+}
+
+.notification-model .notification .info-section svg {
+  width: 18px;
+  height: auto;
+}
+
+.notification-model .notification .section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}

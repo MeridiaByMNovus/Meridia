@@ -1,0 +1,119 @@
+:root {
+  --tab-text-color: #000;
+  --tab-active-bg: #202428;
+  --tab-hover-bg: #e0e0e0;
+  --tab-hover-color: #d1d1d1;
+}
+
+.dark .meridia-tabs-wrapper {
+  --tab-text-color: #abb2bf;
+  --tab-active-bg: #fff;
+  --tab-hover-bg: #444;
+  --tab-hover-color: #fff;
+}
+
+.meridia-tabs-wrapper,
+.meridia-tab,
+.meridia-tabs,
+.active {
+  transition:
+    color 0.2s,
+    background-color 0.2s,
+    border 0.2s;
+}
+
+.meridia-tabs-wrapper {
+  display: flex;
+  background: #30343f;
+  justify-content: space-between;
+}
+
+.meridia-tabs-wrapper .meridia-tabs {
+  display: flex;
+}
+
+.meridia-tabs-wrapper .meridia-tabs .meridia-tab {
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  padding: 20px 18px;
+  transition:
+    background 0.2s,
+    color 0.2s;
+  color: var(--tab-text-color);
+  cursor: pointer;
+  height: 10px;
+}
+
+.meridia-tabs-wrapper .meridia-tabs .meridia-tab:hover {
+  color: var(--tab-hover-color);
+}
+
+.meridia-tabs-wrapper .meridia-tabs .meridia-tab button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.meridia-tabs-wrapper .meridia-tabs .meridia-tab button:hover svg {
+  fill: var(--tab-hover-color);
+}
+
+.meridia-tabs-wrapper .meridia-tabs .meridia-tab button svg {
+  fill: var(--tab-text-color);
+}
+
+.meridia-tabs-wrapper .meridia-tabs .meridia-tab-active {
+  background: #282d33;
+  color: #fff;
+}
+
+.meridia-tabs-wrapper .meridia-tabs .active button svg {
+  fill: var(--tab-active-bg);
+}
+
+.meridia-tabs-wrapper .meridia-add-tab-btn {
+  background: transparent;
+  border: none;
+  color: var(--tab-text-color);
+  border-right: 1px solid var(--tab-text-color);
+  cursor: pointer;
+}
+
+.meridia-tabs-wrapper .meridia-tabs-buttons {
+  display: flex;
+  align-items: center;
+}
+
+.meridia-tabs-wrapper .meridia-tabs-buttons .meridia-custom-buttons {
+  display: flex;
+  align-items: center;
+}
+
+.meridia-tabs-wrapper .meridia-tabs-buttons .meridia-custom-button button {
+  background: transparent;
+  color: var(--tab-text-color);
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+}
+
+.meridia-tabs-wrapper .meridia-tabs-buttons .meridia-custom-button:first-child {
+  border-right: 1px solid var(--tab-text-color);
+}
+
+.meridia-tabs-wrapper
+  .meridia-tabs-buttons
+  .meridia-custom-button
+  button:hover {
+  color: var(--tab-hover-color);
+}
+
+.meridia-tabs-wrapper .meridia-tabs-buttons .meridia-add-tab-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.meridia-tabs-wrapper .meridia-tabs-buttons .meridia-add-tab-btn:hover {
+  color: var(--tab-hover-color);
+}

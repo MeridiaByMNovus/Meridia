@@ -1,0 +1,61 @@
+.variable-wrapper {
+  padding: 16px;
+  background-color: inherit;
+  color: var(--main-text-color);
+}
+
+.title {
+  display: flex;
+  align-content: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--sidebar-bg);
+}
+
+.title button {
+  background: transparent;
+  font-size: 16px;
+  border: none;
+  padding: 2px 6px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease-in-out;
+}
+
+.title button:hover {
+  background: var(--file-list-bg);
+}
+
+.variable-title {
+  font-size: 14px;
+  margin-bottom: 12px;
+  color: var(--main-text-color);
+}
+
+.table-container {
+  overflow: hidden;
+  background-color: #1e1e1e;
+  border-radius: 6px;
+  padding: 8px;
+}
+
+.styled-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table-header {
+  color: var(--main-text-color);
+  padding: 12px;
+  font-weight: bold;
+  text-align: left;
+}
+
+.table-cell {
+  padding: 10px;
+  color: var(--main-text-color);
+  font-size: 14px;
+  font-family: "Fira Code", monospace;
+}

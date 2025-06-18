@@ -1,0 +1,44 @@
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/src/assets/fonts/JetBrainsMono-Regular.ttf") format("ttf");
+}
+
+@font-face {
+  font-family: "Ubuntu Mono";
+  src: url("/src/assets/fonts/UbuntuMono-Regular.ttf") format("ttf");
+}
+
+@font-face {
+  font-family: "Consolas";
+  src: url("/src/assets/fonts/consolas.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Rubik";
+  src: url("/src/assets/fonts/Rubik.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Cascadia Mono";
+  src: url("/src/assets/fonts/CascadiaMono.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Cascadia Code";
+  src: url("/src/assets/fonts/CascadiaCode.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Segoe Ui";
+  src: url("/src/assets/fonts/Segoe\ Ui.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("/src/assets/fonts/Inter_18pt-Regular.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Droid Sans Mono";
+  src: url("/src/assets/fonts/DroidSansMono.ttf") format("truetype");
+}

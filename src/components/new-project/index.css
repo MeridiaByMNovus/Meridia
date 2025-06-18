@@ -1,0 +1,156 @@
+.new-project {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  color: #ffffff;
+  font-family: "Inter", sans-serif;
+}
+
+/* Title Bar */
+.new-project .title-bar {
+  -webkit-app-region: drag;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 40px;
+  background-color: #1e1e1e;
+  border-bottom: 1px solid #333;
+}
+
+.new-project .window-controls {
+  display: flex;
+  align-items: center;
+}
+
+.new-project .window-controls button {
+  -webkit-app-region: no-drag;
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.1s ease-in-out;
+}
+
+.new-project .window-controls button svg {
+  width: 18px;
+  height: auto;
+}
+
+.new-project .window-controls button:hover {
+  background-color: #37373c;
+}
+
+.new-project .window-controls button:last-child:hover {
+  background-color: #c0392b;
+}
+
+/* Options/Form Layout */
+.new-project .options {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px;
+}
+
+/* Label + Input Group */
+.new-project .field,
+.new-project .sub-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.new-project label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #cccccc;
+}
+
+/* Text and Input Field */
+.new-project .input-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #2a2a2a;
+  padding: 8px 12px;
+  border: 1px solid #444;
+  border-radius: 6px;
+  transition: border-color 0.2s;
+}
+
+.new-project .input-field input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.new-project .input-field:hover {
+  border-color: #666;
+}
+
+.new-project .input-field svg {
+  cursor: pointer;
+}
+
+.new-project select {
+  padding: 8px 12px;
+  background-color: #2a2a2a;
+  color: white;
+  border: 1px solid #444;
+  border-radius: 6px;
+  font-size: 14px;
+  appearance: none;
+  outline: none;
+  cursor: pointer;
+}
+
+.new-project select:focus {
+  border-color: #888;
+}
+
+.new-project .checkbox-group {
+  display: flex;
+  gap: 8px;
+}
+
+.new-project .checkbox-group input[type="checkbox"] {
+  accent-color: #5cb85c;
+}
+
+.new-project .buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.new-project .buttons button {
+  padding: 10px 20px;
+  font-size: 14px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.new-project .buttons .primary {
+  background-color: transparent;
+  border: 1px solid var(--main-text-color);
+  color: white;
+}
+
+.new-project .buttons .primary:hover {
+  border: 1px solid #444;
+  color: #666;
+}
+
+.new-project .buttons .secondary {
+  background-color: #444;
+  color: white;
+}
+
+.new-project .buttons .secondary:hover {
+  background-color: #666;
+}

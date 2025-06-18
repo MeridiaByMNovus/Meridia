@@ -1,0 +1,19 @@
+.editor-container {
+  opacity: 1;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.editor-container.fade-out {
+  opacity: 0;
+}
+
+.editor-container.fade-in {
+  opacity: 1;
+}
+
+.inline-output-text {
+  color: #6cf;
+  margin-left: 12px;
+  font-style: italic;
+  opacity: 0.8;
+}

@@ -1,0 +1,107 @@
+:root {
+  --button-bg: #4b8e8d; /* Accent button color */
+  --button-hover-bg: #3a6e6d; /* Button hover effect */
+  --code-bg: #1e1e1e; /* Code block background */
+  --code-color: #f8f8f2; /* Code text color */
+}
+
+.anantchat-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  text-align: center;
+  background: var(--main-bg);
+  color: var(--main-text-color);
+  overflow: hidden;
+  font-family: "Arial", sans-serif;
+}
+
+.anantchat-wrapper h2 {
+  font-size: 2rem;
+  margin-bottom: 20px;
+  color: var(--main-text-color);
+}
+
+.anantchat-wrapper .chat-area {
+  position: absolute;
+  bottom: 20px;
+  display: flex;
+  align-items: center;
+  background: var(--tabs-bg);
+  padding: 12px;
+  width: 90%;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+.anantchat-wrapper .chat-area input {
+  background: var(--tabs-bg);
+  color: var(--main-text-color);
+  width: 90%;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  padding: 0 12px;
+  margin-right: 8px;
+  font-size: 1rem;
+}
+
+.anantchat-wrapper .chat-area input:focus {
+  outline: 1px solid var(--button-bg);
+}
+
+.anantchat-wrapper .chat-area button {
+  background: var(--button-bg);
+  color: var(--main-text-color);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.anantchat-wrapper .chat-area button:hover {
+  background: var(--button-hover-bg);
+}
+
+.anantchat-wrapper .chat-history {
+  overflow: hidden;
+  max-height: 75%;
+  width: 90%;
+  margin-bottom: 60px;
+}
+
+.anantchat-wrapper .chat-history div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin: 10px 0;
+  text-align: left;
+}
+
+.anantchat-wrapper .chat-history div p {
+  background: var(--code-bg);
+  color: var(--code-color);
+  padding: 10px;
+  border-radius: 8px;
+  word-wrap: break-word;
+  max-width: 80%;
+  margin: 5px 0;
+}
+
+.anantchat-wrapper .chat-history div .bot p {
+  position: absolute;
+  right: 0;
+  background: var(--button-bg);
+  color: var(--main-text-color);
+}
+
+.anantchat-wrapper .chat-history div .user p {
+  background: var(--button-bg);
+  color: var(--main-text-color);
+  align-self: flex-end;
+}
