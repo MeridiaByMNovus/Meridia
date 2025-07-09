@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { configureStore } from "@reduxjs/toolkit";
-import mainSlice from "./state-manager";
+import mainSlice from "./state_manager";
 
 // Configure the store with both the main and suggestions reducers
 export const store = configureStore({

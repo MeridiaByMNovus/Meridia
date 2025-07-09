@@ -3,7 +3,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { app, BrowserWindow, ipcMain } from "electron";
 import path from "path";
+import fs from "fs";
 import { Pty } from "./electron/pty";
+import { PythonConsole } from "./electron/python_console";
 import {
   RegisterMenu,
   RegisterUpdateWorker,
@@ -14,6 +16,7 @@ import {
   RegisterUiStateWorker,
   RegisterDialogWorker,
   RegisterIpcCommandsWorker,
+  RegisterThemeWorker,
 } from "./workers/";
 import { handleOpenSetFolder, open_folder } from "./workers/functions_worker";
 import { registerCommand } from "./workers/command_worker";
@@ -38,6 +41,12 @@ function registerIpcHandlers(): void {
   ipcMain.handle("maximize", () => mainWindow.maximize());
   ipcMain.handle("restore", () => mainWindow.restore());
   ipcMain.handle("close", () => mainWindow.close());
+  ipcMain.handle("isMaximized", () => mainWindow.isMaximized());
+  ipcMain.handle("read-image-base-64", (_, path) => {
+    const ext = path.split(".").pop();
+    const base64 = fs.readFileSync(path, { encoding: "base64" });
+    return `data:image/${ext};base64,${base64}`;
+  });
 
   ipcMain.handle("new-project-minimize", () => newProjectWindow.minimize());
   ipcMain.handle("new-project-close", () => newProjectWindow.close());
@@ -75,7 +84,7 @@ export function createMeridiaWindow({
     maxHeight: isMain ? undefined : height,
     maximizable: isMain,
     icon: path.resolve(__dirname, "..", "..", "src", "assets", "icon.ico"),
-    show: false, // Don't show until ready-to-show
+    show: false,
     webPreferences: {
       preload,
     },
@@ -147,6 +156,8 @@ app.whenReady().then(() => {
   });
 
   Pty({ cwd, ipcMain });
+  PythonConsole({ ipcMain });
+  RegisterThemeWorker();
 });
 
 app.on("window-all-closed", () => {

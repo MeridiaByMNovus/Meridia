@@ -23,6 +23,8 @@ export const plugins = [
       },
       { from: "support/icons", to: "icons/" },
       { from: "support/icons", to: "../renderer/main_window/icons" },
+      { from: "theme", to: "theme/" },
+      { from: "theme", to: "../renderer/main_window/theme/" },
     ],
   }),
 ];

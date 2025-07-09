@@ -1,0 +1,352 @@
+[
+  {
+    "id": "ext1",
+    "name": "Prettier Formatter",
+    "description": "Opinionated code formatter for consistent style.",
+    "author": "Prettier",
+    "path": "/extensions/prettier"
+  },
+  {
+    "id": "ext2",
+    "name": "Python",
+    "description": "Rich support for Python including linting, IntelliSense, and Jupyter notebooks.",
+    "author": "Microsoft",
+    "path": "/extensions/python"
+  },
+  {
+    "id": "ext3",
+    "name": "ESLint",
+    "description": "Integrates ESLint for JavaScript and TypeScript linting.",
+    "author": "Dirk Baeumer",
+    "path": "/extensions/eslint"
+  },
+  {
+    "id": "ext4",
+    "name": "GitLens",
+    "description": "Visualize code authorship at a glance via Git blame annotations.",
+    "author": "GitKraken",
+    "path": "/extensions/gitlens"
+  },
+  {
+    "id": "ext5",
+    "name": "Live Server",
+    "description": "Launch a development server with live reload support.",
+    "author": "Ritwick Dey",
+    "path": "/extensions/live-server"
+  },
+  {
+    "id": "ext6",
+    "name": "Tailwind CSS IntelliSense",
+    "description": "Enhances Tailwind development with autocomplete, syntax highlighting and more.",
+    "author": "Tailwind Labs",
+    "path": "/extensions/tailwind"
+  },
+  {
+    "id": "ext7",
+    "name": "Material Icon Theme",
+    "description": "Material Design icons for Visual Studio Code.",
+    "author": "PKief",
+    "path": "/extensions/material-icons"
+  },
+  {
+    "id": "ext8",
+    "name": "Path Intellisense",
+    "description": "Visual Studio Code plugin that autocompletes filenames.",
+    "author": "Christian Kohler",
+    "path": "/extensions/path-intellisense"
+  },
+  {
+    "id": "ext9",
+    "name": "Debugger for Chrome",
+    "description": "Debug your JavaScript code running in Google Chrome from VS Code.",
+    "author": "Microsoft",
+    "path": "/extensions/chrome-debugger"
+  },
+  {
+    "id": "ext10",
+    "name": "Docker",
+    "description": "Adds syntax highlighting, commands, hover tips, and linting for Dockerfile and docker-compose.",
+    "author": "Microsoft",
+    "path": "/extensions/docker"
+  },
+  {
+    "id": "ext11",
+    "name": "C/C++",
+    "description": "C/C++ IntelliSense, debugging, and code browsing.",
+    "author": "Microsoft",
+    "path": "/extensions/cpp"
+  },
+  {
+    "id": "ext12",
+    "name": "JavaScript Snippets",
+    "description": "Code snippets for JavaScript in ES6 syntax.",
+    "author": "charalampos karypidis",
+    "path": "/extensions/js-snippets"
+  },
+  {
+    "id": "ext13",
+    "name": "Vue 3 Snippets",
+    "description": "Snippets for Vue 3 Composition and Options APIs.",
+    "author": "sdras",
+    "path": "/extensions/vue-snippets"
+  },
+  {
+    "id": "ext14",
+    "name": "Markdown All in One",
+    "description": "All you need to write Markdown (keyboard shortcuts, table of contents, auto preview and more).",
+    "author": "Yu Zhang",
+    "path": "/extensions/markdown"
+  },
+  {
+    "id": "ext15",
+    "name": "Better Comments",
+    "description": "Improve your code commenting by highlighting different types of comments.",
+    "author": "Aaron Bond",
+    "path": "/extensions/better-comments"
+  },
+  {
+    "id": "ext16",
+    "name": "Bracket Pair Colorizer",
+    "description": "This extension allows matching brackets to be identified with colors.",
+    "author": "CoenraadS",
+    "path": "/extensions/bracket-colorizer"
+  },
+  {
+    "id": "ext17",
+    "name": "Rainbow CSV",
+    "description": "Highlight CSV and TSV files with different colors for columns.",
+    "author": "mechatroner",
+    "path": "/extensions/rainbow-csv"
+  },
+  {
+    "id": "ext18",
+    "name": "DotENV",
+    "description": "Support for dotenv file syntax.",
+    "author": "mikestead",
+    "path": "/extensions/dotenv"
+  },
+  {
+    "id": "ext19",
+    "name": "YAML",
+    "description": "YAML Language support with built-in Kubernetes syntax support.",
+    "author": "Red Hat",
+    "path": "/extensions/yaml"
+  },
+  {
+    "id": "ext20",
+    "name": "GraphQL",
+    "description": "GraphQL syntax highlighting, linting, auto-complete and more.",
+    "author": "GraphQL Foundation",
+    "path": "/extensions/graphql"
+  },
+  {
+    "id": "ext21",
+    "name": "Jupyter",
+    "description": "Jupyter notebook support in VS Code.",
+    "author": "Microsoft",
+    "path": "/extensions/jupyter"
+  },
+  {
+    "id": "ext22",
+    "name": "REST Client",
+    "description": "Send HTTP request and view the response directly in VS Code.",
+    "author": "Huachao Mao",
+    "path": "/extensions/rest-client"
+  },
+  {
+    "id": "ext23",
+    "name": "Settings Sync",
+    "description": "Synchronize settings, extensions and configurations across machines.",
+    "author": "Shan Khan",
+    "path": "/extensions/settings-sync"
+  },
+  {
+    "id": "ext24",
+    "name": "Remote - SSH",
+    "description": "Open any folder on a remote machine using SSH and take advantage of VS Code's features.",
+    "author": "Microsoft",
+    "path": "/extensions/remote-ssh"
+  },
+  {
+    "id": "ext25",
+    "name": "Java Extension Pack",
+    "description": "Popular extensions for Java development in VS Code.",
+    "author": "Microsoft",
+    "path": "/extensions/java-pack"
+  },
+  {
+    "id": "ext26",
+    "name": "Spring Boot Tools",
+    "description": "Spring Boot development support in VS Code.",
+    "author": "Pivotal",
+    "path": "/extensions/spring-boot"
+  },
+  {
+    "id": "ext27",
+    "name": "IntelliCode",
+    "description": "AI-assisted IntelliSense extension from Microsoft.",
+    "author": "Microsoft",
+    "path": "/extensions/intellicode"
+  },
+  {
+    "id": "ext28",
+    "name": "Code Spell Checker",
+    "description": "Spelling checker for source code.",
+    "author": "Street Side Software",
+    "path": "/extensions/spell-checker"
+  },
+  {
+    "id": "ext29",
+    "name": "EditorConfig",
+    "description": "EditorConfig Support for Visual Studio Code.",
+    "author": "EditorConfig",
+    "path": "/extensions/editorconfig"
+  },
+  {
+    "id": "ext30",
+    "name": "Peacock",
+    "description": "Subtly change the workspace color of your VS Code.",
+    "author": "John Papa",
+    "path": "/extensions/peacock"
+  },
+  {
+    "id": "ext31",
+    "name": "Color Highlight",
+    "description": "Highlight web colors in your editor.",
+    "author": "Sergii Naumov",
+    "path": "/extensions/color-highlight"
+  },
+  {
+    "id": "ext32",
+    "name": "Thunder Client",
+    "description": "Lightweight REST API Client for VS Code.",
+    "author": "Rangav",
+    "path": "/extensions/thunder-client"
+  },
+  {
+    "id": "ext33",
+    "name": "Markdown Preview Enhanced",
+    "description": "Extended markdown preview with math, charts, diagrams support.",
+    "author": "Yiyi Wang",
+    "path": "/extensions/md-preview-enhanced"
+  },
+  {
+    "id": "ext34",
+    "name": "Bookmarks",
+    "description": "Mark lines and jump to them later easily.",
+    "author": "alefragnani",
+    "path": "/extensions/bookmarks"
+  },
+  {
+    "id": "ext35",
+    "name": "Code Runner",
+    "description": "Run code snippet or files for many languages.",
+    "author": "Jun Han",
+    "path": "/extensions/code-runner"
+  },
+  {
+    "id": "ext36",
+    "name": "Auto Rename Tag",
+    "description": "Automatically rename paired HTML/XML tags.",
+    "author": "Jun Han",
+    "path": "/extensions/auto-rename-tag"
+  },
+  {
+    "id": "ext37",
+    "name": "TabNine",
+    "description": "AI-powered autocompletions based on deep learning.",
+    "author": "Codota",
+    "path": "/extensions/tabnine"
+  },
+  {
+    "id": "ext38",
+    "name": "vscode-icons",
+    "description": "Icons for Visual Studio Code.",
+    "author": "vscode-icons team",
+    "path": "/extensions/vscode-icons"
+  },
+  {
+    "id": "ext39",
+    "name": "Import Cost",
+    "description": "Display inline the size of the imported package.",
+    "author": "Wix",
+    "path": "/extensions/import-cost"
+  },
+  {
+    "id": "ext40",
+    "name": "npm Intellisense",
+    "description": "Autocompletes npm modules in import statements.",
+    "author": "Christian Kohler",
+    "path": "/extensions/npm-intellisense"
+  },
+  {
+    "id": "ext41",
+    "name": "Jest",
+    "description": "Use Facebook’s Jest With Pleasure.",
+    "author": "Orta",
+    "path": "/extensions/jest"
+  },
+  {
+    "id": "ext42",
+    "name": "CodeMetrics",
+    "description": "Software metrics visualizer for your code.",
+    "author": "Kisstkondoros",
+    "path": "/extensions/code-metrics"
+  },
+  {
+    "id": "ext43",
+    "name": "Test Explorer UI",
+    "description": "Run your tests using the Test Explorer interface.",
+    "author": "Holger Benl",
+    "path": "/extensions/test-explorer"
+  },
+  {
+    "id": "ext44",
+    "name": "Remote - WSL",
+    "description": "Open any folder in the Windows Subsystem for Linux (WSL).",
+    "author": "Microsoft",
+    "path": "/extensions/wsl"
+  },
+  {
+    "id": "ext45",
+    "name": "Remote - Containers",
+    "description": "Develop inside Docker containers.",
+    "author": "Microsoft",
+    "path": "/extensions/containers"
+  },
+  {
+    "id": "ext46",
+    "name": "Go",
+    "description": "Go language support for VS Code.",
+    "author": "Go Team at Google",
+    "path": "/extensions/go"
+  },
+  {
+    "id": "ext47",
+    "name": "Rust Analyzer",
+    "description": "Rust language server with IDE support.",
+    "author": "rust-analyzer team",
+    "path": "/extensions/rust-analyzer"
+  },
+  {
+    "id": "ext48",
+    "name": "vscode-pylance",
+    "description": "Fast, feature-rich language support for Python.",
+    "author": "Microsoft",
+    "path": "/extensions/pylance"
+  },
+  {
+    "id": "ext49",
+    "name": "Azure Tools",
+    "description": "Azure Resource Management and Web Apps support.",
+    "author": "Microsoft",
+    "path": "/extensions/azure"
+  },
+  {
+    "id": "ext50",
+    "name": "Firebase Explorer",
+    "description": "Explore your Firebase projects right from VS Code.",
+    "author": "Firebase",
+    "path": "/extensions/firebase"
+  }
+]

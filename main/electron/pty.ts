@@ -1,65 +1,49 @@
-import os from "os";
-import fs from "fs";
 import * as pty from "node-pty";
-import { mainWindow } from "..";
+import { terminals } from "../scripts/terminal_manager";
 
-let ptyProcess: pty.IPty;
-const shell = os.platform() === "win32" ? "powershell.exe" : "bash";
-const homeDir =
-  os.platform() === "win32" ? process.env.USERPROFILE : process.env.HOME;
-
-export const Pty = ({ cwd, ipcMain }: { cwd: string; ipcMain: any }) => {
-  const spawnTerminal = (dir: string) => {
-    if (!fs.existsSync(dir)) {
-      mainWindow.webContents.send(
-        "terminal.incomingData",
-        `\r\nInvalid path: ${dir}\r\n`
-      );
-      return;
-    }
-
-    if (ptyProcess) {
-      (ptyProcess as any).removeAllListeners();
-      ptyProcess.kill();
-    }
-
-    ptyProcess = pty.spawn(shell, [], {
+export const Pty = ({ ipcMain, cwd }: any) => {
+  ipcMain.on("terminal.spawn", (event: any, id: number) => {
+    const shell = process.platform === "win32" ? "powershell.exe" : "bash";
+    const term = pty.spawn(shell, [], {
       name: "xterm-color",
       cols: 80,
       rows: 30,
-      cwd: dir,
+      cwd: cwd || process.env.HOME || process.env.USERPROFILE,
       env: process.env,
     });
 
-    ptyProcess.onData((data) => {
-      mainWindow.webContents.send("terminal.incomingData", data);
+    term.onData((data) => {
+      event.sender.send(`terminal.incomingData.${id}`, data);
     });
-  };
 
-  // Initial spawn
-  spawnTerminal(cwd || homeDir);
-
-  ipcMain.on("terminal.change-folder", (_event: any, path: string) => {
-    spawnTerminal(path || homeDir);
+    terminals.set(id, term);
   });
 
-  ipcMain.on("terminal.keystroke", (_event: any, key: string) => {
-    if (typeof key === "string" && ptyProcess) {
-      ptyProcess.write(key);
+  ipcMain.on("terminal.keystroke", (_event: any, { id, data }: any) => {
+    const term = terminals.get(id);
+    if (term) {
+      try {
+        term.write(data);
+      } catch (e) {
+        console.warn(`Terminal write failed for id=${id}`, e);
+      }
     }
   });
 
-  ipcMain.on("terminal.resize", (_event: any, data: any) => {
-    if (ptyProcess) {
-      ptyProcess.resize(data.cols, data.rows);
+  ipcMain.on("terminal.kill", (_event: any, id: number) => {
+    const term = terminals.get(id);
+    if (term) {
+      try {
+        term.kill();
+        terminals.delete(id);
+      } catch {}
     }
   });
 
-  ipcMain.on("terminal.write", (_event: any, line: string) => {
-    if (typeof line === "string" && ptyProcess) {
-      ptyProcess.write(line);
+  ipcMain.on("terminal.resize", (_event: any, { id, cols, rows }: any) => {
+    const term = terminals.get(id);
+    if (term && Number.isInteger(cols) && Number.isInteger(rows)) {
+      term.resize(cols, rows);
     }
   });
-
-  process.on("uncaughtException", (err) => {});
 };

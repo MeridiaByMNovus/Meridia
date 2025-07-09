@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { dialog } from "electron";
+import { BrowserWindow, dialog } from "electron";
 import path from "path";
 import {
   createMeridiaWindow,
@@ -15,6 +15,7 @@ import { get_files } from "../electron/get_files";
 import { registerCommand } from "./command_worker";
 import { IFolderStructure } from "../../src/helpers/types";
 import { StorageWorker } from "./storage_worker";
+import { terminals } from "../scripts/terminal_manager";
 
 export const get_file_content = ({ path }: { path: string }) => {
   try {
@@ -26,87 +27,15 @@ export const get_file_content = ({ path }: { path: string }) => {
   }
 };
 
-export const run_code = ({ data }: { data: { path: string } }) => {
-  try {
-    const { path } = data;
-    if (!path.endsWith(".py") && !path.endsWith(".js")) return;
+export const run_code = ({ path, id }: { path: string; id: number }) => {
+  if (!path.endsWith(".py") && !path.endsWith(".js")) return;
 
-    const isPython = path.endsWith(".py");
-    let process: any;
+  const isPython = path.endsWith(".py");
+  const command = isPython ? `python "${path}"` : `node "${path}"`;
 
-    const startTime = Date.now();
+  const term = terminals.get(id);
 
-    if (isPython) {
-      process = new PythonShell(path, {
-        pythonPath: PythonShell.defaultPythonPath,
-        mode: "text",
-        pythonOptions: ["-u"], // unbuffered output for real-time streaming
-      });
-    } else {
-      process = spawn("node", [path]);
-    }
-
-    const command = isPython
-      ? `${PythonShell.defaultPythonPath} ${path}`
-      : `node ${path}`;
-
-    // Send the command line first
-    mainWindow?.webContents.send("received-output", {
-      type: "command",
-      content: command,
-    });
-
-    const handleOutput = (output: any) => {
-      const message = output.toString().trim();
-      if (message) {
-        mainWindow?.webContents.send("received-output", {
-          type: "output",
-          content: message,
-        });
-      }
-    };
-
-    if (!isPython && process.stdout) {
-      process.stdout.on("data", handleOutput);
-    }
-
-    if (isPython) {
-      process.on("message", handleOutput);
-      process.on("stdout", handleOutput); // Sometimes output is on stdout for PythonShell
-    }
-
-    if (process.stderr) {
-      process.stderr.on("data", (error: any) => {
-        const errorMsg = `Error: ${error.toString().trim()}`;
-        mainWindow?.webContents.send("received-output", {
-          type: "output",
-          content: errorMsg,
-        });
-      });
-    }
-
-    // On process exit, send exit code and elapsed time as "end"
-    if (!isPython) {
-      process.on("close", (code: number) => {
-        const elapsedSeconds = ((Date.now() - startTime) / 1000).toFixed(3);
-        const endMessage = `[Done] exited with code=${code} in ${elapsedSeconds} seconds`;
-        mainWindow?.webContents.send("received-output", {
-          type: "end",
-          content: endMessage,
-        });
-      });
-    } else {
-      // PythonShell emits 'close' as well with exit code
-      process.on("close", (code: number) => {
-        const elapsedSeconds = ((Date.now() - startTime) / 1000).toFixed(3);
-        const endMessage = `[Done] exited with code=${code} in ${elapsedSeconds} seconds`;
-        mainWindow?.webContents.send("received-output", {
-          type: "end",
-          content: endMessage,
-        });
-      });
-    }
-  } catch (err) {}
+  if (term) term.write(`${command}\r`);
 };
 
 export function handleNewFile() {

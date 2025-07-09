@@ -1,5 +1,4 @@
 import fs from "fs";
-import path from "path";
 import { DATA_JSON_PATH } from "./file_worker";
 
 export class StorageWorker {
@@ -24,7 +23,7 @@ export class StorageWorker {
 
   private static saveData(data: Record<string, any>) {
     try {
-      this.data = data; // Sync static data
+      this.data = data;
       fs.writeFileSync(this.filePath, JSON.stringify(data, null, 2), "utf-8");
     } catch (err) {}
   }

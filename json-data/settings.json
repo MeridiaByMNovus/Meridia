@@ -1,0 +1,408 @@
+{
+  "Text Editor": {
+    "": [
+      {
+        "title": "Auto Indent",
+        "type": "select",
+        "default": "advanced",
+        "options": [
+          "none",
+          "keep",
+          "brackets",
+          "advanced"
+        ]
+      },
+      {
+        "title": "Detect Indentation",
+        "type": "select",
+        "default": "true",
+        "options": [
+          "true",
+          "false"
+        ]
+      },
+      {
+        "title": "Render Control Characters",
+        "type": "select",
+        "default": "false",
+        "options": [
+          "true",
+          "false"
+        ]
+      }
+    ],
+    "Cursor": [
+      {
+        "title": "Cursor Style",
+        "type": "select",
+        "default": "line",
+        "options": [
+          "line",
+          "block",
+          "underline"
+        ]
+      },
+      {
+        "title": "Cursor Blinking",
+        "type": "select",
+        "default": "blink",
+        "options": [
+          "blink",
+          "smooth",
+          "phase",
+          "expand",
+          "solid"
+        ]
+      },
+      {
+        "title": "Smooth Caret Animation",
+        "type": "select",
+        "default": "false",
+        "options": [
+          "true",
+          "false"
+        ]
+      }
+    ],
+    "Font": [
+      {
+        "title": "Font Size",
+        "type": "number",
+        "default": 14,
+        "min": 8,
+        "max": 40
+      },
+      {
+        "title": "Font Family",
+        "type": "text",
+        "default": "Consolas"
+      },
+      {
+        "title": "Font Ligatures",
+        "type": "select",
+        "default": "false",
+        "options": [
+          "true",
+          "false"
+        ]
+      }
+    ],
+    "Whitespace": [
+      {
+        "title": "Render Whitespace",
+        "type": "select",
+        "default": "none",
+        "options": [
+          "none",
+          "boundary",
+          "selection",
+          "all"
+        ]
+      },
+      {
+        "title": "Trim Auto Whitespace",
+        "type": "select",
+        "default": "true",
+        "options": [
+          "true",
+          "false"
+        ]
+      },
+      {
+        "title": "Insert Spaces",
+        "type": "select",
+        "default": "true",
+        "options": [
+          "true",
+          "false"
+        ]
+      }
+    ],
+    "Suggestions": [
+      {
+        "title": "Quick Suggestions",
+        "type": "select",
+        "default": "true",
+        "options": [
+          "true",
+          "false"
+        ]
+      },
+      {
+        "title": "Parameter Hints",
+        "type": "select",
+        "default": "true",
+        "options": [
+          "true",
+          "false"
+        ]
+      },
+      {
+        "title": "Snippets Prevent Quick Suggestions",
+        "type": "select",
+        "default": "true",
+        "options": [
+          "true",
+          "false"
+        ]
+      }
+    ]
+  },
+  "Workbench": {
+    "": [
+      {
+        "title": "Color Theme",
+        "type": "select",
+        "default": "dark",
+        "options": [
+          "light",
+          "dark",
+          "high contrast"
+        ]
+      },
+      {
+        "title": "Icon Theme",
+        "type": "select",
+        "default": "default",
+        "options": [
+          "default",
+          "material",
+          "minimal"
+        ]
+      },
+      {
+        "title": "Editor Tabs",
+        "type": "select",
+        "default": "true",
+        "options": [
+          "true",
+          "false"
+        ]
+      }
+    ],
+    "Appearance": [
+      {
+        "title": "Show Status Bar",
+        "type": "select",
+        "default": "true",
+        "options": [
+          "true",
+          "false"
+        ]
+      },
+      {
+        "title": "Show Activity Bar",
+        "type": "select",
+        "default": "true",
+        "options": [
+          "true",
+          "false"
+        ]
+      },
+      {
+        "title": "Centered Layout",
+        "type": "select",
+        "default": "false",
+        "options": [
+          "true",
+          "false"
+        ]
+      }
+    ],
+    "Window": [
+      {
+        "title": "Window Zoom Level",
+        "type": "number",
+        "default": 0,
+        "min": -5,
+        "max": 5
+      },
+      {
+        "title": "Open Files in New Window",
+        "type": "select",
+        "default": "default",
+        "options": [
+          "on",
+          "off",
+          "default"
+        ]
+      },
+      {
+        "title": "Window Restore Windows",
+        "type": "select",
+        "default": "all",
+        "options": [
+          "none",
+          "one",
+          "all",
+          "folders"
+        ]
+      }
+    ],
+    "Sidebar": [
+      {
+        "title": "Sidebar Location",
+        "type": "select",
+        "default": "left",
+        "options": [
+          "left",
+          "right"
+        ]
+      },
+      {
+        "title": "Hide Sidebar When Empty",
+        "type": "select",
+        "default": "false",
+        "options": [
+          "true",
+          "false"
+        ]
+      },
+      {
+        "title": "Show Explorer",
+        "type": "select",
+        "default": "true",
+        "options": [
+          "true",
+          "false"
+        ]
+      }
+    ]
+  },
+  "Security": {
+    "": [
+      {
+        "title": "Enable Workspace Trust",
+        "type": "select",
+        "default": "true",
+        "options": [
+          "true",
+          "false"
+        ]
+      },
+      {
+        "title": "Enable Restricted Mode",
+        "type": "select",
+        "default": "true",
+        "options": [
+          "true",
+          "false"
+        ]
+      }
+    ],
+    "Certificates": [
+      {
+        "title": "Allow Invalid Certs",
+        "type": "select",
+        "default": "false",
+        "options": [
+          "true",
+          "false"
+        ]
+      },
+      {
+        "title": "Pin Trusted Certificates",
+        "type": "select",
+        "default": "true",
+        "options": [
+          "true",
+          "false"
+        ]
+      },
+      {
+        "title": "Certificate Authority Override",
+        "type": "text",
+        "default": ""
+      }
+    ]
+  },
+  "Extensions": {
+    "": [
+      {
+        "title": "Auto Update Extensions",
+        "type": "select",
+        "default": "true",
+        "options": [
+          "true",
+          "false"
+        ]
+      },
+      {
+        "title": "Ignore Recommendations",
+        "type": "select",
+        "default": "false",
+        "options": [
+          "true",
+          "false"
+        ]
+      },
+      {
+        "title": "Show Pre-release Versions",
+        "type": "select",
+        "default": "false",
+        "options": [
+          "true",
+          "false"
+        ]
+      }
+    ],
+    "Marketplace": [
+      {
+        "title": "Enable Marketplace",
+        "type": "select",
+        "default": "true",
+        "options": [
+          "true",
+          "false"
+        ]
+      },
+      {
+        "title": "Restrict to Private Extensions",
+        "type": "select",
+        "default": "false",
+        "options": [
+          "true",
+          "false"
+        ]
+      },
+      {
+        "title": "Trusted Publishers Only",
+        "type": "select",
+        "default": "true",
+        "options": [
+          "true",
+          "false"
+        ]
+      }
+    ],
+    "Management": [
+      {
+        "title": "Extension Development Host",
+        "type": "select",
+        "default": "false",
+        "options": [
+          "true",
+          "false"
+        ]
+      },
+      {
+        "title": "Enable Proposed APIs",
+        "type": "select",
+        "default": "false",
+        "options": [
+          "true",
+          "false"
+        ]
+      },
+      {
+        "title": "Sync Extensions",
+        "type": "select",
+        "default": "true",
+        "options": [
+          "true",
+          "false"
+        ]
+      }
+    ]
+  }
+}

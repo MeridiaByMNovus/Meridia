@@ -1,0 +1,44 @@
+{
+  "--main-bg": "#ffffff",
+  "--titlebar-bg": "#f3f3f3",
+  "--sidebar-bg": "#ffffff",
+  "--extension-bg": "#ffffff",
+  "--editor-theme": "light",
+  "--sidebar-content-bg": "#ffffff",
+  "--command-palette-bg": "#ffffff",
+  "--editor-bg": "#ffffff",
+  "--settings-bg": "#f9f9f9",
+  "--tooltip-bg": "#f9f9f9",
+  "--settings-sidebar-bg": "#f3f3f3",
+  "--terminal-bg": "#ffffff",
+  "--terminal-tabs-bg": "#f3f3f3",
+  "--dark-bg": "#e0e0e0",
+
+  "--border-color": "#d4d4d4",
+  "--focus-color": "#007acc",
+
+  "--text-color": "#000000",
+  "--second-text-color": "#6a6a6a",
+  "--dark-text-color": "#000000",
+  "--icon-color": "#424242",
+
+  "--button-hover-bg": "#eaeaea",
+  "--window-controls-close-button-hover": "#e81123",
+  "--tab-active-border": "#007acc",
+  "--text-hover-color": "#000000",
+  "--icon-hover-bg": "#dddddd",
+
+  "--menu-item-hover": "#e5e5e5",
+  "--submenu-bg": "#f3f3f3",
+  "--submenu-item-hover": "#dcdcdc",
+  "--menu-item-separator": "#cccccc",
+
+  "--file-tree-folder-content-border-color": "#d4d4d4",
+
+  "--scrollbar-thumb-color": "#c6c6c6",
+  "--scrollbar-thumb-hover-color": "#a8a8a8",
+
+  "--blue-color": "#007acc",
+  "--green-color": "#4caf50",
+  "--red-color": "#e81123"
+}

@@ -1,0 +1,80 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.overlay .command-palette {
+  width: 500px;
+  background: var(--command-palette-bg);
+  color: white;
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.overlay .command-palette .command-input {
+  width: 100%;
+  padding: 8px;
+  border: none;
+  outline: none;
+  background: var(--main-bg);
+  color: white;
+  font-size: 16px;
+  border-radius: 4px;
+}
+
+.overlay .command-palette .command-item {
+  padding: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.overlay .command-palette .command-item:hover,
+.overlay .command-palette .command-item[data-selected="true"] {
+  background: var(--button-hover-bg);
+}
+
+.overlay .command-palette .shortcut-container {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.overlay .command-palette .shortcut-box {
+  background: var(--dark-bg);
+  padding: 4px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #ccc;
+  font-weight: bold;
+  display: inline-block;
+  min-width: 20px;
+  text-align: center;
+}
+
+.overlay .command-palette .plus {
+  color: var(--second-text-color);
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.overlay .command-palette .open-button {
+  padding: 8px 12px;
+  background: #333;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.overlay .command-palette .open-button:hover {
+  background: var(--button-hover-bg);
+}

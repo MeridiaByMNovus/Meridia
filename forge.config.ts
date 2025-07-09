@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-inferrable-types */
 /* eslint-disable @typescript-eslint/no-var-requires */
+import { resolve, join, dirname } from "path";
+import { copy, mkdirs } from "fs-extra";
 import type { ForgeConfig } from "@electron-forge/shared-types";
 import { MakerSquirrel } from "@electron-forge/maker-squirrel";
 import { MakerDeb } from "@electron-forge/maker-deb";
@@ -8,8 +10,6 @@ import { FusesPlugin } from "@electron-forge/plugin-fuses";
 import { FuseV1Options, FuseVersion } from "@electron/fuses";
 import { mainConfig } from "./webpack.main.config";
 import { rendererConfig } from "./webpack.renderer.config";
-import { resolve, join, dirname } from "path";
-import { copy, mkdirs } from "fs-extra";
 
 const config: ForgeConfig = {
   packagerConfig: {
@@ -55,23 +55,15 @@ const config: ForgeConfig = {
         entryPoints: [
           {
             html: "./main/static-html/index.html",
-            js: "./main/renderer-workers/main-worker.ts",
+            js: "./main/renderer-workers/main_worker.ts",
             name: "main_window",
             preload: {
               js: "./main/preload.ts",
             },
           },
           {
-            html: "./main/static-html/toolsWindow.html",
-            js: "./main/renderer-workers/tools-worker.ts",
-            name: "tools_window",
-            preload: {
-              js: "./main/preload.ts",
-            },
-          },
-          {
-            html: "./main/static-html/newProject.html",
-            js: "./main/renderer-workers/new-project-worker.ts",
+            html: "./main/static-html/new_project.html",
+            js: "./main/renderer-workers/new_project_worker.ts",
             name: "new_project",
             preload: {
               js: "./main/preload.ts",
