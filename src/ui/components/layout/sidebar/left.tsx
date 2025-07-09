@@ -1,11 +1,10 @@
-import { useEffect, useState } from "react";
 import {
   AppstoreOutlined,
   CodeOutlined,
   FolderOutlined,
   PythonOutlined,
 } from "@ant-design/icons";
-import Tooltip from "../tooltip";
+import Tooltip from "../../tooltip";
 
 export function LeftSidebar() {
   return (
