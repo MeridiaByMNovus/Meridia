@@ -70,7 +70,7 @@ To get started with Meridia locally, follow these steps:
 Clone the repository to your local machine:
 
 ```bash
-git clone https://github.com/mNovus-Industries/Meridia.git
+git clone https://github.com/MeridiaByMNovus/Meridia.git
 ```
 
 ### 2. Navigate to Project Directory
@@ -139,10 +139,10 @@ When submitting a pull request:
 
 ## Reporting Issues
 
-If you encounter an issue or have an idea for a new feature, feel free to report it via the [Issues Page](https://github.com/Ridit-ManojKhandelwal/Meridia/issues). We strive to respond to all issues within 24 hours.
+If you encounter an issue or have an idea for a new feature, feel free to report it via the [Issues Page](https://github.com/MeridiaByMNovus/Meridia/issues). We strive to respond to all issues within 24 hours.
 
 ---
 
 ### Quick Links:
 
-- [Issues Page](https://github.com/mNovus-Industries//Meridia/issues)
+- [Issues Page](https://github.com/MeridiaByMNovus//Meridia/issues)
