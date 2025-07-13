@@ -6,8 +6,6 @@ import {
   handleOpenCommandPalette,
   handleOpenFile,
   handleOpenFolder,
-  handleOpenMeridiaStudio,
-  handleOpenOutput,
   handleOpenRightPanel,
   handleOpenSettings,
   handleOpenSidebar,
@@ -15,6 +13,8 @@ import {
   handleRun,
   handleSaveCurrentFile,
 } from "./functions_worker";
+
+import { shortcuts } from "../../src/ui/data/shortcuts";
 
 export function RegisterMenu() {
   const MenuTemplate = [
@@ -24,33 +24,32 @@ export function RegisterMenu() {
         { label: "New Text File" },
         {
           label: "New File",
-          accelerator: "Ctrl+N",
+          accelerator: shortcuts.new_file,
           click: handleNewFile,
         },
         { type: "separator" },
         {
           label: "Open...",
-          accelerator: "Ctrl+O",
+          accelerator: shortcuts.open_file,
           click: handleOpenFile,
         },
         {
           label: "Open Folder...",
-          accelerator: "Ctrl+Shift+O",
+          accelerator: shortcuts.open_folder,
           click: () => handleOpenFolder(),
         },
         { type: "separator" },
         {
           label: "New Project",
-          accelerator: "Ctrl+Shift+N",
+          accelerator: shortcuts.new_project,
           click: handleNewProject,
         },
         { type: "separator" },
         {
           label: "Save",
-          accelerator: "Ctrl + S",
+          accelerator: shortcuts.save_file,
           click: handleSaveCurrentFile,
         },
-
         { label: "Save As..." },
         { type: "separator" },
         { type: "separator" },
@@ -100,45 +99,35 @@ export function RegisterMenu() {
       submenu: [
         {
           label: "Command Palette",
-          accelerator: "Ctrl + Shift + P",
+          accelerator: shortcuts.command_palette,
           click: handleOpenCommandPalette,
         },
         { label: "Open View" },
         { type: "separator" },
         {
           label: "Settings",
-          accelerator: "Ctrl + ,",
+          accelerator: shortcuts.settings,
           click: handleOpenSettings,
-        },
-        {
-          label: "Meridia Studio",
-          accelerator: "Ctrl + Shift + B",
-          click: handleOpenMeridiaStudio,
         },
         { type: "separator" },
         {
-          label: "Sidebar",
-          accelerator: "Ctrl + B",
+          label: "Toggle Left Panel",
+          accelerator: shortcuts.toggle_left_panel,
           click: handleOpenSidebar,
         },
         {
-          label: "Right Panel",
-          accelerator: "Ctrl + Alt + B",
+          label: "Toggle Right Panel",
+          accelerator: shortcuts.toggle_right_panel,
           click: handleOpenRightPanel,
         },
         {
-          label: "Bottom Panel",
-          accelerator: "Ctrl + J",
+          label: "Toggle Bottom Panel",
+          accelerator: shortcuts.toggle_bottom_panel,
           click: handleOpenBottomPanel,
         },
         {
-          label: "Output",
-          accelerator: "Ctrl + K",
-          click: handleOpenOutput,
-        },
-        {
           label: "Terminal",
-          accelerator: "Ctrl + `",
+          accelerator: shortcuts.open_terminal,
           click: handleOpenTerminal,
         },
       ],
@@ -149,7 +138,7 @@ export function RegisterMenu() {
         {
           label: "Run",
           click: handleRun,
-          accelerator: "F12",
+          accelerator: shortcuts.run,
         },
         { label: "Start Debugging" },
         { label: "Run Without Debugging" },

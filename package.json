@@ -101,7 +101,7 @@
     "monaco-editor": "^0.50.0",
     "monaco-editor-themes": "^1.0.0",
     "monaco-editor-webpack-plugin": "^7.1.0",
-    "monaco-languageclient": "^9.4.0",
+    "monaco-languageclient": "^9.8.0",
     "monaco-pyright-lsp": "^0.1.7",
     "monaco-python": "^0.1.9",
     "node-gyp": "^11.1.0",

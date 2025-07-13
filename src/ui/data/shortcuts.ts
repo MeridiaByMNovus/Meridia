@@ -1,0 +1,16 @@
+export const shortcuts = {
+  new_file: "Ctrl+N",
+  settings: "Ctrl+,",
+  meridia_studio: "Ctrl+Shift+B",
+  toggle_left_panel: "Ctrl+B",
+  toggle_right_panel: "Ctrl+Alt+B",
+  toggle_bottom_panel: "Ctrl+J",
+  open_output: "Ctrl+K",
+  open_terminal: "Ctrl+`",
+  run: "F12",
+  open_file: "Ctrl+O",
+  open_folder: "Ctrl+Shift+O",
+  new_project: "Ctrl+Shift+N",
+  save_file: "Ctrl+S",
+  command_palette: "Ctrl+Shift+P",
+};

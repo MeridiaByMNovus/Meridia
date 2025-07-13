@@ -99,24 +99,16 @@ export function handleOpenSettings() {
   registerCommand("open-settings", "");
 }
 
-export function handleOpenMeridiaStudio() {
-  registerCommand("open-meridia-studio", "");
-}
-
 export function handleOpenSidebar() {
-  registerCommand("open-sidebar", "");
+  registerCommand("toggle-left-panel", "");
 }
 
 export function handleOpenRightPanel() {
-  registerCommand("open-right-panel", "");
+  registerCommand("toggle-right-panel", "");
 }
 
 export function handleOpenBottomPanel() {
-  registerCommand("open-bottom-panel", "");
-}
-
-export function handleOpenOutput() {
-  registerCommand("open-output", "");
+  registerCommand("toggle-bottom-panel", "");
 }
 
 export function handleOpenTerminal() {

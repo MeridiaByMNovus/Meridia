@@ -18,8 +18,8 @@ const initialState: IMainState = {
   indent: { column: 0, line: 0 } as TIndent,
   layout: {
     right_panel: false,
-    bottom_panel: false,
-    sidebar: false,
+    left_panel: true,
+    bottom_panel: true,
   } as TLayout,
 };
 

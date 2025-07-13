@@ -1,5 +1,11 @@
-import React, { useEffect, useState, useCallback, useMemo } from "react";
-import useTree from "../../../hooks/use-file-tree";
+import React, {
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+  useContext,
+} from "react";
+import useTree from "../../../hooks/use_file_tree";
 import { useAppDispatch, useAppSelector } from "../../../helpers/hooks";
 import { MainContext, path_join } from "../../../helpers/functions";
 import {
@@ -7,28 +13,63 @@ import {
   update_active_files,
   update_simple_tab,
 } from "../../../helpers/state_manager";
-import {
-  IFolderStructure,
-  TActiveFile,
-  TFolderTree,
-} from "../../../helpers/types";
+import { IFolderStructure, TFolderTree } from "../../../helpers/types";
 import { ExplorerComponent } from "./explorer";
 import debounce from "lodash.debounce";
 import isEqual from "fast-deep-equal";
 
-export const Explorer = React.memo(function Explorer(props: any) {
-  const folder_structure = useAppSelector(
-    (state) => state.main.folder_structure
-  );
-  const active_files = useAppSelector((state) => state.main.active_files);
+export function Explorer() {
+  const folder_structure = useAppSelector((s) => s.main.folder_structure);
+  const active_files = useAppSelector((s) => s.main.active_files);
   const dispatch = useAppDispatch();
-  const useMainContextIn = React.useContext(MainContext);
 
+  const { handle_set_tab, handle_set_editor } = useContext(MainContext);
   const [fileTreeData, setFileTree] = useState<IFolderStructure | null>(null);
   const { insertNode, deleteNode, updateNode } = useTree();
 
   const isImage = (path: string) =>
     /\.(jpg|jpeg|png|gif|bmp|webp|svg|ico|tiff?|avif|jfif|pjpe?g)$/i.test(path);
+
+  const openFile = useCallback(
+    async (branch_name: string, full_path: string) => {
+      if (isImage(full_path)) {
+        handle_set_tab({
+          id: full_path,
+          name: branch_name,
+          icon: full_path,
+          component: "imageViewer",
+          props: { path: full_path },
+        });
+        return;
+      }
+
+      dispatch(update_simple_tab(null));
+      const content = await window.electron.get_file_content(full_path);
+
+      const active_file = {
+        icon: "",
+        path: full_path,
+        name: branch_name,
+        is_touched: false,
+        content,
+      };
+
+      if (!active_files.some((f: any) => f.path === full_path)) {
+        dispatch(update_active_files([...active_files, active_file]));
+      }
+
+      dispatch(update_active_file(active_file));
+
+      setTimeout(() => {
+        handle_set_editor({
+          name: branch_name,
+          path: full_path,
+          content: content,
+        });
+      }, 0);
+    },
+    [active_files, dispatch, handle_set_tab, handle_set_editor]
+  );
 
   const sortFolderStructure = useCallback((node: TFolderTree): TFolderTree => {
     if (!node?.children?.length) return node;
@@ -41,8 +82,9 @@ export const Explorer = React.memo(function Explorer(props: any) {
       })
       .map(sortFolderStructure);
 
-    const unchanged = node.children.every((c, i) => c === sortedChildren[i]);
-    return unchanged ? node : { ...node, children: sortedChildren };
+    return isEqual(node.children, sortedChildren)
+      ? node
+      : { ...node, children: sortedChildren };
   }, []);
 
   const syncFolderToMain = useMemo(
@@ -55,75 +97,25 @@ export const Explorer = React.memo(function Explorer(props: any) {
   );
 
   useEffect(() => {
-    if (!folder_structure || Object.keys(folder_structure).length === 0) {
-      console.warn("Folder structure is empty.");
-      return;
-    }
-
-    const sorted: any = sortFolderStructure(folder_structure);
-    if (!isEqual(fileTreeData, sorted)) {
-      setFileTree(sorted);
-      syncFolderToMain(sorted);
+    if (folder_structure && Object.keys(folder_structure).length > 0) {
+      const sorted: any = sortFolderStructure(folder_structure);
+      if (!isEqual(fileTreeData, sorted)) {
+        setFileTree(sorted);
+        syncFolderToMain(sorted);
+      }
     }
   }, [folder_structure]);
 
   useEffect(() => {
-    async function getFolderTree() {
-      const newFolder = await window.electron.get_folder();
-      setFileTree(newFolder);
-    }
-
     if (!fileTreeData) {
-      getFolderTree();
+      window.electron.get_folder().then(setFileTree);
     }
   }, [fileTreeData]);
 
-  const handle_set_editor = useCallback(
-    async (branch_name: string, full_path: string) => {
-      if (isImage(full_path)) {
-        useMainContextIn.handle_set_tab({
-          id: full_path,
-          name: branch_name,
-          icon: full_path,
-          component: "imageViewer",
-          props: { path: full_path },
-        });
-        return;
-      }
-
-      dispatch(update_simple_tab(null));
-      const get_file_content =
-        await window.electron.get_file_content(full_path);
-
-      const active_file: TActiveFile = {
-        icon: "",
-        path: full_path,
-        name: branch_name,
-        is_touched: false,
-        content: get_file_content,
-      };
-
-      if (!active_files.some((f: any) => f.path === full_path)) {
-        dispatch(update_active_files([...active_files, active_file]));
-      }
-
-      dispatch(update_active_file(active_file));
-
-      setTimeout(() => {
-        useMainContextIn.handle_set_editor({
-          name: branch_name,
-          path: full_path,
-          content: get_file_content,
-        });
-      }, 0);
-    },
-    [active_files]
-  );
-
   useEffect(() => {
-    const onNew = () => handle_set_editor("Untitled.py", `/untitled.py`);
-    const onOpen = (e: any, data: { path: string; fileName: string }) =>
-      handle_set_editor(data.fileName, data.path);
+    const onNew = () => openFile("Untitled.py", `/untitled.py`);
+    const onOpen = (_: any, data: { path: string; fileName: string }) =>
+      openFile(data.fileName, data.path);
 
     window.electron.ipcRenderer.on("new-file-tab", onNew);
     window.electron.ipcRenderer.on("new-file-opened", onOpen);
@@ -132,7 +124,7 @@ export const Explorer = React.memo(function Explorer(props: any) {
       window.electron.ipcRenderer.removeListener("new-file-tab", onNew);
       window.electron.ipcRenderer.removeListener("new-file-opened", onOpen);
     };
-  }, [handle_set_editor]);
+  }, [openFile]);
 
   const handleRename = (
     id: any,
@@ -188,10 +180,9 @@ export const Explorer = React.memo(function Explorer(props: any) {
       parentPath: containingFolder,
     };
 
-    const fileExists = (node: any): boolean => {
-      if (path_join([node.path, node.name]) === newFile.path) return true;
-      return node.children?.some(fileExists) ?? false;
-    };
+    const fileExists = (node: any): boolean =>
+      path_join([node.path, node.name]) === newFile.path ||
+      (node.children?.some(fileExists) ?? false);
 
     if (fileExists(fileTreeData)) {
       window.electron.ipcRenderer.send("show-warning", {
@@ -246,14 +237,14 @@ export const Explorer = React.memo(function Explorer(props: any) {
     <div className="explorer">
       <div className="title">Explorer</div>
       <div className="explorer-scroll">
-        {fileTreeData && fileTreeData.name ? (
+        {fileTreeData?.name ? (
           <ExplorerComponent
+            fileTree={fileTreeData}
             handleDelete={handleDelete}
             handleAddFile={handleAddFile}
             handleAddFolder={handleAddFolder}
             handleRename={handleRename}
-            onFileClick={handle_set_editor}
-            fileTree={fileTreeData}
+            onFileClick={openFile}
           />
         ) : (
           <div className="empty-folder">Loading...</div>
@@ -261,4 +252,4 @@ export const Explorer = React.memo(function Explorer(props: any) {
       </div>
     </div>
   );
-});
+}

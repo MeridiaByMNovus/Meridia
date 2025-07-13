@@ -33,8 +33,8 @@ export interface IMainState {
 
 export interface TLayout {
   right_panel: boolean;
+  left_panel: boolean;
   bottom_panel: boolean;
-  sidebar: boolean;
 }
 
 export type TActiveFile = {
@@ -69,4 +69,5 @@ export interface IMainContext {
   handle_set_tab: Function;
   handle_remove_editor: Function;
   handle_save_file: Function;
+  handle_save_current_file: Function;
 }

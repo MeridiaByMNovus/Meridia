@@ -1,19 +1,19 @@
 /* eslint-disable no-empty */
-import React, { useEffect, useRef } from "react";
-import { MainContext } from "./helpers/functions";
-import { get_file_types } from "./helpers/functions";
-import { useAppDispatch, useAppSelector } from "./helpers/hooks";
-import { TActiveFile, TSelectedFile, TSimpleTab } from "./helpers/types";
+import React, { useContext, useEffect, useRef } from "react";
+import { MainContext } from "../../helpers/functions";
+import { get_file_types } from "../../helpers/functions";
+import { useAppDispatch, useAppSelector } from "../../helpers/hooks";
+import { TActiveFile, TSelectedFile, TSimpleTab } from "../../helpers/types";
 import {
   update_active_file,
   update_active_files,
   update_indent,
   update_simple_tab,
   update_simple_tabs,
-} from "./helpers/state_manager";
-import { store } from "./helpers/store";
-import NewUi from "./ui";
-import pythonLangData from "../support/languages/python/python.json";
+} from "../../helpers/state_manager";
+import { store } from "../../helpers/store";
+import NewUi from "..";
+import pythonLangData from "../../../support/languages/python/python.json";
 import * as monaco from "monaco-editor";
 
 const MainComponent = React.memo((props: any) => {
@@ -21,17 +21,9 @@ const MainComponent = React.memo((props: any) => {
     null
   );
 
-  const settings = useAppSelector((state) => state.main.editorSettings);
-
   const dispatch = useAppDispatch();
-
-  const simple_tab = useAppSelector((state) => state.main.simple_tab);
-  const simple_tabs = useAppSelector((state) => state.main.simple_tabs);
-
-  useEffect(() => {
-    if (!editor_ref.current) return;
-    editor_ref.current.updateOptions(settings);
-  }, [settings]);
+  const layout = useAppSelector((state) => state.main.layout);
+  const useMainContextIn = useContext(MainContext);
 
   const normalizePath = (path: string) =>
     path.replace(/\\/g, "/").replace(/^\/?([a-zA-Z]):\//, "$1:/");
@@ -126,6 +118,8 @@ const MainComponent = React.memo((props: any) => {
           {
             theme: "oneDark",
             language: get_file_types(selected_file.name),
+            automaticLayout: true,
+            largeFileOptimizations: true,
           }
         );
       }
@@ -303,6 +297,23 @@ const MainComponent = React.memo((props: any) => {
     dispatch(update_simple_tab(selected_tab));
   }, []);
 
+  const handle_save_current_file = React.useCallback(() => {
+    const activeFile = store.getState().main.active_file;
+    if (!activeFile || !editor_ref.current) {
+      window.electron.ipcRenderer.send("show-error-message-box", {
+        message: "Please open a file before saving.",
+        title: "No File Found.",
+      });
+
+      return;
+    }
+
+    handle_save_file({
+      path: activeFile.path,
+      content: editor_ref.current.getValue(),
+    });
+  }, []);
+
   React.useEffect(() => {
     window.addEventListener("blur", handle_win_blur);
     return () => window.removeEventListener("blur", handle_win_blur);
@@ -315,6 +326,7 @@ const MainComponent = React.memo((props: any) => {
         handle_remove_editor,
         handle_save_file,
         handle_set_tab,
+        handle_save_current_file,
       }}
     >
       <NewUi />

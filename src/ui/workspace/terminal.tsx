@@ -14,10 +14,11 @@ type TerminalTab = {
   fit: FitAddon;
 };
 
+export let [activeTabId, setActiveTabId]: any = [];
+
 export function Terminal() {
   const [tabs, setTabs] = useState<TerminalTab[]>([]);
-  const [activeTabId, setActiveTabId] = useState<number | null>(null);
-  const active_file = useAppSelector((state) => state.main.active_file);
+  [activeTabId, setActiveTabId] = useState<number | null>(null);
 
   const createTerminal = () => {
     const term = new XTerminal({
@@ -84,7 +85,7 @@ export function Terminal() {
     }
 
     setTabs((prev) => prev.filter((t) => t.id !== id));
-    setActiveTabId((prev) => (prev === id ? (tabs[0]?.id ?? null) : prev));
+    setActiveTabId((prev: any) => (prev === id ? (tabs[0]?.id ?? null) : prev));
   };
 
   useLayoutEffect(() => {
@@ -94,26 +95,6 @@ export function Terminal() {
       }
     }, 3000);
   }, []);
-
-  useEffect(() => {
-    const runButton: HTMLButtonElement | null =
-      document.querySelector(".run-button");
-
-    function handleRun() {
-      if (!active_file?.path || activeTabId == null) {
-        console.warn("Missing active file path or tab ID");
-        return;
-      }
-
-      window.electron.ipcRenderer.send(
-        "file-run",
-        active_file.path,
-        activeTabId
-      );
-    }
-
-    if (runButton) runButton.onclick = handleRun;
-  }, [active_file, activeTabId]);
 
   return (
     <div

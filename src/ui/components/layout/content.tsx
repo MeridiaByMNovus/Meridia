@@ -236,20 +236,6 @@ export function Content() {
     dispatch(update_active_files(updated));
   };
 
-  useEffect(() => {
-    const handleClickOutside = () => {
-      setIsDropdownOpen(false);
-    };
-
-    if (isDropdownOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isDropdownOpen]);
-
   return (
     <div
       className="content-wrapper"
@@ -258,7 +244,10 @@ export function Content() {
       }}
     >
       {isDropdownOpen && (
-        <ContextMenu contextMenuPos={contextMenuPos}>
+        <ContextMenu
+          contextMenuPos={contextMenuPos}
+          onRequestClose={() => setIsDropdownOpen(false)}
+        >
           <button>1</button>
           <hr />
           <button>2</button>
@@ -269,7 +258,7 @@ export function Content() {
           <div className="page-tabs">
             {active_files.map((file: TActiveFile, index: number) => (
               <DraggableTab
-                key={file.path}
+                key={file.path ?? index}
                 file={file}
                 index={index}
                 moveTab={moveTab}
@@ -336,7 +325,7 @@ export function Content() {
         {(active_files.length > 0 || simple_tabs.length > 0) && (
           <div
             style={{
-              height: "calc(100% - 35px)",
+              height: "100%",
             }}
           >
             <div

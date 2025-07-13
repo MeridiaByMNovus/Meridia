@@ -44,10 +44,6 @@ export const ExplorerComponent = React.memo(function ExplorerComponent({
 
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const getFileContent = async (path: any) => {
-    return await window.electron.get_file_content(path);
-  };
-
   const handleExpand = async () => {
     if (fileTree.name === fileTree.root) {
       setIsExpanded(!isExpanded);
@@ -112,30 +108,47 @@ export const ExplorerComponent = React.memo(function ExplorerComponent({
   };
 
   const renderInput = (defaultName = "", isRename = false) => (
-    <input
-      ref={inputRef}
-      name="name"
-      defaultValue={defaultName}
-      className="filetree-input"
-      onClick={(e) => e.stopPropagation()}
-      onChange={(e) =>
-        isRename
-          ? setIsRenaming({ ...isRenaming, newName: e.target.value })
-          : null
-      }
-      onBlur={() => {
-        isRename
-          ? handleRenameSubmit()
-          : setIsCreating({ ...isCreating, showInput: false });
+    <span
+      style={{
+        display: "flex",
+        alignItems: "center",
+        marginLeft: `${isRename ? 0 : "12px"}`,
       }}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") {
+    >
+      {!isRename && (
+        <img
+          src={`icons/${getIconForFile(fileTree?.name ?? "")}`}
+          alt="file icon"
+          width={14}
+          style={{ marginRight: "8px" }}
+        />
+      )}
+
+      <input
+        ref={inputRef}
+        name="name"
+        defaultValue={defaultName}
+        className="filetree-input"
+        onClick={(e) => e.stopPropagation()}
+        onChange={(e) =>
+          isRename
+            ? setIsRenaming({ ...isRenaming, newName: e.target.value })
+            : null
+        }
+        onBlur={() => {
           isRename
             ? handleRenameSubmit()
-            : e.currentTarget.form?.requestSubmit();
-        }
-      }}
-    />
+            : setIsCreating({ ...isCreating, showInput: false });
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            isRename
+              ? handleRenameSubmit()
+              : e.currentTarget.form?.requestSubmit();
+          }
+        }}
+      />
+    </span>
   );
 
   useEffect(() => {
@@ -144,20 +157,6 @@ export const ExplorerComponent = React.memo(function ExplorerComponent({
       inputRef.current.select();
     }
   }, [isRenaming.showInput, isCreating.showInput]);
-
-  useEffect(() => {
-    const handleClickOutside = () => {
-      setIsDropdownOpen(false);
-    };
-
-    if (isDropdownOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isDropdownOpen]);
 
   return (
     <div className="filetree-node">
@@ -228,36 +227,49 @@ export const ExplorerComponent = React.memo(function ExplorerComponent({
       </div>
 
       {isDropdownOpen && (
-        <ContextMenu contextMenuPos={contextMenuPos}>
-          <button
-            onClick={() => {
-              setIsCreating({
-                isFolder: false,
-                showInput: true,
-                folderId: fileTree.id,
-              });
-              setIsExpanded(true);
-              setIsDropdownOpen(false);
-            }}
-          >
-            New File...
-          </button>
-          <button
-            onClick={() => {
-              setIsCreating({
-                isFolder: true,
-                showInput: true,
-                folderId: fileTree.id,
-              });
-              setIsExpanded(true);
-              setIsDropdownOpen(false);
-            }}
-          >
-            New Folder...
-          </button>
+        <ContextMenu
+          contextMenuPos={contextMenuPos}
+          onRequestClose={() => setIsDropdownOpen(false)}
+        >
+          {fileTree.type === "folder" && (
+            <>
+              <button
+                onClick={() => {
+                  setIsCreating({
+                    isFolder: false,
+                    showInput: true,
+                    folderId: fileTree.id,
+                  });
+                  setIsExpanded(true);
+                  setIsDropdownOpen(false);
+                  if (isExpanded) return;
+                  handleExpand();
+                }}
+              >
+                New File...
+              </button>
+              <button
+                onClick={() => {
+                  setIsCreating({
+                    isFolder: true,
+                    showInput: true,
+                    folderId: fileTree.id,
+                  });
+                  setIsExpanded(true);
+                  setIsDropdownOpen(false);
+                  if (isExpanded) return;
+                  handleExpand();
+                }}
+              >
+                New Folder...
+              </button>
+            </>
+          )}
+          {fileTree.type === "folder" && fileTree.name !== fileTree.root && (
+            <hr />
+          )}
           {fileTree.name !== fileTree.root && (
             <>
-              <hr />
               <button
                 onClick={() => {
                   setIsRenaming({

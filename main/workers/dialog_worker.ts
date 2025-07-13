@@ -3,7 +3,7 @@ import { ipcMain, dialog, BrowserWindow } from "electron";
 export function RegisterDialogWorker() {
   ipcMain.handle("show-message-box", async (event, data) => {
     return dialog.showMessageBox(BrowserWindow.getFocusedWindow()!, {
-      type: data.type || "info",
+      type: data.info || "info",
       title: data.title,
       message: data.content,
       buttons: data.buttons || ["OK"],
@@ -19,7 +19,7 @@ export function RegisterDialogWorker() {
       typeof data.content === "string"
         ? data.content
         : String(data.content ?? "");
-    dialog.showErrorBox(title, content);
+    return dialog.showErrorBox(title, content);
   });
 
   ipcMain.handle("dialog:open-file", async () => {

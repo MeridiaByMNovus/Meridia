@@ -1,5 +1,3 @@
-import { TActiveFile } from "../../helpers/types";
-
 export const MaximizeSVG = `
 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
   <rect x="4" y="4" width="16" height="16" rx="2" stroke="#D1D1D1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -13,7 +11,6 @@ export const RestoreSVG = `
 `;
 
 export async function titlebar() {
-  let activesubmenuIndex: number | null = null;
   const menuItems = await window.electron.getMenu();
   const menuDiv: HTMLDivElement | null = document.querySelector(".menu");
 

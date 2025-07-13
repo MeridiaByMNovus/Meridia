@@ -5,11 +5,9 @@ import {
   handleOpenFolder,
   handleSaveCurrentFile,
   handleOpenSettings,
-  handleOpenMeridiaStudio,
   handleOpenSidebar,
   handleOpenRightPanel,
   handleOpenBottomPanel,
-  handleOpenOutput,
   handleOpenTerminal,
   handleRun,
 } from "./functions_worker";
@@ -20,11 +18,9 @@ const commandHandlers: any = {
   "open-folder": () => handleOpenFolder(),
   save: handleSaveCurrentFile,
   settings: handleOpenSettings,
-  "meridia-studio": handleOpenMeridiaStudio,
   "toggle-sidebar": handleOpenSidebar,
   "toggle-right-panel": handleOpenRightPanel,
   "toggle-bottom-panel": handleOpenBottomPanel,
-  "open-output": handleOpenOutput,
   "open-terminal": handleOpenTerminal,
   run: handleRun,
 };

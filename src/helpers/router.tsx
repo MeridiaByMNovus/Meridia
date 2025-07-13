@@ -1,5 +1,5 @@
 import { createHashRouter } from "react-router-dom";
-import MainComponent from "../main";
+import MainComponent from "../ui/workspace/main";
 
 export default createHashRouter([
   {

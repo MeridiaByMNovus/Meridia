@@ -28,7 +28,8 @@ const config: ForgeConfig = {
       setupIcon: "./src/assets/icon.ico",
       exe: "Meridia.exe",
       title: "Meridia",
-      iconUrl: "./src/assets/icon.ico",
+      iconUrl:
+        "https://raw.githubusercontent.com/MeridiaByMNovus/Meridia/refs/heads/main/src/assets/icon.ico",
       owners: "MNovus",
       authors: "MNovus",
       description: "The new world of Python Development",

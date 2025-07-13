@@ -1,62 +1,64 @@
+import { shortcuts } from "./shortcuts";
+
 export const commands = [
   {
     id: "new",
     label: "New File",
-    shortcut: ["Ctrl", "N"],
+    shortcut: shortcuts.new_file,
   },
   {
     id: "open",
     label: "Open File",
-    shortcut: ["Ctrl", "O"],
+    shortcut: shortcuts.open_file,
   },
   {
     id: "open-folder",
     label: "Open Folder",
-    shortcut: ["Ctrl", "Shift", "O"],
+    shortcut: shortcuts.open_folder,
   },
   {
     id: "save",
     label: "Save File",
-    shortcut: ["Ctrl", "S"],
+    shortcut: shortcuts.save_file,
   },
   {
     id: "settings",
     label: "Settings",
-    shortcut: ["Ctrl", ","],
+    shortcut: shortcuts.settings,
   },
   {
     id: "meridia-studio",
     label: "Meridia Studio",
-    shortcut: ["Ctrl", "Shift", "B"],
+    shortcut: shortcuts.meridia_studio,
   },
   {
     id: "toggle-sidebar",
     label: "Toggle Sidebar",
-    shortcut: ["Ctrl", "B"],
+    shortcut: shortcuts.toggle_left_panel,
   },
   {
     id: "toggle-right-panel",
     label: "Toggle Right Panel",
-    shortcut: ["Ctrl", "Alt", "B"],
+    shortcut: shortcuts.toggle_right_panel,
   },
   {
     id: "toggle-bottom-panel",
     label: "Toggle Bottom Panel",
-    shortcut: ["Ctrl", "J"],
+    shortcut: shortcuts.toggle_bottom_panel,
   },
   {
     id: "open-output",
     label: "Open Output",
-    shortcut: ["Ctrl", "K"],
+    shortcut: shortcuts.open_output,
   },
   {
     id: "open-terminal",
     label: "Open Terminal",
-    shortcut: ["Ctrl", "`"],
+    shortcut: shortcuts.open_terminal,
   },
   {
     id: "run",
     label: "Run",
-    shortcut: ["F12"],
+    shortcut: shortcuts["run"],
   },
 ];

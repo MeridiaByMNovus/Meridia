@@ -12362,7 +12362,7 @@ monaco-editor@^0.52.0:
   dependencies:
     vscode "npm:@codingame/monaco-vscode-api@8.0.4"
 
-monaco-languageclient@^9.4.0:
+monaco-languageclient@^9.8.0:
   version "9.8.0"
   resolved "https://registry.yarnpkg.com/monaco-languageclient/-/monaco-languageclient-9.8.0.tgz#972fed13a52c092a57fa52357f9069dc6617d2a0"
   integrity sha512-xQ82vs0xWdeaxDK0lXJdN81CGC0gzMOVhmr7bN71y+tFezsToAW0+tt+IpQbyw1i3lQQxjdh1ci+Hu5CCx43ew==

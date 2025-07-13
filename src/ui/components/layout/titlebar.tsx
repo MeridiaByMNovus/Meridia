@@ -1,5 +1,10 @@
 import React from "react";
-import { useAppSelector } from "../../../helpers/hooks";
+
+import { useAppDispatch, useAppSelector } from "../../../helpers/hooks";
+import { MainContext } from "../../../helpers/functions";
+import { setPanel, togglePanel } from "../../../hooks/use_panel_buttons";
+import { handle_set_settings } from "../../../hooks/use_tabs_function";
+import { handle_run_file } from "../../../hooks/use_functions";
 
 import Tooltip from "../../components/tooltip";
 
@@ -25,28 +30,16 @@ import { ReactComponent as Close } from "../../../assets/window-controls/close.s
 
 import Logo from "../../../assets/logo.png";
 
-import { MainContext } from "../../../helpers/functions";
-
 export function TitlebarUI() {
-  const sidebar_active = useAppSelector((state) => state.main.sidebar_active);
-  const right_sidebar_active = useAppSelector(
-    (state) => state.main.right_sidebar_active
+  const layout = useAppSelector((state) => state.main.layout);
+  const { right_panel, left_panel, bottom_panel } = useAppSelector(
+    (state) => state.main.layout
   );
-  const bottom_panel_active = useAppSelector(
-    (state) => state.main.bottom_panel_active
-  );
+  const active_file = useAppSelector((state) => state.main.active_file);
+  const active_files = useAppSelector((state) => state.main.active_files);
+  const dispatch = useAppDispatch();
 
   const useMainContextIn = React.useContext(MainContext);
-
-  function handle_set_settings() {
-    useMainContextIn.handle_set_tab({
-      name: "Settings",
-      id: "settings",
-      icon: "icons/file_type_python.svg",
-      component: "Settings",
-      props: null,
-    });
-  }
 
   return (
     <div className="titlebar-wrapper">
@@ -59,15 +52,29 @@ export function TitlebarUI() {
       </div>
       <div className="part">
         <div className="commands">
-          <Tooltip text="Run ( F12 )">
-            <button className="run-button">
+          <Tooltip text="Run ( F12 )" position="bottom">
+            <button
+              onClick={() => {
+                if (
+                  active_files.length === 0 ||
+                  !active_file?.path?.endsWith(".py")
+                )
+                  return;
+                handle_run_file(active_file, setPanel, dispatch, layout);
+              }}
+              className={`${
+                active_files.length > 0 && active_file?.path?.endsWith(".py")
+                  ? ""
+                  : "disabled"
+              }`}
+            >
               <CaretRightOutlined />
             </button>
           </Tooltip>
         </div>
         <div className="panel-controls">
-          <button>
-            {bottom_panel_active ? (
+          <button onClick={() => togglePanel(dispatch, layout, "bottom")}>
+            {bottom_panel ? (
               <Tooltip text="Toggle Panel ( Ctrl + ` )" position="bottom">
                 <PanelBottom />
               </Tooltip>
@@ -78,8 +85,8 @@ export function TitlebarUI() {
             )}
           </button>
 
-          <button>
-            {sidebar_active ? (
+          <button onClick={() => togglePanel(dispatch, layout, "left")}>
+            {left_panel ? (
               <Tooltip
                 text="Toggle Primary Sidebar ( Ctrl + B )"
                 position="bottom"
@@ -96,8 +103,8 @@ export function TitlebarUI() {
             )}
           </button>
 
-          <button>
-            {right_sidebar_active ? (
+          <button onClick={() => togglePanel(dispatch, layout, "right")}>
+            {right_panel ? (
               <Tooltip
                 text="Toggle Right Panel ( Ctrl + Alt + B )"
                 position="bottom"
@@ -115,7 +122,7 @@ export function TitlebarUI() {
           </button>
         </div>
         <div className="options">
-          <button onClick={handle_set_settings}>
+          <button onClick={() => handle_set_settings(useMainContextIn)}>
             <SettingOutlined />
           </button>
           <button>

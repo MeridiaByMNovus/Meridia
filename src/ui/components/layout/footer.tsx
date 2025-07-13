@@ -10,31 +10,24 @@ export function Footer() {
   const active_files = useAppSelector((state) => state.main.active_files);
   return (
     <div className="footer-wrapper">
-      <div>
-        <span>
-          {active_file?.name ||
-            folder_structure?.name?.split(/\/|\\/).at(-1) ||
-            "main"}
-        </span>
-      </div>
+      <span>
+        {active_file?.name ||
+          folder_structure?.name?.split(/\/|\\/).at(-1) ||
+          "main"}
+      </span>
 
-      <div style={{ display: "flex", gap: "2px" }}>
-        {active_files.length !== 0 && (
+      {active_files.length !== 0 && (
+        <div style={{ display: "flex", gap: "2px" }}>
           <span>
             Ln {editor_indent.line}, Col {editor_indent.column}
           </span>
-        )}
-
-        {active_files.length !== 0 && <span>Spaces: 4</span>}
-
-        {active_files.length !== 0 && <span>UTF-8</span>}
-
-        {active_file?.name && (
+          <span>Spaces: 4</span>
+          <span>UTF-8</span>
           <span style={{ textTransform: "capitalize" }}>
-            {get_file_types(active_file.name) ?? "Text"}
+            {get_file_types(active_file?.name) ?? "Text"}
           </span>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
