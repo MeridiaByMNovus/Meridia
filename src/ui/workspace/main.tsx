@@ -13,13 +13,14 @@ import {
 } from "../../helpers/state_manager";
 import { store } from "../../helpers/store";
 import NewUi from "..";
-import pythonLangData from "../../../support/languages/python/python.json";
 import * as monaco from "monaco-editor";
+import { MonacoPyrightProvider } from "monaco-pyright-lsp";
 
 const MainComponent = React.memo((props: any) => {
   const editor_ref = useRef<monaco.editor.IStandaloneCodeEditor | undefined>(
     null
   );
+  const pyrightProviderRef = React.useRef<MonacoPyrightProvider | null>(null);
 
   const dispatch = useAppDispatch();
   const layout = useAppSelector((state) => state.main.layout);
@@ -28,60 +29,16 @@ const MainComponent = React.memo((props: any) => {
   const normalizePath = (path: string) =>
     path.replace(/\\/g, "/").replace(/^\/?([a-zA-Z]):\//, "$1:/");
 
-  const pythonLangFeature: any = pythonLangData;
-
-  useEffect(() => {
-    monaco.languages.registerCompletionItemProvider("python", {
-      provideCompletionItems: (model, position) => {
-        const word = model.getWordUntilPosition(position);
-        const range = new monaco.Range(
-          position.lineNumber,
-          word.startColumn,
-          position.lineNumber,
-          word.endColumn
-        );
-
-        const suggestions = [
-          ...pythonLangFeature.keywords.map((keyword: any) => ({
-            label: keyword,
-            kind: monaco.languages.CompletionItemKind.Keyword,
-            insertText: keyword,
-            detail: "Python Keyword",
-            range: range,
-          })),
-
-          ...pythonLangFeature.builtins.map((builtin: any) => ({
-            label: builtin,
-            kind: monaco.languages.CompletionItemKind.Function,
-            insertText: builtin,
-            detail: "Python Built-in",
-            range: range,
-          })),
-
-          ...Object.keys(pythonLangData.snippets).map((key) => {
-            const snippet = pythonLangFeature.snippets[key];
-            return {
-              label: snippet.prefix,
-              kind: monaco.languages.CompletionItemKind.Snippet,
-              insertText: Array.isArray(snippet.body)
-                ? snippet.body.join("\n")
-                : snippet.body,
-              insertTextRules:
-                monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-              detail: snippet.description,
-              range: range,
-            };
-          }),
-        ];
-
-        return { suggestions };
-      },
-    });
-  }, []);
-
   const handle_set_editor = React.useCallback(
     async (selected_file: TSelectedFile) => {
       console.log("selected file", selected_file);
+
+      // Initialize Pyright only once
+      if (!pyrightProviderRef.current) {
+        const provider = new MonacoPyrightProvider("./worker.js", {});
+        await provider.init(monaco);
+        pyrightProviderRef.current = provider;
+      }
 
       const theme = getComputedStyle(document.documentElement).getPropertyValue(
         "--editor-theme"
@@ -112,32 +69,33 @@ const MainComponent = React.memo((props: any) => {
         },
       });
 
+      const uri = monaco.Uri.file(selected_file.path);
+
+      let targetModel = monaco.editor.getModel(uri);
+      if (!targetModel) {
+        targetModel = monaco.editor.createModel(
+          selected_file.content,
+          get_file_types(selected_file.name),
+          uri
+        );
+      }
+
       if (!editor_ref.current) {
         editor_ref.current = monaco.editor.create(
           document.querySelector(".editor-container"),
           {
             theme: "oneDark",
-            language: get_file_types(selected_file.name),
             automaticLayout: true,
             largeFileOptimizations: true,
           }
         );
       }
-      let targetModel = monaco.editor
-        .getModels()
-        .find(
-          (model) =>
-            model.uri.toString() ===
-            monaco.Uri.file(selected_file.path).toString()
-        );
 
-      if (!targetModel) {
-        targetModel = monaco.editor.createModel(
-          selected_file.content,
-          get_file_types(selected_file.name),
-          monaco.Uri.file(selected_file.path)
-        );
-      } else {
+      editor_ref.current.setModel(targetModel);
+
+      // Setup diagnostics for this model
+      if (pyrightProviderRef.current) {
+        await pyrightProviderRef.current.setupDiagnostics(editor_ref.current);
       }
 
       editor_ref.current.onDidChangeModelContent(() => {
@@ -169,14 +127,8 @@ const MainComponent = React.memo((props: any) => {
       });
 
       editor_ref.current.onDidChangeCursorSelection((e) => {
-        const { startLineNumber, startColumn, endColumn } = e.selection;
-
-        dispatch(
-          update_indent({
-            line: startLineNumber,
-            column: startColumn,
-          })
-        );
+        const { startLineNumber, startColumn } = e.selection;
+        dispatch(update_indent({ line: startLineNumber, column: startColumn }));
       });
 
       editor_ref.current.addCommand(
@@ -188,8 +140,6 @@ const MainComponent = React.memo((props: any) => {
           });
         }
       );
-
-      editor_ref.current.setModel(targetModel);
     },
     []
   );
