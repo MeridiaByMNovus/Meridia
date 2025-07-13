@@ -21,125 +21,160 @@ const MainComponent = React.memo((props: any) => {
     null
   );
   const pyrightProviderRef = React.useRef<MonacoPyrightProvider | null>(null);
+  const loadedModels = new Set<string>();
+  const pyrightDiagnosticsSetup = new Set<string>();
 
   const dispatch = useAppDispatch();
-  const layout = useAppSelector((state) => state.main.layout);
-  const useMainContextIn = useContext(MainContext);
 
   const normalizePath = (path: string) =>
     path.replace(/\\/g, "/").replace(/^\/?([a-zA-Z]):\//, "$1:/");
 
   const handle_set_editor = React.useCallback(
     async (selected_file: TSelectedFile) => {
-      console.log("selected file", selected_file);
+      try {
+        if (!pyrightProviderRef.current) {
+          const provider = new MonacoPyrightProvider("./worker.js", {});
+          await provider.init(monaco);
+          pyrightProviderRef.current = provider;
+        }
 
-      // Initialize Pyright only once
-      if (!pyrightProviderRef.current) {
-        const provider = new MonacoPyrightProvider("./worker.js", {});
-        await provider.init(monaco);
-        pyrightProviderRef.current = provider;
-      }
+        const uri = monaco.Uri.file(selected_file.path);
+        let model = monaco.editor.getModel(uri);
 
-      const theme = getComputedStyle(document.documentElement).getPropertyValue(
-        "--editor-theme"
-      );
-      const editorBg = getComputedStyle(
-        document.documentElement
-      ).getPropertyValue("--terminal-bg");
-      const textColor = getComputedStyle(
-        document.documentElement
-      ).getPropertyValue("--text-color");
+        if (!model) {
+          model = monaco.editor.createModel(
+            selected_file.content,
+            get_file_types(selected_file.name),
+            uri
+          );
+          loadedModels.add(uri.path);
+        } else if (model.getValue() !== selected_file.content) {
+          model.setValue(selected_file.content);
+        }
 
-      monaco.editor.defineTheme("oneDark", {
-        base: theme === "dark" ? "vs-dark" : "vs",
-        inherit: true,
-        rules: [
-          { token: "comment", foreground: "7f848e", fontStyle: "italic" },
-          { token: "keyword", foreground: "c678dd" },
-          { token: "number", foreground: "d19a66" },
-          { token: "string", foreground: "98c379" },
-          { token: "type", foreground: "e5c07b" },
-          { token: "function", foreground: "61afef" },
-          { token: "variable", foreground: "e06c75" },
-        ],
-        colors: {
-          "editor.background": editorBg,
-          "editor.foreground": textColor,
-          "editorCursor.foreground": textColor,
-        },
-      });
+        if (!editor_ref.current) {
+          const style = getComputedStyle(document.documentElement);
+          const editorBg = style.getPropertyValue("--terminal-bg");
+          const textColor = style.getPropertyValue("--text-color");
+          const theme = style.getPropertyValue("--editor-theme").trim();
 
-      const uri = monaco.Uri.file(selected_file.path);
+          const rules = [
+            { token: "comment", foreground: "7f848e", fontStyle: "italic" },
+            { token: "keyword", foreground: "c678dd" },
+            { token: "number", foreground: "d19a66" },
+            { token: "string", foreground: "98c379" },
+            { token: "type", foreground: "e5c07b" },
+            { token: "function", foreground: "61afef" },
+            { token: "variable", foreground: "e06c75" },
+          ];
 
-      let targetModel = monaco.editor.getModel(uri);
-      if (!targetModel) {
-        targetModel = monaco.editor.createModel(
-          selected_file.content,
-          get_file_types(selected_file.name),
-          uri
-        );
-      }
+          monaco.editor.defineTheme("oneDark", {
+            base: "vs-dark",
+            inherit: true,
+            rules,
+            colors: {
+              "editor.background": editorBg,
+              "editor.foreground": textColor,
+              "editorCursor.foreground": textColor,
+            },
+          });
 
-      if (!editor_ref.current) {
-        editor_ref.current = monaco.editor.create(
-          document.querySelector(".editor-container"),
-          {
-            theme: "oneDark",
-            automaticLayout: true,
-            largeFileOptimizations: true,
-          }
-        );
-      }
+          monaco.editor.defineTheme("oneLight", {
+            base: "vs",
+            inherit: true,
+            rules,
+            colors: {
+              "editor.background": editorBg,
+              "editor.foreground": textColor,
+              "editorCursor.foreground": textColor,
+            },
+          });
 
-      editor_ref.current.setModel(targetModel);
-
-      // Setup diagnostics for this model
-      if (pyrightProviderRef.current) {
-        await pyrightProviderRef.current.setupDiagnostics(editor_ref.current);
-      }
-
-      editor_ref.current.onDidChangeModelContent(() => {
-        const model_editing_index = store
-          .getState()
-          .main.active_files.findIndex(
-            (file: TActiveFile) =>
-              normalizePath(file.path) ===
-              normalizePath(editor_ref.current?.getModel()?.uri.path || "")
+          editor_ref.current = monaco.editor.create(
+            document.querySelector(".editor-container"),
+            {
+              theme: theme === "dark" ? "oneDark" : "oneLight",
+              automaticLayout: true,
+              largeFileOptimizations: true,
+              cursorBlinking: "smooth",
+              cursorSmoothCaretAnimation: "on",
+              smoothScrolling: true,
+            }
           );
 
-        if (model_editing_index > -1) {
-          const updated_files = [...store.getState().main.active_files];
-          updated_files[model_editing_index] = {
-            ...updated_files[model_editing_index],
-            is_touched: true,
-          };
-          dispatch(update_active_files(updated_files));
-        }
-      });
-
-      editor_ref.current.onDidChangeCursorPosition((e) => {
-        dispatch(
-          update_indent({
-            line: e.position.lineNumber,
-            column: e.position.column,
-          })
-        );
-      });
-
-      editor_ref.current.onDidChangeCursorSelection((e) => {
-        const { startLineNumber, startColumn } = e.selection;
-        dispatch(update_indent({ line: startLineNumber, column: startColumn }));
-      });
-
-      editor_ref.current.addCommand(
-        monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
-        () => {
-          handle_save_file({
-            path: editor_ref.current.getModel().uri.path,
-            content: editor_ref.current.getValue(),
+          editor_ref.current.onDidChangeCursorPosition((e) => {
+            dispatch(
+              update_indent({
+                line: e.position.lineNumber,
+                column: e.position.column,
+              })
+            );
           });
+
+          editor_ref.current.addCommand(
+            monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
+            () => {
+              handle_save_file({
+                path: editor_ref.current.getModel().uri.path,
+                content: editor_ref.current.getValue(),
+              });
+            }
+          );
         }
-      );
+
+        editor_ref.current.setModel(model);
+
+        if (
+          pyrightProviderRef.current &&
+          !pyrightDiagnosticsSetup.has(uri.path)
+        ) {
+          await pyrightProviderRef.current.setupDiagnostics(editor_ref.current);
+          pyrightDiagnosticsSetup.add(uri.path);
+        }
+
+        editor_ref.current.onDidChangeModelContent(() => {
+          const path = normalizePath(
+            editor_ref.current?.getModel()?.uri.path || ""
+          );
+          const index = store
+            .getState()
+            .main.active_files.findIndex(
+              (f: TActiveFile) => normalizePath(f.path) === path
+            );
+          if (index > -1) {
+            const updated = [...store.getState().main.active_files];
+            updated[index] = {
+              ...updated[index],
+              is_touched: true,
+            };
+            dispatch(update_active_files(updated));
+          }
+        });
+
+        monaco.editor.onDidChangeMarkers(() => {
+          const markers = monaco.editor.getModelMarkers({ resource: uri });
+          let state = "info";
+          if (markers.some((m) => m.severity === monaco.MarkerSeverity.Error))
+            state = "error";
+          else if (
+            markers.some((m) => m.severity === monaco.MarkerSeverity.Warning)
+          )
+            state = "warning";
+
+          const index = store
+            .getState()
+            .main.active_files.findIndex(
+              (f: any) => normalizePath(f.path) === normalizePath(uri.path)
+            );
+
+          if (index !== -1) {
+            const updated = [...store.getState().main.active_files];
+            updated[index] = { ...updated[index], diagnostic_state: state };
+            dispatch(update_active_files(updated));
+          }
+        });
+      } finally {
+      }
     },
     []
   );

@@ -13,7 +13,11 @@ import {
   update_active_files,
   update_simple_tab,
 } from "../../../helpers/state_manager";
-import { IFolderStructure, TFolderTree } from "../../../helpers/types";
+import {
+  IFolderStructure,
+  TActiveFile,
+  TFolderTree,
+} from "../../../helpers/types";
 import { ExplorerComponent } from "./explorer";
 import debounce from "lodash.debounce";
 import isEqual from "fast-deep-equal";
@@ -46,12 +50,13 @@ export function Explorer() {
       dispatch(update_simple_tab(null));
       const content = await window.electron.get_file_content(full_path);
 
-      const active_file = {
+      const active_file: TActiveFile = {
         icon: "",
         path: full_path,
         name: branch_name,
         is_touched: false,
-        content,
+        content: content,
+        diagnostic_state: "info",
       };
 
       if (!active_files.some((f: any) => f.path === full_path)) {

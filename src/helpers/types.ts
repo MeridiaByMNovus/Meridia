@@ -42,6 +42,7 @@ export type TActiveFile = {
   name: any;
   icon: string;
   is_touched: boolean;
+  diagnostic_state: string;
   content: string;
 };
 

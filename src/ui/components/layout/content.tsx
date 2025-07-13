@@ -119,7 +119,7 @@ function SimpleTab({ tab, index, moveTab, isActive }: any) {
   );
 }
 
-function DraggableTab({ file, index, moveTab, isActive }: any) {
+function DraggableTab({ file, index, moveTab, isActive, state }: any) {
   const active_files = useAppSelector((state) => state.main.active_files);
   const active_file = useAppSelector((state) => state.main.active_file);
   const simple_tabs = useAppSelector((state) => state.main.simple_tabs);
@@ -197,7 +197,7 @@ function DraggableTab({ file, index, moveTab, isActive }: any) {
       <div className="file-icon">
         <img src={`icons/${getIconForFile(file.name)}`} alt={file.name} />
       </div>
-      <div className="file-name">{file.name}</div>
+      <div className={`file-name ${state}`}>{file.name}</div>
       <div className="icons">
         <span className={`icons ${file.is_touched ? "is_touched" : ""}`}>
           <button
@@ -262,6 +262,7 @@ export function Content() {
                 file={file}
                 index={index}
                 moveTab={moveTab}
+                state={file.diagnostic_state}
                 isActive={active_file?.path === file?.path}
               />
             ))}
