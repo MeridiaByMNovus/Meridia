@@ -1,11 +1,15 @@
 import { ipcRenderer } from "electron";
 import { IFolderStructure } from "../../src/helpers/types";
+import { new_project_data_props } from "../../src/ui/welcome-wizard/";
 
 export const renderer = {
   openFolder: () => ipcRenderer.invoke("open-folder"),
   get_folder: () => ipcRenderer.invoke("get-folder"),
   open_set_folder: () => ipcRenderer.invoke("open-set-folder"),
   clear_folder: () => ipcRenderer.send("clear-folder"),
+
+  create_project: (data: new_project_data_props) =>
+    ipcRenderer.send("create-project", data),
 
   get_file_content: async (path: string) => {
     try {
@@ -71,8 +75,6 @@ export const renderer = {
     removeListener: (channel: any, listener: any) =>
       ipcRenderer.removeListener(channel, listener),
   },
-
-  sendMessage: (message: string) => ipcRenderer.invoke("send-message", message),
 
   getMenu: () => ipcRenderer.invoke("get-menu"),
 

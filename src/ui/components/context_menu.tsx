@@ -2,7 +2,7 @@ import { useEffect, useId, useRef } from "react";
 import {
   isContextMenuOwner,
   setContextMenuOwner,
-} from "../scripts/context_menu_owner";
+} from "../scripts/others/context_menu_owner";
 
 interface ContextMenuProps {
   contextMenuPos: { x: number; y: number };

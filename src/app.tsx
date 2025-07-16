@@ -5,9 +5,8 @@ import { PrimeReactProvider } from "primereact/api";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 
-import { useAppSetup } from "./ui/scripts/startup";
-import { registerAllEvents } from "./ui/scripts/ipc";
-import { registerAllShortcuts } from "./ui/scripts/keyboard";
+import { useAppSetup } from "./ui/scripts/startup/startup";
+import { registerAllShortcuts } from "./ui/scripts/shortcuts/keyboard";
 
 import { useAppDispatch } from "./helpers/hooks";
 
@@ -20,11 +19,8 @@ const App: React.FC = React.memo(() => {
   [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
-  const dispatch = useAppDispatch();
+  useAppSetup();
 
-  useAppSetup({ setOpen });
-
-  registerAllEvents(dispatch, setOpen);
   registerAllShortcuts(setOpen);
 
   return (
@@ -32,7 +28,7 @@ const App: React.FC = React.memo(() => {
       <ConfigProvider
         theme={{
           algorithm: [theme.darkAlgorithm, theme.compactAlgorithm],
-          components: { Splitter: { splitBarSize: 1 } },
+          components: { Splitter: { splitBarSize: 0 } },
         }}
       >
         <DndProvider backend={HTML5Backend}>

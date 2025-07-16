@@ -22,11 +22,19 @@ export function RegisterDialogWorker() {
     return dialog.showErrorBox(title, content);
   });
 
-  ipcMain.handle("dialog:open-file", async () => {
+  ipcMain.handle("dialog:open-file", async (_, ext?: string[]) => {
     const result = await dialog.showOpenDialog(
       BrowserWindow.getFocusedWindow()!,
       {
         properties: ["openFile"],
+        filters: ext
+          ? [
+              {
+                name: "Allowed Files",
+                extensions: ext,
+              },
+            ]
+          : [],
       }
     );
     return result.canceled ? null : result.filePaths[0];

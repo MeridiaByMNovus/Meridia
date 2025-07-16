@@ -4,6 +4,8 @@ export * from "./dialog_worker";
 export * from "./file_tree_worker";
 export * from "./file_worker";
 export * from "./functions_worker";
+export * from "./data_change_worker";
+export * from "./project_worker";
 export * from "./ipc_main_commands_worker";
 export * from "./menu_worker";
 export * from "./python_worker";

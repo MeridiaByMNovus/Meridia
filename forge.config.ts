@@ -63,9 +63,9 @@ const config: ForgeConfig = {
             },
           },
           {
-            html: "./main/static-html/new_project.html",
-            js: "./main/renderer-workers/new_project_worker.ts",
-            name: "new_project",
+            html: "./main/static-html/welcome_wizard.html",
+            js: "./main/renderer-workers/welcome_wizard_worker.ts",
+            name: "welcome_wizard",
             preload: {
               js: "./main/preload.ts",
             },

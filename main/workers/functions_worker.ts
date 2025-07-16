@@ -1,16 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { BrowserWindow, dialog } from "electron";
+import { dialog } from "electron";
 import path from "path";
-import {
-  createMeridiaWindow,
-  main_window_preload_webpack_entry,
-  mainWindow,
-  new_project_webpack_entry,
-  newProjectWindow,
-} from "..";
 import fs from "fs";
-import { PythonShell } from "python-shell";
-import { spawn } from "child_process";
 import { get_files } from "../electron/get_files";
 import { registerCommand } from "./command_worker";
 import { IFolderStructure } from "../../src/helpers/types";
@@ -74,25 +65,12 @@ export async function handleOpenFolder() {
   }
 }
 
-export function handleSaveCurrentFile() {
-  registerCommand("save-current-file", "");
+export function handleCloseProject() {
+  StorageWorker.store("fileTree", null);
 }
 
-export function handleNewProject() {
-  if (newProjectWindow && !newProjectWindow.isDestroyed()) {
-    newProjectWindow.show();
-    return;
-  }
-
-  let newProjectWindowModified = createMeridiaWindow({
-    width: 1000,
-    height: 800,
-    preload: main_window_preload_webpack_entry,
-    entry: new_project_webpack_entry,
-    title: "Meridia – New Project",
-  });
-
-  newProjectWindowModified.show();
+export function handleSaveCurrentFile() {
+  registerCommand("save-current-file", "");
 }
 
 export function handleOpenSettings() {
@@ -185,4 +163,17 @@ export const refresh_window = ({ folder }: { folder: string }) => {
 
   StorageWorker.store("fileTree", structure);
   mainWindow.webContents.send("new-folder-opened", folder);
+};
+
+export const get_set_folder_structure = ({ path }: { path: string }) => {
+  const structure = {
+    id: 1,
+    name: path,
+    root: path,
+    type: "folder",
+    children: get_files(path),
+  };
+
+  StorageWorker.store("fileTree", structure);
+  registerCommand("new-folder-opened", path);
 };

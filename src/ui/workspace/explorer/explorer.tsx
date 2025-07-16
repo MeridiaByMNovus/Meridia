@@ -115,14 +115,19 @@ export const ExplorerComponent = React.memo(function ExplorerComponent({
         marginLeft: `${isRename ? 0 : "12px"}`,
       }}
     >
-      {!isRename && (
-        <img
-          src={`icons/${getIconForFile(fileTree?.name ?? "")}`}
-          alt="file icon"
-          width={14}
-          style={{ marginRight: "8px" }}
-        />
-      )}
+      {!isRename &&
+        (isCreating.isFolder ? (
+          <span className="filetree-icon" style={{ marginRight: "8px" }}>
+            <FolderIcon />
+          </span>
+        ) : (
+          <img
+            src={`icons/${getIconForFile(fileTree?.name ?? "")}`}
+            alt="file icon"
+            width={14}
+            style={{ marginRight: "8px" }}
+          />
+        ))}
 
       <input
         ref={inputRef}

@@ -1,7 +1,5 @@
-import { ipcMain, BrowserWindow } from "electron";
+import { ipcMain } from "electron";
 import { StorageWorker } from "./storage_worker";
-import { mainWindow } from "..";
-import fs from "fs";
 
 export function RegisterThemeWorker() {
   if (!StorageWorker.get("theme")) {

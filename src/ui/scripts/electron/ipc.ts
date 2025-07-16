@@ -1,5 +1,5 @@
-import { set_folder_structure } from "../../helpers/state_manager";
-import { IFolderStructure } from "../../helpers/types";
+import { set_folder_structure } from "../../../helpers/state_manager";
+import { IFolderStructure } from "../../../helpers/types";
 
 export function registerAllEvents(
   dispatch: any,

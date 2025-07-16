@@ -17,39 +17,55 @@ import {
   RegisterDialogWorker,
   RegisterIpcCommandsWorker,
   RegisterThemeWorker,
+  RegisterDataChangeWorker,
+  RegisterProjectWorker,
 } from "./workers/";
 import { handleOpenSetFolder, open_folder } from "./workers/functions_worker";
 import { registerCommand } from "./workers/command_worker";
 import { StorageWorker } from "./workers/storage_worker";
 
 declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
-declare const NEW_PROJECT_WEBPACK_ENTRY: string;
+declare const WELCOME_WIZARD_WEBPACK_ENTRY: string;
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
+
+declare global {
+  var mainWindow: BrowserWindow | null;
+  var welcomeWizardWindow: BrowserWindow | null;
+}
+
+global.mainWindow = null;
+global.welcomeWizardWindow = null;
 
 export let main_window_preload_webpack_entry =
   MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY;
-export let new_project_webpack_entry = NEW_PROJECT_WEBPACK_ENTRY;
+export let main_window_webpack_entry = MAIN_WINDOW_WEBPACK_ENTRY;
+export let welcome_wizard_webpack_entry = WELCOME_WIZARD_WEBPACK_ENTRY;
 
 export const SELECTED_FOLDER_STORE_NAME = "selected-folder";
 
-export let mainWindow: BrowserWindow;
-export let newProjectWindow: BrowserWindow;
-export let cwd: string = "";
-
-function registerIpcHandlers(): void {
-  ipcMain.handle("minimize", () => mainWindow.minimize());
-  ipcMain.handle("maximize", () => mainWindow.maximize());
-  ipcMain.handle("restore", () => mainWindow.restore());
-  ipcMain.handle("close", () => mainWindow.close());
-  ipcMain.handle("isMaximized", () => mainWindow.isMaximized());
+function RegisterIpcHandlers(): void {
+  ipcMain.handle("minimize", (_, window) =>
+    window === "main" ? mainWindow.minimize() : welcomeWizardWindow.minimize()
+  );
+  ipcMain.handle("maximize", (_, window) =>
+    window === "main" ? mainWindow.maximize() : welcomeWizardWindow.maximize()
+  );
+  ipcMain.handle("restore", (_, window) =>
+    window === "main" ? mainWindow.restore() : welcomeWizardWindow.restore()
+  );
+  ipcMain.handle("close", (_, window) =>
+    window === "main" ? mainWindow.close() : welcomeWizardWindow.close()
+  );
+  ipcMain.handle("isMaximized", (_, window) =>
+    window === "main"
+      ? mainWindow.isMaximized()
+      : welcomeWizardWindow.isMaximized()
+  );
   ipcMain.handle("read-image-base-64", (_, path) => {
     const ext = path.split(".").pop();
     const base64 = fs.readFileSync(path, { encoding: "base64" });
     return `data:image/${ext};base64,${base64}`;
   });
-
-  ipcMain.handle("new-project-minimize", () => newProjectWindow.minimize());
-  ipcMain.handle("new-project-close", () => newProjectWindow.close());
 
   ipcMain.handle("open-folder", async () => {
     open_folder();
@@ -63,6 +79,7 @@ interface CreateMeridiaWindowOptions {
   entry: string;
   title: string;
   isMain?: boolean;
+  resizable?: boolean;
 }
 
 export function createMeridiaWindow({
@@ -72,6 +89,7 @@ export function createMeridiaWindow({
   entry,
   title,
   isMain = false,
+  resizable = true,
 }: CreateMeridiaWindowOptions): BrowserWindow {
   const window = new BrowserWindow({
     width,
@@ -82,6 +100,7 @@ export function createMeridiaWindow({
     minHeight: height,
     maxWidth: isMain ? undefined : width,
     maxHeight: isMain ? undefined : height,
+    resizable: resizable,
     maximizable: isMain,
     icon: path.resolve(__dirname, "..", "..", "src", "assets", "icon.ico"),
     show: false,
@@ -130,13 +149,10 @@ app.whenReady().then(() => {
   RegisterUiStateWorker();
   RegisterDialogWorker();
   RegisterUpdateWorker();
-  registerIpcHandlers();
+  RegisterProjectWorker();
+  RegisterIpcHandlers();
 
-  try {
-    cwd = StorageWorker.get("fileTree")?.root || "/";
-  } catch {
-    cwd = "/";
-  }
+  const cwd = StorageWorker.get("fileTree")?.root || "/";
 
   mainWindow = createMeridiaWindow({
     width: 800,
@@ -147,17 +163,19 @@ app.whenReady().then(() => {
     isMain: true,
   });
 
-  newProjectWindow = createMeridiaWindow({
-    width: 1000,
-    height: 800,
+  welcomeWizardWindow = createMeridiaWindow({
+    width: 1100,
+    height: 750,
     preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
-    entry: NEW_PROJECT_WEBPACK_ENTRY,
-    title: "Meridia – New Project",
+    entry: WELCOME_WIZARD_WEBPACK_ENTRY,
+    title: "Meridia – Welcome",
+    resizable: false,
   });
 
   Pty({ cwd, ipcMain });
   PythonConsole({ ipcMain });
   RegisterThemeWorker();
+  RegisterDataChangeWorker();
 });
 
 app.on("window-all-closed", () => {

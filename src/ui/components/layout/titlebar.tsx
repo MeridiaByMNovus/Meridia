@@ -130,13 +130,13 @@ export function TitlebarUI() {
           </button>
         </div>
         <div className="window-controls">
-          <button>
+          <button className="button-minimize">
             <Minimize />
           </button>
-          <button>
+          <button className="button-restore-maximize">
             <Restore />
           </button>
-          <button>
+          <button className="button-close">
             <Close />
           </button>
         </div>

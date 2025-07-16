@@ -10,7 +10,7 @@ export const RestoreSVG = `
 </svg>
 `;
 
-export async function titlebar() {
+export async function titlebar({ main }: { main: boolean }) {
   const menuItems = await window.electron.getMenu();
   const menuDiv: HTMLDivElement | null = document.querySelector(".menu");
 
@@ -93,14 +93,12 @@ export async function titlebar() {
   }
 
   const minimizeBtn = document.querySelector(
-    ".window-controls button:nth-child(1)"
+    ".window-controls .button-minimize"
   );
   const maximizeBtn = document.querySelector(
-    ".window-controls button:nth-child(2)"
+    ".window-controls .button-restore-maximize"
   );
-  const closeBtn = document.querySelector(
-    ".window-controls button:nth-child(3)"
-  );
+  const closeBtn = document.querySelector(".window-controls .button-close");
 
   const toggleMaxRestoreIcon = (isMaximized: boolean) => {
     if (!maximizeBtn) return;
@@ -115,7 +113,7 @@ export async function titlebar() {
 
   if (minimizeBtn) {
     minimizeBtn.addEventListener("click", () => {
-      window.electron.ipcRenderer.invoke("minimize", "");
+      window.electron.ipcRenderer.invoke("minimize", `${main && "main"}`);
     });
   }
 
@@ -123,13 +121,13 @@ export async function titlebar() {
     maximizeBtn.addEventListener("click", async () => {
       const isMaximized = await window.electron.ipcRenderer.invoke(
         "isMaximized",
-        ""
+        `${main && "main"}`
       );
       if (isMaximized) {
-        window.electron.ipcRenderer.invoke("restore", "");
+        window.electron.ipcRenderer.invoke("restore", `${main && "main"}`);
         toggleMaxRestoreIcon(false);
       } else {
-        window.electron.ipcRenderer.invoke("maximize", "");
+        window.electron.ipcRenderer.invoke("maximize", `${main && "main"}`);
         toggleMaxRestoreIcon(true);
       }
     });
@@ -137,7 +135,7 @@ export async function titlebar() {
 
   if (closeBtn) {
     closeBtn.addEventListener("click", () => {
-      window.electron.ipcRenderer.invoke("close", "");
+      window.electron.ipcRenderer.invoke("close", `${main && "main"}`);
     });
   }
 

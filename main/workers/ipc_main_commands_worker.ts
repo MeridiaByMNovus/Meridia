@@ -1,6 +1,6 @@
 import fs from "fs";
 import { registerIpcMainCommand } from "./command_worker";
-import { mainWindow, open_set_folder, SELECTED_FOLDER_STORE_NAME } from "..";
+import { open_set_folder } from "..";
 import {
   create_file,
   create_folder,

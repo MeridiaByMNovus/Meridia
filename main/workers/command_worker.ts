@@ -1,5 +1,4 @@
 import { ipcMain } from "electron";
-import { mainWindow } from "..";
 
 export function registerCommand(command: string, data: any) {
   mainWindow.webContents.send(command, data);

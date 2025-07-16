@@ -1,6 +1,6 @@
-import { TActiveFile, TLayout } from "../../helpers/types";
-import { handle_run_file } from "../../hooks/use_functions";
-import { handle_set_settings } from "../../hooks/use_tabs_function";
+import { TActiveFile, TLayout } from "../../../helpers/types";
+import { handle_run_file } from "../../../hooks/use_functions";
+import { handle_set_settings } from "../../../hooks/use_tabs_function";
 
 interface RegisterShortcutsProps {
   dispatch: Function;

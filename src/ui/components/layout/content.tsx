@@ -255,27 +255,25 @@ export function Content() {
       )}
       {active_files.length || simple_tabs.length > 0 ? (
         <div className="page-tabs">
-          <div className="page-tabs">
-            {active_files.map((file: TActiveFile, index: number) => (
-              <DraggableTab
-                key={file.path ?? index}
-                file={file}
-                index={index}
-                moveTab={moveTab}
-                state={file.diagnostic_state}
-                isActive={active_file?.path === file?.path}
-              />
-            ))}
-            {simple_tabs.map((tab: TSimpleTab, index: number) => (
-              <SimpleTab
-                key={tab.id}
-                tab={tab}
-                index={index}
-                moveTab={moveTab}
-                isActive={simple_tab?.name === tab.name}
-              />
-            ))}
-          </div>
+          {active_files.map((file: TActiveFile, index: number) => (
+            <DraggableTab
+              key={file.path ?? index}
+              file={file}
+              index={index}
+              moveTab={moveTab}
+              state={file.diagnostic_state}
+              isActive={active_file?.path === file?.path}
+            />
+          ))}
+          {simple_tabs.map((tab: TSimpleTab, index: number) => (
+            <SimpleTab
+              key={tab.id}
+              tab={tab}
+              index={index}
+              moveTab={moveTab}
+              isActive={simple_tab?.name === tab.name}
+            />
+          ))}
         </div>
       ) : (
         <div

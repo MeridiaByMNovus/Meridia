@@ -1,7 +1,7 @@
 import { ipcMain, Menu, MenuItem } from "electron";
 import {
+  handleCloseProject,
   handleNewFile,
-  handleNewProject,
   handleOpenBottomPanel,
   handleOpenCommandPalette,
   handleOpenFile,
@@ -38,11 +38,10 @@ export function RegisterMenu() {
           accelerator: shortcuts.open_folder,
           click: () => handleOpenFolder(),
         },
-        { type: "separator" },
         {
-          label: "New Project",
-          accelerator: shortcuts.new_project,
-          click: handleNewProject,
+          label: "Close Project...",
+          accelerator: shortcuts.close_project,
+          click: () => handleCloseProject(),
         },
         { type: "separator" },
         {
@@ -51,8 +50,6 @@ export function RegisterMenu() {
           click: handleSaveCurrentFile,
         },
         { label: "Save As..." },
-        { type: "separator" },
-        { type: "separator" },
         { type: "separator" },
         { role: "quit" },
       ],

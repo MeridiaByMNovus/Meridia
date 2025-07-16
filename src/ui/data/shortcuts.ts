@@ -10,6 +10,7 @@ export const shortcuts = {
   run: "F12",
   open_file: "Ctrl+O",
   open_folder: "Ctrl+Shift+O",
+  close_project: "Ctrl+Shift+X",
   new_project: "Ctrl+Shift+N",
   save_file: "Ctrl+S",
   command_palette: "Ctrl+Shift+P",

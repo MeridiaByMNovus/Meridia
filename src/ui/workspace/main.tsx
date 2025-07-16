@@ -150,29 +150,6 @@ const MainComponent = React.memo((props: any) => {
             dispatch(update_active_files(updated));
           }
         });
-
-        monaco.editor.onDidChangeMarkers(() => {
-          const markers = monaco.editor.getModelMarkers({ resource: uri });
-          let state = "info";
-          if (markers.some((m) => m.severity === monaco.MarkerSeverity.Error))
-            state = "error";
-          else if (
-            markers.some((m) => m.severity === monaco.MarkerSeverity.Warning)
-          )
-            state = "warning";
-
-          const index = store
-            .getState()
-            .main.active_files.findIndex(
-              (f: any) => normalizePath(f.path) === normalizePath(uri.path)
-            );
-
-          if (index !== -1) {
-            const updated = [...store.getState().main.active_files];
-            updated[index] = { ...updated[index], diagnostic_state: state };
-            dispatch(update_active_files(updated));
-          }
-        });
       } finally {
       }
     },

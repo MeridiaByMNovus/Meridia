@@ -1,5 +1,5 @@
 import "react-perfect-scrollbar/dist/css/styles.css";
-import "../entry-points/app_entry";
+import "../entry-points/welcome_wizard";
 import "../../src/ui/css/main.css";
 import "../../src/ui/css/tailwind.css";
 import "../../src/ui/css/command_overlay.css";

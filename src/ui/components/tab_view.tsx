@@ -17,6 +17,7 @@ export function TabView({
     <div
       style={{
         height: fullHeight ? "100%" : undefined,
+        width: "100%",
         display: activeTab === tab ? "block" : "none",
       }}
     >

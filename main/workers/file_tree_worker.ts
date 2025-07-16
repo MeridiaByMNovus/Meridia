@@ -1,6 +1,5 @@
 /* eslint-disable import/no-named-as-default-member */
 /* eslint-disable no-useless-escape */
-import { mainWindow } from "..";
 import { registerIpcMainCommand } from "./command_worker";
 import { StorageWorker } from "./storage_worker";
 import { IFolderStructure, TFolderTree } from "../../src/helpers/types";

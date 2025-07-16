@@ -5,12 +5,12 @@ import { Splitter } from "antd";
 import { useAppDispatch, useAppSelector } from "../helpers/hooks";
 
 import { MainContext } from "../helpers/functions";
-import { RegisterShortcuts } from "./scripts/register_shortcuts";
+import { RegisterShortcuts } from "./scripts/shortcuts/register_shortcuts";
 import { togglePanel } from "../hooks/use_panel_buttons";
 import { useTabs } from "../hooks/use_tab";
 
-import { registerAllShortcuts } from "./scripts/keyboard";
-import { registerAllEvents } from "./scripts/ipc";
+import { registerAllShortcuts } from "./scripts/shortcuts/keyboard";
+import { registerAllEvents } from "./scripts/electron/ipc";
 import { setOpen } from "../app";
 
 import { TitlebarUI } from "./components/layout/titlebar";
@@ -25,7 +25,7 @@ import { Console } from "./workspace/console";
 import { Terminal } from "./workspace/terminal";
 import { Extension } from "./workspace/extension";
 
-import { titlebar } from "./scripts/titlebar";
+import { titlebar } from "./scripts/others/titlebar";
 
 export default function NewUi() {
   const topTabs = useTabs("explorer");
@@ -41,7 +41,7 @@ export default function NewUi() {
   );
 
   useEffect(() => {
-    titlebar();
+    titlebar({ main: true });
   }, []);
 
   useEffect(() => {
@@ -146,7 +146,7 @@ export default function NewUi() {
             </div>
           </Splitter.Panel>
         </Splitter>
-        <RightSidebar />
+        {/* <RightSidebar /> */}
       </div>
       <Footer />
     </div>
