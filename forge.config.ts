@@ -55,19 +55,19 @@ const config: ForgeConfig = {
         config: rendererConfig,
         entryPoints: [
           {
-            html: "./main/static-html/index.html",
-            js: "./main/renderer-workers/main_worker.ts",
+            html: "./src/base/html/index.html",
+            js: "./src/base/renderer/main.ts",
             name: "main_window",
             preload: {
-              js: "./main/preload.ts",
+              js: "./src/meridia/platform/preload/preload.ts",
             },
           },
           {
-            html: "./main/static-html/welcome_wizard.html",
-            js: "./main/renderer-workers/welcome_wizard_worker.ts",
+            html: "./src/base/html/welcome_wizard.html",
+            js: "./src/base/renderer/welcome_wizard.ts",
             name: "welcome_wizard",
             preload: {
-              js: "./main/preload.ts",
+              js: "./src/meridia/platform/preload/preload.ts",
             },
           },
         ],

@@ -15,11 +15,7 @@ export const plugins = [
     patterns: [
       {
         from: "node_modules/monaco-pyright-lsp/dist/worker.js",
-        to: "../renderer/main_window",
-      },
-      {
-        from: "node_modules/monaco-pyright-lsp/dist/worker.js.map",
-        to: "../renderer/main_window",
+        to: "../renderer/main_window/python",
       },
       { from: "support/icons", to: "../renderer/main_window/icons" },
       { from: "theme", to: "../renderer/main_window/theme/" },

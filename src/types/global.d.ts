@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { ERenderer } from "../../main/preload";
+import { ERenderer } from "../meridia/platform/preload/preload";
 
 declare global {
   interface Window {

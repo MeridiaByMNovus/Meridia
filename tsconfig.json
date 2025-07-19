@@ -9,21 +9,11 @@
     "sourceMap": true,
     "baseUrl": ".",
     "jsx": "react-jsx",
-    "outDir": "dist",
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "paths": {
       "*": ["node_modules/*"]
     }
   },
-  "include": [
-    "src/**/*",
-    "support/ui-kit",
-    "apps/meridiachat",
-    "main/entry-points",
-    "main/renderer-workers",
-    "main/index.ts",
-    "main/preload.ts",
-    "forge.config.ts"
-  ]
+  "include": ["src/**/*", "forge.config.ts"]
 }
