@@ -33,6 +33,7 @@ Studio makes Meridia an excellent choice for data scientists, analysts, and engi
 ### Prerequisites
 
 - [Node.js](https://nodejs.org/) (v20 or higher recommended)
+- [Python](https://python .org/) (v3.11.x or higher recommended)
 - [Git](https://git-scm.com/)
 
 ### Installation
