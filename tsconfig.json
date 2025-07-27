@@ -1,19 +1,19 @@
 {
   "compilerOptions": {
-    "target": "ES6",
-    "allowJs": true,
+    "target": "ES2020",
     "module": "commonjs",
-    "skipLibCheck": true,
+    "outDir": "./out",
     "esModuleInterop": true,
-    "noImplicitAny": true,
-    "sourceMap": true,
-    "baseUrl": ".",
-    "jsx": "react-jsx",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "paths": {
-      "*": ["node_modules/*"]
-    }
+    "forceConsistentCasingInFileNames": true,
+    "lib": ["ES2020", "DOM"],
+    "noEmit": false,
+    "skipLibCheck": true
   },
-  "include": ["src/**/*", "forge.config.ts"]
+  "include": ["./src/*.ts", "./src/typings", "./src/code/**/*.ts"],
+  "exclude": [
+    "src/code/workbench/**/*.ts",
+    "src/code/editor/**/*",
+    "node_modules",
+    ""
+  ]
 }

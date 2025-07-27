@@ -1,0 +1,15 @@
+{
+  "appId": "com.mnovus.meridia",
+  "productName": "Meridia",
+  "asar": false,
+  "directories": {
+    "output": "dist"
+  },
+  "files": ["out/**/*", "package.json", "node_modules/**/*", "!**/*.map"],
+  "extraMetadata": {
+    "main": "out/main.js"
+  },
+  "win": {
+    "target": "nsis"
+  }
+}

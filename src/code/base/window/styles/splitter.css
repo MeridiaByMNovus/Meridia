@@ -1,0 +1,35 @@
+.gutter {
+  position: relative;
+  background: transparent;
+  transition: background 0.2s ease;
+}
+
+.gutter::before {
+  content: "";
+  position: absolute;
+  background: var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.gutter.gutter-vertical::before {
+  top: 1px;
+  left: 0;
+  height: 2px;
+  width: 100%;
+}
+
+.gutter.gutter-horizontal::before {
+  top: 0;
+  left: 1px;
+  width: 2px;
+  height: 100%;
+}
+
+.gutter:hover::before,
+body.dragging-gutter .gutter::before {
+  background: var(--splitter-active-color);
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
