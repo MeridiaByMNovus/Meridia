@@ -8,7 +8,7 @@ import {
   LightTheme,
   PyCharmDarkTheme,
   VSCodeDarkPlusTheme,
-} from "../contrib/theme/themes.js";
+} from "../resources/theme/themes.js";
 import { themeService } from "./service/ThemeServiceSingleton.js";
 
 export class Workbench {

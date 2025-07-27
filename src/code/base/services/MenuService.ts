@@ -14,7 +14,7 @@ import {
   handleSaveCurrentFile,
 } from "../common/functions.js";
 
-import { shortcuts } from "../../contrib/data/shortcut.js";
+import { shortcuts } from "../../resources/data/shortcut.js";
 
 export class MenuService {
   constructor() {

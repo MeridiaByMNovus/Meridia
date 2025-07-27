@@ -318,7 +318,7 @@ export class FileTreeController {
 </svg>`;
     } else {
       const iconName = getIconForFile(node.name) ?? "file";
-      icon.innerHTML = `<img src="./code/contrib/assets/fileIcons/${iconName}" width="14" />`;
+      icon.innerHTML = `<img src="./code/resources/assets/fileIcons/${iconName}" width="14" />`;
     }
 
     const name = document.createElement("span");

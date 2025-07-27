@@ -28,7 +28,7 @@ export class TabLayout {
 
     const icon = document.createElement("img");
     icon.alt = this.icon;
-    icon.src = `./code/contrib/assets/fileIcons/${getIconForFile(this.icon)}`;
+    icon.src = `./code/resources/assets/fileIcons/${getIconForFile(this.icon)}`;
 
     const iconWrapper = document.createElement("div");
     iconWrapper.className = "icon-wrapper";

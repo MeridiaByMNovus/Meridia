@@ -132,11 +132,6 @@ function createWindow({
 
   window.loadURL(entry);
 
-  if (window.isMaximized())
-    window.webContents.send("window-changed-to-maximized");
-  if (!window.isMaximized())
-    window.webContents.send("window-changed-to-restore");
-
   window.on("maximize", () => {
     window.webContents.send("window-changed-to-maximized");
   });
@@ -147,6 +142,14 @@ function createWindow({
 
   window.on("close", () => {
     window.webContents.send("handle-window-closing");
+  });
+
+  window.webContents.on("did-finish-load", () => {
+    window.webContents.send(
+      window.isMaximized()
+        ? "window-changed-to-maximized"
+        : "window-changed-to-restore"
+    );
   });
 
   window.once("ready-to-show", () => {

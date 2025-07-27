@@ -1,7 +1,12 @@
 import PerfectScrollbar from "perfect-scrollbar";
-import { FileTreeLayout, TabsLayout, TitleBarLayout } from "./imports.js";
+import {
+  ActivityBar,
+  FileTreeLayout,
+  TabsLayout,
+  TitleBarLayout,
+} from "./imports.js";
 import { LayoutService } from "./common/LayoutRegistery.js";
-import { ActivityBarLayout } from "./activityBarLayout.js";
+import { StatusBarLayout } from "./statusBarLayout.js";
 import { select, watch } from "../../common/store/selectors.js";
 import { dispatch } from "../../common/store/store.js";
 import {
@@ -10,8 +15,8 @@ import {
 } from "../../common/store/mainSlice.js";
 import { IEditorTab, ITab } from "../../../../typings/types.js";
 import { EditorService } from "../../../editor/common/EditorService.js";
-import { SpawnTerminal } from "../../service/TerminalService/spawnTerminal.js";
-import { ActivityBarController } from "./common/ActivityBarController.js";
+import { SpawnTerminal } from "../../common/spawnTerminal.js";
+import { StatusBarController } from "./common/StatusBarController.js";
 
 export class Layout {
   private fileTree: any = null;
@@ -37,7 +42,7 @@ export class Layout {
     new TitleBarLayout();
 
     const layout = this.layoutService.RegisterLayout("main");
-    const leftSidebar = this.layoutService.RegisterSidebar("left");
+    const leftActivityBar = new ActivityBar("left");
 
     const splitterLayout = this.layoutService.RegisterSplitterLayout(
       70,
@@ -45,7 +50,7 @@ export class Layout {
       layout
     );
 
-    const rightSidebar = this.layoutService.RegisterSidebar("right");
+    const rightActivityBar = new ActivityBar("right");
 
     const leftPane = this.layoutService.RegisterSplitterPane(
       "leftPane",
@@ -53,10 +58,12 @@ export class Layout {
       "top",
       20
     );
-    const leftSidebarContent = this.layoutService.RegisterSidebarContent(
-      leftPane,
-      "leftSidebarContent"
-    );
+
+    const leftActivityBarContent =
+      this.layoutService.RegisterActivityBarContent(
+        leftPane,
+        "leftActivityBarContent"
+      );
 
     const middlePane = this.layoutService.RegisterSplitterPane(
       "middlePane",
@@ -206,10 +213,10 @@ export class Layout {
       </svg>
     `;
 
-    this.layoutService.RegisterSidebarItem(
-      leftSidebar,
+    this.layoutService.RegisterActivityBarItem(
+      leftActivityBar,
       new FileTreeLayout(this.fileTree).render() as any,
-      leftSidebarContent.getDomElement(),
+      leftActivityBarContent.getDomElement(),
       explorerIcon,
       "explorer",
       "top",
@@ -228,16 +235,16 @@ export class Layout {
       document.querySelector(".scrollbar-container") as HTMLDivElement
     );
 
-    new ActivityBarLayout();
+    new StatusBarLayout();
 
-    const activityBarController = new ActivityBarController();
-    const mainItem = activityBarController.createActivityItem({
+    const statusBarController = new StatusBarController();
+    const mainItem = statusBarController.createActivityItem({
       id: "fileName",
     });
 
     mainItem.textContent = "main";
 
-    activityBarController.addItemToPrimary(mainItem);
+    statusBarController.addItemToPrimary(mainItem);
 
     watch(
       (s) => s.main.editor_active_tab,

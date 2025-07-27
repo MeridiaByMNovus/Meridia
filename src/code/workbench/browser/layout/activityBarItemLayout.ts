@@ -1,11 +1,11 @@
 import { update_active_sidebaritem } from "../../common/store/mainSlice.js";
 import { select, watch } from "../../common/store/selectors.js";
 import { dispatch } from "../../common/store/store.js";
-import { Sidebar } from "./sidebarLayout.js";
+import { ActivityBar } from "./activityBarLayout.js";
 
-export class SidebarItemLayout {
+export class ActivtyBarItemLayout {
   constructor(
-    private sidebar: Sidebar,
+    private ActivtyBar: ActivityBar,
     private icon: string,
     private id: string,
     private content: HTMLDivElement,
@@ -18,7 +18,7 @@ export class SidebarItemLayout {
 
   private render() {
     const item = document.createElement("div");
-    item.classList.add("sidebar-item-wrapper");
+    item.classList.add("activity-bar-item");
     item.innerHTML = this.icon;
     item.onclick = () => {
       dispatch(update_active_sidebaritem(this.id));
@@ -47,7 +47,7 @@ export class SidebarItemLayout {
       }
     );
 
-    this.sidebar.addSidebarItem(item, this.position);
+    this.ActivtyBar.addActivityBarItem(item, this.position);
   }
 
   private setActive(isActive: boolean, item: HTMLDivElement) {

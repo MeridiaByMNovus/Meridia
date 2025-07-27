@@ -1,5 +1,5 @@
 import * as monaco from "monaco-editor";
-import editorTheme from "../../contrib/theme/editor.json";
+import editorTheme from "../../resources/theme/editor.json";
 
 export type OpenTab = {
   uri: string;

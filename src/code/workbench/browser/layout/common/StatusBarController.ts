@@ -1,12 +1,12 @@
-type ActivityItemOptions = {
+type StatusItemOptions = {
   id: string;
   icon?: string;
   tooltip?: string;
   onClick?: () => void;
 };
 
-export class ActivityBarController {
-  private activityBarWrapper!: HTMLDivElement;
+export class StatusBarController {
+  private StatusBar!: HTMLDivElement;
   private primarySection!: HTMLDivElement;
   private globalSection!: HTMLDivElement;
 
@@ -15,18 +15,16 @@ export class ActivityBarController {
   }
 
   private render() {
-    this.activityBarWrapper = document.querySelector(
-      ".activity-bar-wrapper"
-    ) as HTMLDivElement;
+    this.StatusBar = document.querySelector(".status-bar") as HTMLDivElement;
 
     this.primarySection = document.createElement("div");
-    this.primarySection.className = "activity-bar-primary";
+    this.primarySection.className = "status-bar-primary";
 
     this.globalSection = document.createElement("div");
-    this.globalSection.className = "activity-bar-global";
+    this.globalSection.className = "status-bar-global";
 
-    this.activityBarWrapper.appendChild(this.primarySection);
-    this.activityBarWrapper.appendChild(this.globalSection);
+    this.StatusBar.appendChild(this.primarySection);
+    this.StatusBar.appendChild(this.globalSection);
   }
 
   addItemToPrimary(spanItem: HTMLSpanElement) {
@@ -47,10 +45,10 @@ export class ActivityBarController {
     if (item) item.remove();
   }
 
-  createActivityItem(options: ActivityItemOptions): HTMLSpanElement {
+  createActivityItem(options: StatusItemOptions): HTMLSpanElement {
     const btn = document.createElement("span");
     btn.id = options.id;
-    btn.className = "activity-item";
+    btn.className = "status-bar-item";
     btn.innerHTML = options.icon ?? "";
     if (options.tooltip) btn.title = options.tooltip;
     if (options.onClick) btn.addEventListener("click", options.onClick);

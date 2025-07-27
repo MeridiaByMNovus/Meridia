@@ -1,4 +1,3 @@
-import { InitElementsService } from "../../service/InitElementsService.js";
 import { TitleBarController } from "./common/TitlebarController.js";
 
 export class TitleBarLayout {
@@ -9,8 +8,8 @@ export class TitleBarLayout {
   }
 
   createTitlebar() {
-    const titlebarWrapper = document.createElement("div");
-    titlebarWrapper.className = "titlebar-wrapper";
+    const titlebar = document.createElement("div");
+    titlebar.className = "titlebar";
 
     const MaximizeSVG = `
 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -47,7 +46,7 @@ export class TitleBarLayout {
     logoDiv.className = "logo";
     const logoImg = document.createElement("img");
     logoImg.alt = "logo";
-    logoImg.src = "./code/contrib/assets/icons/logo.svg";
+    logoImg.src = "./code/resources/assets/icons/logo.svg";
     logoDiv.appendChild(logoImg);
 
     const menuDiv = document.createElement("div");
@@ -121,11 +120,11 @@ export class TitleBarLayout {
     partRight.appendChild(optionsDiv);
     partRight.appendChild(windowControlsDiv);
 
-    titlebarWrapper.appendChild(partLeft);
-    titlebarWrapper.appendChild(partRight);
+    titlebar.appendChild(partLeft);
+    titlebar.appendChild(partRight);
 
     (document.querySelector(".main-wrapper") as HTMLDivElement).appendChild(
-      titlebarWrapper
+      titlebar
     );
   }
 }

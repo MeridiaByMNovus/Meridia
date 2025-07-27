@@ -1,8 +1,8 @@
 import { ITab } from "../../../../../typings/types.js";
 import { EditorLayout } from "../editorLayout.js";
-import { SidebarContentLayout } from "../sidebarContentLayout.js";
-import { SidebarItemLayout } from "../sidebarItemLayout.js";
-import { Sidebar } from "../sidebarLayout.js";
+import { ActivityBarContentLayout } from "../activityBarContentLayout.js";
+import { ActivtyBarItemLayout } from "../activityBarItemLayout.js";
+import { ActivityBar } from "../activityBarLayout.js";
 import { SplitterLayout } from "../splitterLayout.js";
 import { SplitterPaneLayout } from "../splitterPaneLayout.js";
 import { TabLayout } from "../tabLayout.js";
@@ -51,13 +51,7 @@ export class LayoutService {
 
     return splitterPane;
   }
-
-  public RegisterSidebar(side: "left" | "right") {
-    const sidebar = new Sidebar(side);
-    return sidebar;
-  }
-
-  public RegisterSidebarContent(
+  public RegisterActivityBarContent(
     pane: SplitterPaneLayout,
     uniqueId: string,
     style?: [
@@ -67,18 +61,18 @@ export class LayoutService {
       }
     ]
   ) {
-    const sidebarcontent = new SidebarContentLayout(uniqueId);
-    const sidebarContentElement = sidebarcontent.render();
+    const activityBarContent = new ActivityBarContentLayout(uniqueId);
+    const activityBarContentElement = activityBarContent.render();
     style?.forEach(({ attribute, value }) => {
-      sidebarContentElement.style.setProperty(attribute, value);
+      activityBarContentElement.style.setProperty(attribute, value);
     });
 
-    pane.addContent(sidebarContentElement);
-    return sidebarcontent;
+    pane.addContent(activityBarContentElement);
+    return activityBarContent;
   }
 
-  public RegisterSidebarItem(
-    sidebar: Sidebar,
+  public RegisterActivityBarItem(
+    activityBar: ActivityBar,
     content: HTMLDivElement,
     contentWrapper: HTMLDivElement,
     icon: string,
@@ -86,8 +80,8 @@ export class LayoutService {
     position: "top" | "bottom",
     activeByDefault: boolean
   ) {
-    const sidebaritem = new SidebarItemLayout(
-      sidebar,
+    const activityBarItem = new ActivtyBarItemLayout(
+      activityBar,
       icon,
       id,
       content,
@@ -96,7 +90,7 @@ export class LayoutService {
       activeByDefault
     );
 
-    return sidebaritem;
+    return activityBarItem;
   }
 
   public RegisterTabsLayout(parent: HTMLDivElement) {
