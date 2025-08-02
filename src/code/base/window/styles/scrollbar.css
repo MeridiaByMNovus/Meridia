@@ -74,14 +74,14 @@
 .ps__rail-x:hover > .ps__thumb-x,
 .ps__rail-x:focus > .ps__thumb-x,
 .ps__rail-x.ps--clicking .ps__thumb-x {
-  background-color: var(--hover--scrollbar-color);
+  background-color: var(--hover-scrollbar-color);
   height: 11px;
 }
 
 .ps__rail-y:hover > .ps__thumb-y,
 .ps__rail-y:focus > .ps__thumb-y,
 .ps__rail-y.ps--clicking .ps__thumb-y {
-  background-color: var(--hover--scrollbar-color);
+  background-color: var(--hover-scrollbar-color);
   width: 11px;
 }
 
@@ -89,7 +89,7 @@
 .ps__thumb-y,
 .ps__thumb-y:hover {
   width: 8px;
-  background-color: var(--hover--scrollbar-color) !important;
+  background-color: var(--hover-scrollbar-color) !important;
   scale: 1 !important;
 }
 
@@ -103,7 +103,7 @@
 .ps__thumb-x:hover {
   height: 3px !important;
   border-radius: 0px !important;
-  background-color: var(--hover--scrollbar-color) !important;
+  background-color: var(--hover-scrollbar-color) !important;
   scale: 1 !important;
   z-index: +9 !important;
 }

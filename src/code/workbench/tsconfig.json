@@ -13,7 +13,7 @@
     "allowJs": true,
     "checkJs": false,
     "resolveJsonModule": true,
-    "types": ["../../typings/global.d.ts"]
+    "types": ["../../typings/global.d.ts", "../../typings/module.d.ts"]
   },
   "include": ["**/*.ts"],
   "exclude": ["node_modules", "../../../out", "**/*.test.ts"]

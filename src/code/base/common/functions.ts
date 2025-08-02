@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { dialog } from "electron";
+import { dialog, ipcMain } from "electron";
 import path from "path";
 import fs from "fs";
 import chokidar from "chokidar";
@@ -10,10 +10,20 @@ import { ptyInstances } from "./ptyManager.js";
 import { PythonShell } from "python-shell";
 import { CommandRegistry } from "../services/CommandRegistryService.js";
 import { mainWindow } from "../../../main.js";
+import { tmpdir } from "os";
+import { randomUUID } from "crypto";
 
 const window = mainWindow;
 
 const executeCommand = new CommandRegistry().execute;
+
+ipcMain.handle("create-temp-file", () => {
+  const tempDir = tmpdir();
+  const filename = `untitled-${randomUUID().slice(0, 8)}.py`;
+  const fullPath = path.join(tempDir, filename);
+  fs.writeFileSync(fullPath, "", "utf8");
+  return { path: fullPath, name: filename };
+});
 
 export const get_file_content = ({ path }: { path: string }) => {
   try {

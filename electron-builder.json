@@ -1,7 +1,7 @@
 {
   "appId": "com.mnovus.meridia",
   "productName": "Meridia",
-  "asar": false,
+  "asar": true,
   "directories": {
     "output": "dist"
   },

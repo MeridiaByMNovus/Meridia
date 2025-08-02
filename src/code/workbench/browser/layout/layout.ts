@@ -1,8 +1,11 @@
 import PerfectScrollbar from "perfect-scrollbar";
+import { randomUUID } from "crypto";
 import {
   ActivityBar,
+  ActivityBarContentLayout,
   FileTreeLayout,
-  TabsLayout,
+  SplitterLayout,
+  TerminalLayoutWrapper,
   TitleBarLayout,
 } from "./imports.js";
 import { LayoutService } from "./common/LayoutRegistery.js";
@@ -39,18 +42,17 @@ export class Layout {
   }
 
   private async buildLayout() {
+    let terminal: SpawnTerminal;
+    let terminalLayout: TerminalLayoutWrapper;
+
+    const { left, right, bottom } = select((s) => s.main.panel_state);
+
     new TitleBarLayout();
 
     const layout = this.layoutService.RegisterLayout("main");
     const leftActivityBar = new ActivityBar("left");
 
-    const splitterLayout = this.layoutService.RegisterSplitterLayout(
-      70,
-      30,
-      layout
-    );
-
-    const rightActivityBar = new ActivityBar("right");
+    const splitterLayout = new SplitterLayout(layout, 70, 30);
 
     const leftPane = this.layoutService.RegisterSplitterPane(
       "leftPane",
@@ -59,11 +61,14 @@ export class Layout {
       20
     );
 
-    const leftActivityBarContent =
-      this.layoutService.RegisterActivityBarContent(
+    let leftActivityBarContent: ActivityBarContentLayout;
+
+    if (this.fileTree) {
+      leftActivityBarContent = this.layoutService.RegisterActivityBarContent(
         leftPane,
         "leftActivityBarContent"
       );
+    }
 
     const middlePane = this.layoutService.RegisterSplitterPane(
       "middlePane",
@@ -79,8 +84,7 @@ export class Layout {
     );
 
     const editorLayout = this.layoutService.RegisterEditorLayout(middlePane);
-    const terminalLayout =
-      this.layoutService.RegisterTerminalLayout(bottomPane);
+    terminalLayout = this.layoutService.RegisterTerminalLayout(bottomPane);
 
     const editorContentWrapper = document.createElement("div");
     editorContentWrapper.className = "editor-content-wrapper";
@@ -94,9 +98,38 @@ export class Layout {
 
     terminalLayout.getDomElement().appendChild(terminalContentWrapper);
 
+    const addTabButton = document.createElement("button");
+    addTabButton.innerHTML = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="var(--icon-color)"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <title></title> <g id="Complete"> <g data-name="add" id="add-2"> <g> <line fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="12" x2="12" y1="19" y2="5"></line> <line fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="5" x2="19" y1="12" y2="12"></line> </g> </g> </g> </g></svg>`;
+
+    addTabButton.onclick = async () => {
+      const { path, name } = await window.electron.createTempPythonFile();
+
+      const tabs = select((s) => s.main.editor_tabs) || [];
+      const exists = tabs.find((t) => t.uri === path);
+      const next = tabs.map((t) => ({ ...t, active: t.uri === path }));
+
+      if (!exists) {
+        const tab: IEditorTab = {
+          icon: "file.py",
+          name,
+          active: true,
+          uri: path,
+          language: "python",
+          initialContent: "",
+          is_touched: false,
+        };
+
+        dispatch(update_editor_tabs([...next, tab]));
+      } else {
+        dispatch(update_editor_tabs(next));
+      }
+    };
+
     const editorTabs = this.layoutService.RegisterTabsLayout(
-      editorLayout.getDomElement()
+      editorLayout.getDomElement(),
+      [addTabButton]
     );
+
     const terminalTabs = this.layoutService.RegisterTabsLayout(
       terminalLayout.getDomElement()
     );
@@ -216,14 +249,14 @@ export class Layout {
     this.layoutService.RegisterActivityBarItem(
       leftActivityBar,
       new FileTreeLayout(this.fileTree).render() as any,
-      leftActivityBarContent.getDomElement(),
+      leftActivityBarContent!.getDomElement(),
       explorerIcon,
       "explorer",
       "top",
       true
     );
 
-    const terminal = new SpawnTerminal(terminalLayout.getDomElement(), 1, {
+    terminal = new SpawnTerminal(terminalLayout.getDomElement(), 1, {
       cols: 80,
       rows: 24,
     });
@@ -249,6 +282,26 @@ export class Layout {
     watch(
       (s) => s.main.editor_active_tab,
       (next) => (mainItem.textContent = next?.name ?? "main")
+    );
+
+    watch(
+      (s) => s.main.panel_state,
+      (next) => {
+        const paneEl = leftPane.getDomElement();
+        console.log("changing", next);
+        console.log("pane element:", paneEl);
+
+        if (!paneEl) {
+          console.warn("Pane element is null or undefined, skipping show/hide");
+          return;
+        }
+
+        if (next.left === "off") {
+          splitterLayout.hideTopPane(paneEl);
+        } else {
+          splitterLayout.showTopPane(paneEl);
+        }
+      }
     );
   }
 }

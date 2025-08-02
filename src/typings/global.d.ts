@@ -1,4 +1,4 @@
-import { ERenderer } from "../code/base/window/preload/preload.js";
+import { ERenderer, EApi } from "../code/base/window/preload/preload.js";
 
 declare global {
   interface Window {

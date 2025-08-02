@@ -3,11 +3,11 @@ import { EditorLayout } from "../editorLayout.js";
 import { ActivityBarContentLayout } from "../activityBarContentLayout.js";
 import { ActivtyBarItemLayout } from "../activityBarItemLayout.js";
 import { ActivityBar } from "../activityBarLayout.js";
-import { SplitterLayout } from "../splitterLayout.js";
 import { SplitterPaneLayout } from "../splitterPaneLayout.js";
 import { TabLayout } from "../tabLayout.js";
 import { TabsLayout } from "../tabsLayout.js";
 import { TerminalLayoutWrapper } from "../terminalLayoutWrapper.js";
+import { SplitterLayout } from "../splitterLayout.js";
 
 export class LayoutService {
   constructor() {}
@@ -22,19 +22,6 @@ export class LayoutService {
     mainWrapper.appendChild(layoutRow);
 
     return layoutRow;
-  }
-
-  public RegisterSplitterLayout(
-    topSplitterHeight: number,
-    bottomSplitterHeight: number,
-    parent: HTMLDivElement
-  ) {
-    const splitterLayout = new SplitterLayout(
-      parent,
-      topSplitterHeight,
-      bottomSplitterHeight
-    );
-    return splitterLayout;
   }
 
   public RegisterSplitterPane(
@@ -93,8 +80,8 @@ export class LayoutService {
     return activityBarItem;
   }
 
-  public RegisterTabsLayout(parent: HTMLDivElement) {
-    const tabsWrapper = new TabsLayout(parent);
+  public RegisterTabsLayout(parent: HTMLDivElement, props?: any[]) {
+    const tabsWrapper = new TabsLayout(parent, props);
     return tabsWrapper;
   }
 
@@ -119,7 +106,7 @@ export class LayoutService {
       updateStoreTabs,
       isEditor
     );
-    tabsLayout.addTab(tab.tab);
+    tabsLayout.addTab(tab.tabDomElement);
     return tab;
   }
 

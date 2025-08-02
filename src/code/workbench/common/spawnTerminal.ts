@@ -2,10 +2,9 @@ import { Terminal, ITheme } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebglAddon } from "@xterm/addon-webgl";
 import { SearchAddon, ISearchOptions } from "@xterm/addon-search";
-import "@xterm/xterm/css/xterm.css";
 import PerfectScrollbar from "perfect-scrollbar";
-import "perfect-scrollbar/css/perfect-scrollbar.css";
 import { themeService } from "../service/ThemeServiceSingleton.js";
+import { KnownColorKey } from "../../../typings/types.js";
 
 const FONT_STACK =
   'Monaco, Menlo, Consolas, "Droid Sans Mono", "Inconsolata", "Courier New", monospace';
@@ -29,9 +28,6 @@ export class SpawnTerminal {
   private btnPrev!: HTMLButtonElement;
   private btnNext!: HTMLButtonElement;
   private btnClose!: HTMLButtonElement;
-  private btnCase!: HTMLButtonElement;
-  private btnRegex!: HTMLButtonElement;
-  private btnWhole!: HTMLButtonElement;
   private searchOpts: ISearchOptions = {
     caseSensitive: false,
     regex: false,
@@ -49,9 +45,9 @@ export class SpawnTerminal {
     container.appendChild(terminalWrapper);
 
     const theme: ITheme = {
-      background: themeService.getVar("--terminal-bg"),
-      foreground: themeService.getVar("--text-color"),
-      cursor: themeService.getVar("--cursor-color"),
+      background: themeService.getVar("terminal.background"),
+      foreground: themeService.getVar("foreground"),
+      cursor: themeService.getVar("cursor.foreground"),
     };
 
     this.fitAddon = new FitAddon();
@@ -88,18 +84,21 @@ export class SpawnTerminal {
       });
     }
 
-    this.bindTheme("--terminal-bg", "background");
-    this.bindTheme("--text-color", "foreground");
-    this.bindTheme("--cursor-color", "cursor");
+    this.bindTheme("terminal.background", "background");
+    this.bindTheme("foreground", "foreground");
+    this.bindTheme("cursor.foreground", "cursor");
 
     this.createSearchUI(terminalWrapper);
     this.host = terminalWrapper;
     this.bindSearchKeys(this.host);
 
     this.initAfterFonts().then(() => {
-      this.fitAddon.fit();
+      setTimeout(() => {
+        this.fitAddon.fit();
+      }, 0);
       this.sendResize();
       window.electron.ipcRenderer.send("ptyInstance.spawn", ptyId);
+      window.addEventListener("resize", () => this.fitIfNeeded());
     });
 
     this.terminal.onData((data) => {
@@ -146,6 +145,10 @@ export class SpawnTerminal {
     }
   }
 
+  forceFit() {
+    this.fitIfNeeded();
+  }
+
   private sendResize() {
     window.electron.ipcRenderer.send("ptyInstance.resize", {
       id: this.ptyId,
@@ -166,7 +169,7 @@ export class SpawnTerminal {
     this.terminal.dispose();
   }
 
-  private bindTheme(cssVar: string, key: keyof ITheme) {
+  private bindTheme(cssVar: KnownColorKey, key: keyof ITheme) {
     themeService.watchVar(cssVar, (val) => {
       const theme = this.terminal.options.theme ?? {};
       this.terminal.options.theme = { ...theme, [key]: val };
@@ -239,15 +242,6 @@ export class SpawnTerminal {
     this.searchAddon.findPrevious(v, this.searchOpts);
   }
 
-  private toggleOpt<K extends keyof ISearchOptions>(
-    k: K,
-    el: HTMLButtonElement
-  ) {
-    const on = !this.searchOpts[k];
-    this.searchOpts[k] = on as ISearchOptions[K];
-    el.classList.toggle("on", on);
-  }
-
   private bindSearchKeys(root: HTMLElement) {
     const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
 
@@ -276,5 +270,12 @@ export class SpawnTerminal {
       },
       true
     );
+  }
+
+  runCommand(command: string) {
+    window.electron.ipcRenderer.send("ptyInstance.keystroke", {
+      id: this.ptyId,
+      data: command + "\r",
+    });
   }
 }

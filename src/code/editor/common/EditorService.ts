@@ -1,5 +1,10 @@
 import * as monaco from "monaco-editor";
-import editorTheme from "../../resources/theme/editor.json";
+import { MonacoPyrightProvider } from "monaco-pyright-lsp";
+import debounce from "lodash.debounce";
+import { themeService } from "../../workbench/service/ThemeServiceSingleton.js";
+import { dispatch, store } from "../../workbench/common/store/store.js";
+import { update_editor_tabs } from "../../workbench/common/store/mainSlice.js";
+import { IEditorTab } from "../../../typings/types.js";
 
 export type OpenTab = {
   uri: string;
@@ -13,55 +18,40 @@ function toFileUri(path: string) {
   return monaco.Uri.file(path);
 }
 
-function convertTheme(name: string, vscodeTheme: any) {
-  const type = vscodeTheme.type ?? "dark";
-  const base = type === "light" ? "vs" : "vs-dark";
-  const rules: monaco.editor.ITokenThemeRule[] = [];
-  const tokenColors = vscodeTheme.tokenColors || [];
-  for (const tc of tokenColors) {
-    const scopes: string[] = Array.isArray(tc.scope)
-      ? tc.scope
-      : typeof tc.scope === "string"
-      ? tc.scope.split(",").map((s: string) => s.trim())
-      : [""];
-    for (const scope of scopes) {
-      const fg = tc.settings?.foreground;
-      rules.push({
-        token: scope,
-        foreground: typeof fg === "string" ? fg.replace("#", "") : undefined,
-        fontStyle: tc.settings?.fontStyle,
-      });
-    }
-  }
-  const colors = vscodeTheme.colors || {};
-  return { name, definition: { base, inherit: true, rules, colors } };
-}
-
 export class EditorService {
   private static i: EditorService;
   private editor: monaco.editor.IStandaloneCodeEditor | null = null;
+  private pyrightProviderRef: MonacoPyrightProvider | null = null;
   private models = new Map<string, monaco.editor.ITextModel>();
   private viewStates = new Map<
     string,
     monaco.editor.ICodeEditorViewState | null
   >();
   private themeName = "customTheme";
-
-  private constructor() {}
+  private normalizePath = (path: string) =>
+    path.replace(/\\/g, "/").replace(/^\/?([a-zA-Z]):\//, "$1:/");
 
   static get() {
     if (!this.i) this.i = new EditorService();
     return this.i;
   }
 
-  mount(container: HTMLElement, _theme: Theme = "dark") {
+  async mount(container: HTMLElement, _theme: Theme = "dark") {
     if (this.editor) return;
-    const { name, definition } = convertTheme(
-      this.themeName,
-      editorTheme as any
-    );
-    monaco.editor.defineTheme(name, definition as any);
-    monaco.editor.setTheme(name);
+
+    monaco.editor.defineTheme("theme", {
+      base: themeService.getCurrent()?.kind === "dark" ? "vs-dark" : "vs",
+      inherit: true,
+      rules: [],
+      colors: {
+        "editor.background":
+          themeService.getColor("editor.background") ?? (null as any),
+        "editor.foreground":
+          themeService.getColor("editor.foreground") ?? (null as any),
+      },
+    });
+    monaco.editor.setTheme("theme");
+
     this.editor = monaco.editor.create(container, {
       automaticLayout: true,
       largeFileOptimizations: true,
@@ -71,6 +61,20 @@ export class EditorService {
       minimap: { enabled: false },
       fontSize: 18,
     });
+
+    this.loadPyrightProvider();
+  }
+
+  private async loadPyrightProvider() {
+    if (this.pyrightProviderRef || !this.editor) return;
+
+    const provider = new MonacoPyrightProvider(
+      "./workers/python.worker.js",
+      {}
+    );
+    await provider.init(monaco);
+    await provider.setupDiagnostics(this.editor);
+    this.pyrightProviderRef = provider;
   }
 
   setTheme(_: Theme) {
@@ -106,7 +110,59 @@ export class EditorService {
       if (vs) this.editor.restoreViewState(vs);
     }
 
+    const markFileTouched = debounce(() => {
+      const model = this.editor?.getModel();
+      const uriPath = this.normalizePath(model?.uri.path || "");
+
+      const tabs = store.getState().main.editor_tabs;
+      const index = tabs.findIndex(
+        (file) => this.normalizePath(file.uri) === uriPath
+      );
+
+      if (index > -1 && !tabs[index].is_touched) {
+        const updatedTabs = [...tabs];
+        updatedTabs[index] = {
+          ...updatedTabs[index],
+          is_touched: true,
+        };
+        dispatch(update_editor_tabs(updatedTabs));
+      }
+    }, 300);
+
+    this.editor.onDidChangeModelContent(() => {
+      markFileTouched();
+    });
+
+    this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
+      this.handle_save_file({
+        path: this.editor!.getModel()?.uri.path as string,
+        content: this.editor!.getValue(),
+      });
+    });
+
     this.editor.focus();
+  }
+
+  handle_save_file(data: { path: string; content: string }) {
+    const newDataPath = this.normalizePath(data.path);
+    window.electron.save_file({ path: newDataPath, content: data.content });
+
+    const state = store.getState();
+    const model_editing_index = state.main.editor_tabs.findIndex(
+      (file) => this.normalizePath(file.uri) === newDataPath
+    );
+
+    if (model_editing_index === -1) {
+      return;
+    }
+
+    const updated_files = [...state.main.editor_tabs];
+    updated_files[model_editing_index] = {
+      ...updated_files[model_editing_index],
+      is_touched: false,
+    };
+
+    dispatch(update_editor_tabs(updated_files));
   }
 
   close(uriString: string) {

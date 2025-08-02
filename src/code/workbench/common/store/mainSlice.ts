@@ -5,6 +5,7 @@ import {
   IFolderStructure,
   IMainState,
   ITab,
+  PanelState,
 } from "../../../../typings/types.js";
 
 const initialState: IMainState = {
@@ -13,7 +14,12 @@ const initialState: IMainState = {
   editor_active_tab: {} as IEditorTab,
   terminal_tabs: [] as ITab[],
   terminal_active_tab: {} as ITab,
-  active_sidebaritem: "",
+  active_activityBaritem: "",
+  panel_state: {
+    left: "on",
+    bottom: "on",
+    right: "off",
+  },
 };
 
 export const mainSlice = createSlice({
@@ -35,8 +41,11 @@ export const mainSlice = createSlice({
     update_terminal_active_tab: (state, action: PayloadAction<ITab>) => {
       state.terminal_active_tab = action.payload;
     },
-    update_active_sidebaritem: (state, action: PayloadAction<string>) => {
-      state.active_sidebaritem = action.payload;
+    update_active_activitybar_item: (state, action: PayloadAction<string>) => {
+      state.active_activityBaritem = action.payload;
+    },
+    update_panel_state: (state, action: PayloadAction<PanelState>) => {
+      state.panel_state = action.payload;
     },
   },
 });
@@ -47,7 +56,8 @@ export const {
   update_editor_active_tab,
   update_terminal_active_tab,
   update_terminal_tabs,
-  update_active_sidebaritem,
+  update_active_activitybar_item,
+  update_panel_state,
 } = mainSlice.actions;
 
 export default mainSlice.reducer;

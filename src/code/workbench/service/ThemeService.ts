@@ -1,4 +1,5 @@
-import { Theme, ThemeKind } from "../../../typings/types.js";
+import { KnownColorKey, Theme, ThemeKind } from "../../../typings/types.js";
+import { tokensToCssVariables } from "../common/functions.js";
 
 type ThemeServiceOptions = {
   autoDetect?: boolean;
@@ -101,26 +102,28 @@ export class ThemeService {
     this.setTheme(merged, false);
   }
 
-  getColor(key: string) {
-    if (this.current?.colors[key]) return this.current.colors[key];
+  getColor(key: KnownColorKey) {
+    const varKey = tokensToCssVariables[key];
+    if (!varKey) return undefined;
+    if (this.current?.colors?.[key]) return this.current.colors[key];
     return (
       getComputedStyle(document.documentElement)
-        .getPropertyValue(key)
+        .getPropertyValue(varKey)
         ?.trim() || undefined
     );
   }
 
-  getVar(tag: string) {
-    const key = tag.startsWith("--") ? tag : `--${tag}`;
+  getVar(tag: KnownColorKey) {
+    const key = tag;
     return this.getColor(key);
   }
 
   watchVar(
-    tag: string,
+    tag: KnownColorKey,
     cb: (newVal: string | undefined, oldVal: string | undefined) => void,
     opts: WatchOptions = {}
   ) {
-    const key = tag.startsWith("--") ? tag : `--${tag}`;
+    const key = tag;
     let prev = this.getColor(key);
     if (opts.immediate) cb(prev, undefined);
     const handler = () => {
@@ -161,9 +164,13 @@ export class ThemeService {
     this.listeners.forEach((l) => l(theme));
   }
 
-  private applyCssVars(vars: Record<string, string>) {
+  private applyCssVars(vars: Partial<Record<KnownColorKey, string>>) {
     const root = document.documentElement;
-    for (const [k, v] of Object.entries(vars)) root.style.setProperty(k, v);
+    for (const [key, value] of Object.entries(vars)) {
+      if (!value) continue;
+      const varKey = tokensToCssVariables[key as KnownColorKey];
+      if (varKey) root.style.setProperty(varKey, value);
+    }
   }
 
   private handleSchemeChange = () => {

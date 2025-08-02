@@ -2,34 +2,34 @@
   position: relative;
   background: transparent;
   transition: background 0.2s ease;
+  z-index: 1;
+  background: var(--splitter-color);
+  pointer-events: auto;
 }
 
 .gutter::before {
   content: "";
   position: absolute;
-  background: var(--border-color);
-  transition: all 0.2s ease;
+  top: -4px;
+  left: -4px;
+  width: calc(100% + 4px);
+  height: calc(100% + 4px);
+  background: transparent;
+  transition: background 0.2s ease;
+  border-radius: 2px;
 }
 
-.gutter.gutter-vertical::before {
-  top: 1px;
-  left: 0;
-  height: 2px;
-  width: 100%;
-}
-
-.gutter.gutter-horizontal::before {
-  top: 0;
-  left: 1px;
+.gutter.gutter-horizontal {
   width: 2px;
-  height: 100%;
+  cursor: col-resize;
+}
+
+.gutter.gutter-vertical {
+  height: 2px;
+  cursor: row-resize;
 }
 
 .gutter:hover::before,
 body.dragging-gutter .gutter::before {
   background: var(--splitter-active-color);
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
 }

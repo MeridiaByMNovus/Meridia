@@ -1,3 +1,7 @@
+@import url("./scrollbar.css");
+@import url("./splitter.css");
+@import url("./tailwind.css");
+
 body {
   background: var(--main-bg);
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
@@ -10,23 +14,7 @@ body {
 
 * {
   user-select: none;
-}
-
-.xterm {
-  font-family: "JetBrains Mono", "Cascadia Code", "Fira Code", "SFMono-Regular",
-    Consolas, Monaco, ui-monospace, monospace !important;
-  font-size: 14px;
-  line-height: 1.25;
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-}
-
-.xterm .xterm-viewport {
-  scrollbar-width: none;
-}
-
-.xterm .xterm-cursor {
-  background: var(--cursor-color);
+  box-sizing: border-box;
 }
 
 .scrollbar-container {
@@ -42,6 +30,7 @@ body {
 }
 
 .main-wrapper {
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -75,12 +64,37 @@ body {
   height: auto;
 }
 
+.main-wrapper .titlebar .commands {
+  display: flex;
+  height: 42px;
+}
+
+.main-wrapper .titlebar .panel-controls {
+  display: flex;
+  height: 42px;
+  margin-right: 100px;
+}
+
+.main-wrapper .titlebar .panel-controls button {
+  padding: 0 8px !important;
+}
+
+.main-wrapper .titlebar .panel-controls svg {
+  width: 20px;
+  height: auto;
+}
+
+.main-wrapper .titlebar .commands svg {
+  width: 20px;
+  height: auto;
+}
+
 .main-wrapper .titlebar .window-controls {
   display: flex;
   height: 42px;
 }
 
-.main-wrapper .titlebar .window-controls button {
+.main-wrapper .titlebar button {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -90,7 +104,7 @@ body {
   cursor: pointer;
 }
 
-.main-wrapper .titlebar .window-controls button:hover {
+.main-wrapper .titlebar button:hover {
   background: var(--hover-bg);
 }
 
@@ -110,7 +124,14 @@ body {
 
 .main-wrapper .titlebar .menu .menu-item {
   cursor: pointer;
-  padding: 4px 8px;
+}
+
+.main-wrapper .titlebar .menu .menu-item .menu-item-text {
+  padding: 0 8px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .main-wrapper .titlebar .menu .menu-item .menu-item-text:hover {
@@ -201,6 +222,7 @@ body {
 .main-wrapper .layout-row .activity-bar-content {
   width: 100%;
   height: 100%;
+  background: var(--content-bg);
 }
 
 .main-wrapper .layout-row .splitter-layout-wrapper {
@@ -278,8 +300,50 @@ body {
   min-height: 42px;
   max-height: 42px;
   border-bottom: 1px solid var(--border-color);
-  background: var(--tab-wrapper-bg);
+  background: var(--tabs-wrapper-bg);
   overscroll-behavior: contain;
+}
+
+.main-wrapper .layout-row .splitter-layout-wrapper .tabs-layout-extra-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 42px;
+  max-width: max-content;
+  border-left: 1px solid var(--border-color);
+  background: var(--tabs-wrapper-bg);
+}
+
+.main-wrapper
+  .layout-row
+  .splitter-layout-wrapper
+  .tabs-layout-extra-buttons
+  button {
+  display: flex;
+  align-items: center;
+  justify-content: baselinece;
+  height: 42px;
+  width: 100%;
+  padding: 0 12px;
+  cursor: pointer;
+}
+
+.main-wrapper
+  .layout-row
+  .splitter-layout-wrapper
+  .tabs-layout-extra-buttons
+  button
+  svg {
+  width: 16px;
+  height: auto;
+}
+
+.main-wrapper
+  .layout-row
+  .splitter-layout-wrapper
+  .tabs-layout-extra-buttons
+  button:hover {
+  background: var(--hover-bg);
 }
 
 .main-wrapper
@@ -398,6 +462,14 @@ body {
   visibility: hidden;
 }
 
+.main-wrapper
+  .layout-row
+  .splitter-layout-wrapper
+  .tabs-layout-wrapper
+  .tab-layout-wrapper {
+  color: var(--tab-text-color);
+}
+
 .main-wrapper .layout-row .splitter-layout-wrapper .tab-layout-wrapper img {
   width: 16px;
   height: 16px;
@@ -408,6 +480,11 @@ body {
   width: 16px;
   height: 16px;
   flex-shrink: 0;
+}
+
+.main-wrapper .layout-row .splitter-layout-wrapper .tab-layout-wrapper.active {
+  background: var(--tab-active-bg);
+  color: var(--tab-active-text-color);
 }
 
 .main-wrapper
@@ -436,10 +513,6 @@ body {
   background: var(--hover-bg);
 }
 
-.main-wrapper .layout-row .splitter-layout-wrapper .tab-layout-wrapper.active {
-  color: var(--active-text-color);
-}
-
 .main-wrapper
   .layout-row
   .splitter-layout-wrapper
@@ -464,12 +537,13 @@ body {
 .main-wrapper .layout-row .splitter-layout-wrapper .filetree-node {
   display: flex;
   flex-direction: column;
-  width: 100%;
+  flex-grow: 1;
+  min-width: max-content;
   font-size: 14px;
-  color: var(--text-color);
-  width: 100%;
+  color: var(--file-tree-foreground);
   max-width: 100%;
   overflow: hidden;
+  min-width: 0;
 }
 
 .main-wrapper .layout-row .splitter-layout-wrapper .filetree-label {
@@ -488,16 +562,18 @@ body {
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
+  color: var(--file-tree-foreground);
+  min-width: 0;
 }
 
 .main-wrapper .layout-row .splitter-layout-wrapper .filetree-inline-input {
   width: 100%;
   padding: 0 6px;
   font-size: 16px;
-  border: 1px solid var(--active-border);
+  border: 1px solid var(--file-tree-active-border);
   border-radius: 2px;
   background-color: var(--main-bg);
-  color: var(--text-color);
+  color: var(--file-tree-foreground);
   outline: none;
 }
 
@@ -505,11 +581,11 @@ body {
   .layout-row
   .splitter-layout-wrapper
   .filetree-inline-input:focus {
-  border-color: var(--active-border);
+  border-color: var(--file-tree-active-border);
 }
 
 .filetree-label.drop-target {
-  background: var(--hover-filetree-node-background);
+  background: var(--file-tree-active-background);
 }
 
 .main-wrapper .layout-row .splitter-layout-wrapper .filetree-label > * {
@@ -517,7 +593,8 @@ body {
 }
 
 .main-wrapper .layout-row .splitter-layout-wrapper .filetree-label:hover {
-  background-color: var(--hover-filetree-node-background);
+  background-color: var(--file-tree-hover-background);
+  color: var(--file-tree-text-active-foreground);
 }
 
 .main-wrapper .layout-row .splitter-layout-wrapper .filetree-toggle {
@@ -529,7 +606,7 @@ body {
 .main-wrapper .layout-row .splitter-layout-wrapper .filetree-toggle svg {
   width: 16px;
   height: auto;
-  stroke: var(--icon-color);
+  stroke: var(--file-tree-icon-foreground);
   stroke-width: 1;
 }
 
@@ -542,31 +619,39 @@ body {
 .main-wrapper .layout-row .splitter-layout-wrapper .filetree-icon svg {
   width: 16px;
   height: 16px;
-  stroke: var(--icon-color);
-  stroke-width: 1;
+}
+
+.main-wrapper .layout-row .splitter-layout-wrapper .filetree-icon svg path {
+  stroke: var(--file-tree-icon-foreground);
 }
 
 .main-wrapper .layout-row .splitter-layout-wrapper .filetree-name {
   flex: 1;
+  min-width: 0;
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
   overflow: hidden;
+  color: var(--file-tree-foreground);
+}
+
+.filetree-icon,
+.filetree-toggle {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .main-wrapper .layout-row .splitter-layout-wrapper .filetree-children {
-  padding-left: 14px;
+  margin-left: 14px;
   width: 100%;
   overflow: hidden;
   max-height: 100%;
 }
 
-.main-wrapper
-  .layout-row
-  .splitter-layout-wrapper
-  .filetree-node:hover
-  > .filetree-children {
-  box-shadow: -1px 0 0 0 var(--file-tree-folder-content-border-color);
+.main-wrapper .layout-row .splitter-layout-wrapper .filetree-children {
+  box-shadow: -1px 0 0 0 var(--border-color);
 }
 
 .main-wrapper .layout-row .splitter-layout-wrapper .filetree-create-form {
@@ -615,12 +700,11 @@ body {
 
 .main-wrapper .terminal-root {
   position: relative;
+  display: flex;
   padding: 8px;
   width: 100%;
   height: 100%;
   background: var(--terminal-bg);
-  color: var(--text-color);
-  overflow: hidden;
 }
 
 .main-wrapper .terminal-root .terminal-search-bar {

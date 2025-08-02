@@ -84,6 +84,13 @@ export const ERenderer = {
     ipcRenderer.invoke("maximize", window),
   handleWindowRestore: (window: "main" | "welcomeWizard") =>
     ipcRenderer.invoke("restore", window),
+
+  createTempPythonFile: async () => {
+    return (await ipcRenderer.invoke("create-temp-file")) as {
+      path: string;
+      name: string;
+    };
+  },
 };
 
 ipcRenderer.on("command-update-folder-structure", (event, data) => {

@@ -9,7 +9,8 @@ export class SplitterLayout {
   constructor(
     parent: HTMLElement,
     topHeightPercent: number,
-    bottomHeightPercent: number
+    bottomHeightPercent: number,
+    private onResize?: () => void
   ) {
     const splitterLayout = document.createElement("div");
     splitterLayout.className = "splitter-layout-wrapper";
@@ -28,35 +29,113 @@ export class SplitterLayout {
       sizes: [topHeightPercent, bottomHeightPercent],
       minSize: [50, 50],
       direction: "vertical",
-      gutterSize: 4,
+      gutterSize: 1,
       gutterStyle: (dimension, gutterSize) => ({
         [dimension]: `${gutterSize}px`,
       }),
       snapOffset: 0,
       gutter: (index, direction) => this.createGutter(direction),
       cursor: "row-resize",
+      onDrag: () => {
+        this.onResize?.();
+      },
     });
   }
 
   public addTopSplitterPane(pane: HTMLElement, sizePercent?: number) {
     this.topHorizontalPanes.push(pane);
-    const sizes = this.calculateSizes(
-      this.topHorizontalPanes.length,
-      sizePercent
-    );
-    this.renderHorizontalSplit(
-      this.topSplitter,
-      this.topHorizontalPanes,
-      sizes
-    );
+    pane.style.display = "block";
+    this.recalculateTopSizes(sizePercent);
   }
 
-  public addBottomSplitterPane(pane: HTMLElement) {
+  public hideTopPane(pane: HTMLElement) {
+    if (this.topHorizontalPanes.includes(pane)) {
+      pane.style.display = "none";
+      this.recalculateTopSizes();
+    }
+  }
+
+  showTopPane(pane: HTMLElement | null) {
+    if (!pane) {
+      console.warn("showTopPane called with null or undefined pane");
+      return;
+    }
+    if (!this.topHorizontalPanes.includes(pane)) {
+      this.topHorizontalPanes.push(pane);
+    }
+    if (!pane.parentElement || pane.parentElement !== this.topSplitter) {
+      this.topSplitter.appendChild(pane);
+    }
+    this.recalculateTopSizes();
+  }
+
+  public removeTopSplitterPane(pane: HTMLElement) {
+    const index = this.topHorizontalPanes.indexOf(pane);
+    if (index >= 0) {
+      this.topHorizontalPanes.splice(index, 1);
+      this.recalculateTopSizes();
+    }
+  }
+
+  private recalculateTopSizes(newSizePercent?: number) {
+    const visiblePanes = this.topHorizontalPanes.filter(
+      (pane) => pane.style.display !== "none"
+    );
+
+    if (visiblePanes.length === 0) {
+      this.topSplitter.innerHTML = "";
+      return;
+    }
+
+    const sizes = this.calculateSizes(visiblePanes.length, newSizePercent);
+    this.renderHorizontalSplit(this.topSplitter, visiblePanes, sizes);
+  }
+
+  public addBottomSplitterPane(pane: HTMLElement, sizePercent?: number) {
     this.bottomHorizontalPanes.push(pane);
-    this.renderHorizontalSplit(this.bottomSplitter, this.bottomHorizontalPanes);
+    pane.style.display = "block";
+    this.recalculateBottomSizes(sizePercent);
+  }
+
+  public hideBottomPane(pane: HTMLElement) {
+    if (this.bottomHorizontalPanes.includes(pane)) {
+      pane.style.display = "none";
+      this.recalculateBottomSizes();
+    }
+  }
+
+  public showBottomPane(pane: HTMLElement) {
+    if (this.bottomHorizontalPanes.includes(pane)) {
+      pane.style.display = "block";
+      this.recalculateBottomSizes();
+    }
+  }
+
+  public removeBottomSplitterPane(pane: HTMLElement) {
+    const index = this.bottomHorizontalPanes.indexOf(pane);
+    if (index >= 0) {
+      this.bottomHorizontalPanes.splice(index, 1);
+      this.recalculateBottomSizes();
+    }
+  }
+
+  private recalculateBottomSizes(newSizePercent?: number) {
+    const visiblePanes = this.bottomHorizontalPanes.filter(
+      (pane) => pane.style.display !== "none"
+    );
+
+    if (visiblePanes.length === 0) {
+      this.bottomSplitter.innerHTML = "";
+      return;
+    }
+
+    const sizes = this.calculateSizes(visiblePanes.length, newSizePercent);
+    this.renderHorizontalSplit(this.bottomSplitter, visiblePanes, sizes);
   }
 
   private calculateSizes(total: number, newSize?: number): number[] {
+    if (total === 0) return [];
+
     const sizes: number[] = [];
 
     if (total === 1) {
@@ -64,12 +143,13 @@ export class SplitterLayout {
       return sizes;
     }
 
-    const remaining = 100 - (newSize ?? 100 / total);
+    const lastSize = newSize ?? 100 / total;
+    const remaining = 100 - lastSize;
     const sizeForOthers = remaining / (total - 1);
 
     for (let i = 0; i < total; i++) {
       if (i === total - 1) {
-        sizes.push(newSize ?? 100 / total);
+        sizes.push(lastSize);
       } else {
         sizes.push(sizeForOthers);
       }
@@ -103,7 +183,7 @@ export class SplitterLayout {
       sizes: sizes.length === wrappers.length ? sizes : undefined,
       minSize: 50,
       direction: "horizontal",
-      gutterSize: 4,
+      gutterSize: 1,
       gutterStyle: (dimension, gutterSize) => ({
         [dimension]: `${gutterSize}px`,
       }),

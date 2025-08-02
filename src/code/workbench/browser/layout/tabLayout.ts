@@ -3,7 +3,7 @@ import { dispatch } from "../../common/store/store.js";
 import { getIconForFile } from "../../service/IconService/IconService.js";
 
 export class TabLayout {
-  public tab: HTMLDivElement;
+  public tabDomElement: HTMLDivElement;
 
   constructor(
     private icon: string,
@@ -15,12 +15,14 @@ export class TabLayout {
     private updateStoreTabs: Function,
     private isEditor?: boolean
   ) {
-    this.tab = document.createElement("div");
+    this.tabDomElement = document.createElement("div");
     this.setupTab();
   }
 
   private setupTab() {
-    this.tab.className = `tab-layout-wrapper${this.active ? " active" : ""}`;
+    this.tabDomElement.className = `tab-layout-wrapper${
+      this.active ? " active" : ""
+    }`;
 
     const name = document.createElement("span");
     name.className = "text-wrap";
@@ -44,9 +46,9 @@ export class TabLayout {
   <path d="M3 3.32001L21 21.32" stroke="#ccc" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>`;
 
-    this.tab.appendChild(icon);
-    this.tab.appendChild(name);
-    this.tab.appendChild(iconWrapper);
+    this.tabDomElement.appendChild(icon);
+    this.tabDomElement.appendChild(name);
+    this.tabDomElement.appendChild(iconWrapper);
     iconWrapper.appendChild(dot);
     iconWrapper.appendChild(close);
 
@@ -56,10 +58,10 @@ export class TabLayout {
     const isTouched = !!currentTab?.is_touched;
 
     if (isTouched) {
-      this.tab.classList.add("touched");
+      this.tabDomElement.classList.add("touched");
     }
 
-    this.tab.onclick = () => {
+    this.tabDomElement.onclick = () => {
       const tabs = this.getStoreTabs();
       const updatedTabs = tabs.map((t: any) => ({
         ...t,
@@ -87,15 +89,15 @@ export class TabLayout {
         }));
       }
       dispatch(this.updateStoreTabs(updatedTabs));
-      this.tab.remove();
+      this.tabDomElement.remove();
     };
 
     close.onclick = handleRemove;
 
-    this.tab.onmousedown = (e) => {
+    this.tabDomElement.onmousedown = (e) => {
       if (e.button === 1) handleRemove(e);
     };
 
-    return this.tab;
+    return this.tabDomElement;
   }
 }

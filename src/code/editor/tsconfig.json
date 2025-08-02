@@ -15,6 +15,6 @@
     "resolveJsonModule": true,
     "types": ["../../typings/global.d.ts"]
   },
-  "include": ["**/*.ts"],
+  "include": ["**/*.ts", "../../typings/module.d.ts"],
   "exclude": ["node_modules", "../../../out", "**/*.test.ts"]
 }

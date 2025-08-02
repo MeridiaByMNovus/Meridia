@@ -34,20 +34,16 @@ if (process.env.NODE_ENV === "development") {
 
 const PRELOAD_PATH = path.join(
   __dirname,
-  "..",
-  "out",
   "./code/base/window/preload/preload.js"
 );
 
 const MAIN_HTML_PATH =
   process.env.NODE_ENV === "development"
     ? `http://localhost:${PORT}`
-    : path.join(__dirname, "..", "out", "index.html");
+    : path.join(__dirname, "index.html");
 
 const WELCOME_WIZARD_HTML_PATH = path.join(
   __dirname,
-  "..",
-  "out",
   "./code/base/window/welcomeWizard/index.html"
 );
 
