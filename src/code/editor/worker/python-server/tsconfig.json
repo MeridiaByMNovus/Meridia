@@ -1,0 +1,49 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "Node16",
+    "moduleResolution": "Node16",
+    "lib": [
+      "ES2022",
+      "DOM"
+    ],
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    // Enable project compilation
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "inlineSources": false,
+    "stripInternal": true,
+    "strict": true,
+    "strictPropertyInitialization": false,
+    "importHelpers": true,
+    "downlevelIteration": false,
+    "noImplicitReturns": true,
+    "noUnusedParameters": true,
+    "noUnusedLocals": true,
+    // Enable type checking of declaration files, skip in packages where needed
+    "skipLibCheck": false,
+     // Disallow inconsistently-cased references to the same file
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitOverride": true,
+    "jsx": "react"
+  },
+  "include": [
+    "**/src/**/*.ts",
+    "**/test/**/*.ts",
+    "**/src/**/*.tsx",
+    "**/test/**/*.tsx",
+    "**/packages/*/*/*.ts",
+    "**/packages/*/*/*.js",
+    "**/resources/**/*.mts",
+    "**/resources/**/*.mjs",
+    "*.ts"
+  ],
+  "exclude": [
+    "dist/**/*",
+    "lib/**/*",
+    "node_modules/**/*"
+  ]
+}
