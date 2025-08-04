@@ -6,5 +6,6 @@ declare global {
     set_folder_data: Function;
     target_window: string;
     __gutter_cleanup_bound__?: boolean;
+    vfsTests: any;
   }
 }

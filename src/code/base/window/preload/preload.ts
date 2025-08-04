@@ -91,6 +91,10 @@ export const ERenderer = {
       name: string;
     };
   },
+
+  readFile: async (path: string) => {
+    return await ipcRenderer.invoke("read-file", path);
+  },
 };
 
 ipcRenderer.on("command-update-folder-structure", (event, data) => {

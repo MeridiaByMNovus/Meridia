@@ -1,6 +1,32 @@
 import esbuild from "esbuild";
 import fg from "fast-glob";
 
+const importMetaUrlPlugin = {
+  name: "import-meta-url",
+  setup(build) {
+    build.onResolve({ filter: /.*/ }, (args) => {
+      if (args.kind === "entry-point") return;
+      return;
+    });
+
+    build.onLoad({ filter: /\.[jt]s$/ }, async (args) => {
+      const fs = await import("fs/promises");
+      let contents = await fs.readFile(args.path, "utf8");
+
+      if (contents.includes("import.meta.url")) {
+        const fileUrl = `file://${args.path.replace(/\\/g, "/")}`;
+        contents = contents.replace(/import\.meta\.url/g, JSON.stringify(fileUrl));
+      }
+
+      return {
+        contents,
+        loader: args.path.endsWith(".ts") ? "ts" : "js",
+      };
+    });
+  },
+};
+
+
 const watch = process.argv.includes("--watch");
 const prod = process.argv.includes("--prod");
 const env = prod ? "production" : "development";
@@ -11,7 +37,7 @@ const common = {
   minify: prod,
   outbase: "src",
   outdir: "out",
-  plugins: [],
+  plugins: [importMetaUrlPlugin],
 };
 
 async function buildAll() {
@@ -19,6 +45,7 @@ async function buildAll() {
   const otherEntries = await fg([
     "src/code/workbench/**/*.ts",
     "src/code/editor/**/*.ts",
+    "!src/code/editor/worker/**/*.ts",
     "!src/code/workbench/**/renderer.ts",
     "!**/*.d.ts",
     "!**/*.test.ts",
@@ -56,6 +83,7 @@ async function buildAll() {
     ".svg": "file",
     ".py": "text",
     ".css": "text",
+    ".py": "file",
   };
 
   const rendererOpts = {

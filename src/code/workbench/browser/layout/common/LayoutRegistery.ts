@@ -12,6 +12,10 @@ import { SplitterLayout } from "../splitterLayout.js";
 export class LayoutService {
   constructor() {}
 
+  public getPane(id: string) {
+    return document.getElementById(id) as HTMLDivElement;
+  }
+
   public RegisterLayout(id: string) {
     const mainWrapper = document.querySelector(
       ".main-wrapper"
@@ -38,6 +42,7 @@ export class LayoutService {
 
     return splitterPane;
   }
+
   public RegisterActivityBarContent(
     pane: SplitterPaneLayout,
     uniqueId: string,
@@ -45,7 +50,7 @@ export class LayoutService {
       {
         attribute: string;
         value: string;
-      }
+      },
     ]
   ) {
     const activityBarContent = new ActivityBarContentLayout(uniqueId);
@@ -65,7 +70,8 @@ export class LayoutService {
     icon: string,
     id: string,
     position: "top" | "bottom",
-    activeByDefault: boolean
+    activeByDefault: boolean,
+    onClickHook?: Function
   ) {
     const activityBarItem = new ActivtyBarItemLayout(
       activityBar,
@@ -74,7 +80,8 @@ export class LayoutService {
       content,
       contentWrapper,
       position,
-      activeByDefault
+      activeByDefault,
+      onClickHook
     );
 
     return activityBarItem;
@@ -86,25 +93,31 @@ export class LayoutService {
   }
 
   public RegisterTabLayout(
-    icon: string,
     name: string,
     active: boolean,
-    content: HTMLDivElement,
+    content: HTMLElement,
     contentWrapper: HTMLDivElement,
     tabsLayout: TabsLayout,
     storeTabs: () => ITab[],
     updateStoreTabs: Function,
-    isEditor: boolean
+    isEditor: boolean,
+    onTabClickHook?: Function,
+    fileIcon?: string,
+    customIcon?: string,
+    tabData?: ITab
   ) {
     const tab = new TabLayout(
-      icon,
       name,
       active,
       content,
       contentWrapper,
       storeTabs,
       updateStoreTabs,
-      isEditor
+      isEditor,
+      onTabClickHook,
+      fileIcon,
+      customIcon,
+      tabData
     );
     tabsLayout.addTab(tab.tabDomElement);
     return tab;

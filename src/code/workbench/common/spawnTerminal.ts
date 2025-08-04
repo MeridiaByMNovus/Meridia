@@ -56,7 +56,7 @@ export class SpawnTerminal {
     this.terminal = new Terminal({
       theme,
       fontFamily: FONT_STACK,
-      fontSize: 16,
+      fontSize: 20,
       lineHeight: 1.25,
       letterSpacing: 0,
       cols: size.cols,
@@ -120,6 +120,10 @@ export class SpawnTerminal {
     ro.observe(container);
   }
 
+  attachTo(container: HTMLElement) {
+    this.terminal.open(container);
+  }
+
   private async initAfterFonts() {
     if ("fonts" in document) {
       try {
@@ -134,14 +138,26 @@ export class SpawnTerminal {
   fitToContainer() {
     const dims = this.fitAddon.proposeDimensions();
     if (!dims) return;
-    this.resize(dims.cols, dims.rows);
+
+    const cols = Math.floor(dims.cols);
+    const rows = Math.floor(dims.rows);
+
+    if (cols > 0 && rows > 0) this.resize(cols, rows);
   }
 
   fitIfNeeded() {
     const dims = this.fitAddon.proposeDimensions();
     if (!dims) return;
-    if (dims.cols !== this.terminal.cols || dims.rows !== this.terminal.rows) {
-      this.resize(dims.cols, dims.rows);
+
+    const cols = Math.floor(dims.cols);
+    const rows = Math.floor(dims.rows);
+
+    if (
+      Number.isInteger(cols) &&
+      Number.isInteger(rows) &&
+      (cols !== this.terminal.cols || rows !== this.terminal.rows)
+    ) {
+      this.resize(cols, rows);
     }
   }
 
@@ -258,6 +274,7 @@ export class SpawnTerminal {
       return true;
     });
 
+    // Changed this: removed passive:true
     root.addEventListener(
       "keydown",
       (e) => {
@@ -272,10 +289,25 @@ export class SpawnTerminal {
     );
   }
 
-  runCommand(command: string) {
+  clearAndAttachTo(container: HTMLElement) {
+    container.innerHTML = "";
+    this.attachTo(container);
+    this.fitToContainer();
+  }
+
+  executeCommand(command: string) {
     window.electron.ipcRenderer.send("ptyInstance.keystroke", {
       id: this.ptyId,
       data: command + "\r",
     });
+  }
+
+  moveTo(container: HTMLElement) {
+    if (!this.host || !container) return;
+
+    container.innerHTML = "";
+
+
+    this.fitToContainer();
   }
 }

@@ -1,7 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import {
-  IEditorTab,
   IFolderStructure,
   IMainState,
   ITab,
@@ -10,8 +9,8 @@ import {
 
 const initialState: IMainState = {
   folder_structure: {} as IFolderStructure,
-  editor_tabs: [] as IEditorTab[],
-  editor_active_tab: {} as IEditorTab,
+  editor_tabs: [] as ITab[],
+  editor_active_tab: {} as ITab,
   terminal_tabs: [] as ITab[],
   terminal_active_tab: {} as ITab,
   active_activityBaritem: "",
@@ -29,10 +28,10 @@ export const mainSlice = createSlice({
     set_folder_structure: (state, action: PayloadAction<IFolderStructure>) => {
       state.folder_structure = action.payload;
     },
-    update_editor_tabs: (state, action: PayloadAction<IEditorTab[]>) => {
+    update_editor_tabs: (state, action: PayloadAction<ITab[]>) => {
       state.editor_tabs = action.payload;
     },
-    update_editor_active_tab: (state, action: PayloadAction<IEditorTab>) => {
+    update_editor_active_tab: (state, action: PayloadAction<ITab>) => {
       state.editor_active_tab = action.payload;
     },
     update_terminal_tabs: (state, action: PayloadAction<ITab[]>) => {

@@ -68,9 +68,64 @@ export class TabsLayout {
   }
 
   public addTab(tab: HTMLDivElement) {
+    tab.draggable = true;
+
+    tab.addEventListener("dragstart", (e) => {
+      tab.classList.add("dragging");
+      e.dataTransfer?.setData("text/plain", "");
+      e.dataTransfer!.effectAllowed = "move";
+    });
+
+    tab.addEventListener("dragend", () => {
+      tab.classList.remove("dragging");
+      this.clearDropIndicators();
+    });
+
+    tab.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      const draggingEl = this.wrapper.querySelector(".dragging");
+      if (draggingEl !== tab) {
+        this.wrapper.querySelectorAll(".drag-over").forEach((el) => {
+          if (el !== tab) el.classList.remove("drag-over");
+        });
+        tab.classList.add("drag-over");
+      }
+    });
+
+    tab.addEventListener("drop", (e) => {
+      e.preventDefault();
+      const draggingEl = this.wrapper.querySelector(".dragging") as HTMLElement;
+      if (draggingEl && draggingEl !== tab) {
+        const dropTarget = tab;
+        const tabs = Array.from(this.wrapper.children);
+        const dropIndex = tabs.indexOf(dropTarget);
+        const dragIndex = tabs.indexOf(draggingEl);
+
+        if (dragIndex < dropIndex) {
+          dropTarget.after(draggingEl);
+        } else {
+          dropTarget.before(draggingEl);
+        }
+
+        this.ps.update();
+        this.ps2?.update();
+      }
+
+      this.clearDropIndicators();
+    });
+
     this.wrapper.appendChild(tab);
-    this.ps.update();
-    this.ps2?.update();
+    requestAnimationFrame(() => {
+      this.wrapper.scrollLeft = this.wrapper.scrollWidth;
+      this.ps.update();
+      this.ps2?.update();
+    });
+  }
+
+  private clearDropIndicators() {
+    this.wrapper
+      .querySelectorAll(".drag-over")
+      .forEach((el) => el.classList.remove("drag-over"));
   }
 
   public removeAllTabs() {

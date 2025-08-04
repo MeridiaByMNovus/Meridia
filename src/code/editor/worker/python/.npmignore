@@ -1,0 +1,7 @@
+/.vscode
+/.nx
+/.github
+/examples
+/gh-pages
+/pyright-browser
+node_modules

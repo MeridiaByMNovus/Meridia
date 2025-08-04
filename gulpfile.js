@@ -2,8 +2,9 @@ const { src, dest, watch, series, parallel } = require("gulp");
 const rename = require("gulp-rename");
 
 const SOURCE_GLOBS = [
-  "src/**/*.{html,css,json,svg,png,ico,zip}",
+  "src/**/*.{html,css,json,svg,png,ico,zip,py}",
   "!src/**/tsconfig.*",
+  "!src/**/node_modules/**",
 ];
 
 function copyFiles() {
@@ -11,7 +12,7 @@ function copyFiles() {
 }
 
 function copyPythonWorker() {
-  return src("node_modules/monaco-pyright-lsp/dist/worker.js")
+  return src("out/code/editor/worker/python/src/worker.js")
     .pipe(rename("python.worker.js"))
     .pipe(dest("out/workers"));
 }

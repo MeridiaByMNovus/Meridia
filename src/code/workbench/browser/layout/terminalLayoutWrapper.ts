@@ -4,8 +4,6 @@ export class TerminalLayoutWrapper {
   public render() {
     const terminalLayoutWrapper = document.createElement("div");
     terminalLayoutWrapper.className = "terminal-layout-wrapper";
-    terminalLayoutWrapper.style.width = "100%";
-    terminalLayoutWrapper.style.height = "100%";
 
     return terminalLayoutWrapper;
   }

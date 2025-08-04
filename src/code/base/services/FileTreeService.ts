@@ -20,6 +20,7 @@ export class FileTreeService {
   }
 
   private setupIPC() {
+    this.watch(this.fileTree);
     ipcMain.on("chokidar-change-folder", () => {
       this.watch(this.fileTree);
     });
@@ -27,7 +28,7 @@ export class FileTreeService {
     ipcMain.handle("get-folder", async () => StorageService.get("fileTree"));
 
     ipcMain.handle("get-subfolder-data", async (_event, dirPath) => {
-      if (!dirPath || dirPath === StorageService.get("fileTree")?.root) return;
+      if (!dirPath) return;
       const entries = fs.readdirSync(dirPath, { withFileTypes: true });
       const children = entries.map((entry) => ({
         id: Date.now() + Math.random(),
@@ -38,14 +39,15 @@ export class FileTreeService {
         children: entry.isDirectory() ? [] : undefined,
       })) as TFolderTree[];
 
+      const stats = fs.statSync(dirPath);
+      const isFolder = stats.isDirectory();
+
       const fileTree = StorageService.get("fileTree");
       this.addUniqueChildrenToNode(fileTree, dirPath, children);
       StorageService.set("fileTree", fileTree);
-      this.window.webContents.send("folder-updated");
+
       return children;
     });
-
-    // ---------- NEW: IPC BRIDGES ----------
 
     ipcMain.handle("fs-get-file-content", async (_e, filePath: string) => {
       return fsp.readFile(filePath, "utf-8");
@@ -198,9 +200,15 @@ export class FileTreeService {
       const parentPath = path.dirname(filePath);
       const renamedFrom = this.detectRename(filePath);
 
+      const stats = fs.statSync(filePath);
+      const isFolder = stats.isDirectory();
+
       if (renamedFrom && this.updatePath(fileTree, renamedFrom, filePath)) {
         StorageService.set("fileTree", fileTree);
-        this.window.webContents.send("folder-updated");
+        this.window.webContents.send("folder-updated", {
+          path: filePath,
+          isFolder,
+        });
         return;
       }
 
@@ -216,7 +224,10 @@ export class FileTreeService {
       parentNode.children = parentNode.children || [];
       parentNode.children.push(newNode);
       StorageService.set("fileTree", fileTree);
-      this.window.webContents.send("folder-updated");
+      this.window.webContents.send("folder-updated", {
+        path: filePath,
+        isFolder,
+      });
     };
   }
 
@@ -243,6 +254,7 @@ export class FileTreeService {
         return oldPath;
       }
     }
+
     return null;
   }
 

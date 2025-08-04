@@ -8,10 +8,11 @@ export class ActivtyBarItemLayout {
     private ActivtyBar: ActivityBar,
     private icon: string,
     private id: string,
-    private content: HTMLDivElement,
-    private contentWrapper: HTMLDivElement,
-    private position: "top" | "bottom",
-    private activeByDefault: boolean
+    private content?: HTMLDivElement,
+    private contentWrapper?: HTMLDivElement,
+    private position: "top" | "bottom" = "top",
+    private activeByDefault: boolean = false,
+    private onClickHook?: Function
   ) {
     this.render();
   }
@@ -21,38 +22,43 @@ export class ActivtyBarItemLayout {
     item.classList.add("activity-bar-item");
     item.innerHTML = this.icon;
     item.onclick = () => {
-      dispatch(update_active_activitybar_item(this.id));
+      if (this.content && this.contentWrapper) {
+        dispatch(update_active_activitybar_item(this.id));
+        this.contentWrapper.innerHTML = "";
+        this.contentWrapper.appendChild(this.content);
+      }
 
-      this.contentWrapper.innerHTML = "";
-      this.contentWrapper.appendChild(this.content);
+      if (this.onClickHook) {
+        this.onClickHook();
+      }
     };
 
-    if (this.activeByDefault) {
+    if (this.activeByDefault && this.content && this.contentWrapper) {
       dispatch(update_active_activitybar_item(this.id));
       this.contentWrapper.innerHTML = "";
       this.contentWrapper.appendChild(this.content);
     }
 
-    const active = select((s) => s.main.active_activityBaritem);
+    if (this.content && this.contentWrapper) {
+      const active = select((s) => s.main.active_activityBaritem);
 
-    if (active === this.id) {
-      this.setActive(true, item);
-    }
-
-    watch(
-      (s) => s.main.active_activityBaritem,
-      (next) => {
-        const isActive = next === this.id;
-        this.setActive(isActive, item);
+      if (active === this.id) {
+        this.setActive(true, item);
       }
-    );
+
+      watch(
+        (s) => s.main.active_activityBaritem,
+        (next) => {
+          const isActive = next === this.id;
+          this.setActive(isActive, item);
+        }
+      );
+    }
 
     this.ActivtyBar.addActivityBarItem(item, this.position);
   }
 
   private setActive(isActive: boolean, item: HTMLDivElement) {
     item.classList.toggle("active", isActive);
-    if (isActive) {
-    }
   }
 }

@@ -13,7 +13,6 @@
   "exclude": [
     "src/code/workbench/**/*.ts",
     "src/code/editor/**/*",
-    "node_modules",
-    ""
+    "node_modules"
   ]
 }

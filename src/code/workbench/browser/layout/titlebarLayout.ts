@@ -99,7 +99,8 @@ export class TitleBarLayout {
     const commandsDiv = document.createElement("div");
     commandsDiv.className = "commands";
     const runButton = document.createElement("button");
-    runButton.innerHTML = `<svg viewBox="-3 0 28 28" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:sketch="http://www.bohemiancoding.com/sketch/ns" fill="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <title>play</title> <desc>Created with Sketch Beta.</desc> <defs> </defs> <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" sketch:type="MSPage"> <g id="Icon-Set" sketch:type="MSLayerGroup" transform="translate(-417.000000, -569.000000)" fill="var(--icon-color)"> <path d="M418.983,594.247 L418.983,571.722 L436.831,582.984 L418.983,594.247 L418.983,594.247 Z M438.204,581.536 L419.394,569.279 C418.278,568.672 417,568.943 417,570.917 L417,595.052 C417,597.012 418.371,597.361 419.394,596.689 L438.204,584.433 C439.288,583.665 439.258,582.242 438.204,581.536 L438.204,581.536 Z" id="play" sketch:type="MSShapeGroup"> </path> </g> </g> </g></svg>`;
+    runButton.className = "run-button";
+    runButton.innerHTML = `<svg viewBox="-3 0 28 28" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:sketch="http://www.bohemiancoding.com/sketch/ns" fill="var(--icon-color)"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <title>play</title> <desc>Created with Sketch Beta.</desc> <defs> </defs> <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" sketch:type="MSPage"> <g id="Icon-Set" sketch:type="MSLayerGroup" transform="translate(-417.000000, -569.000000)" fill="var(--icon-color)"> <path d="M418.983,594.247 L418.983,571.722 L436.831,582.984 L418.983,594.247 L418.983,594.247 Z M438.204,581.536 L419.394,569.279 C418.278,568.672 417,568.943 417,570.917 L417,595.052 C417,597.012 418.371,597.361 419.394,596.689 L438.204,584.433 C439.288,583.665 439.258,582.242 438.204,581.536 L438.204,581.536 Z" id="play" sketch:type="MSShapeGroup"> </path> </g> </g> </g></svg>`;
     commandsDiv.appendChild(runButton);
 
     const panelControlsDiv = document.createElement("div");
@@ -107,13 +108,12 @@ export class TitleBarLayout {
 
     const getState = () => select((s) => s.main.panel_state);
     const btnPanelLeft = document.createElement("button");
-    const btnPanelRight = document.createElement("button");
+
     const btnPanelBottom = document.createElement("button");
     const updateBtn = () => {
       const { left, right, bottom } = getState();
       btnPanelLeft.innerHTML = left === "on" ? panelLeftOnSvg : panelLeftOffSvg;
-      btnPanelRight.innerHTML =
-        right === "on" ? panelRightOnSvg : panelRightOffSvg;
+
       btnPanelBottom.innerHTML =
         bottom === "on" ? panelBottomOnSvg : panelBottomOffSvg;
     };
@@ -129,16 +129,7 @@ export class TitleBarLayout {
         })
       );
     };
-    btnPanelRight.onclick = () => {
-      const { left, right, bottom } = getState();
-      dispatch(
-        update_panel_state({
-          left,
-          right: right === "on" ? "off" : "on",
-          bottom,
-        })
-      );
-    };
+
     btnPanelBottom.onclick = () => {
       const { left, right, bottom } = getState();
       dispatch(
@@ -152,7 +143,6 @@ export class TitleBarLayout {
 
     panelControlsDiv.appendChild(btnPanelLeft);
     panelControlsDiv.appendChild(btnPanelBottom);
-    panelControlsDiv.appendChild(btnPanelRight);
 
     const optionsDiv = document.createElement("div");
     optionsDiv.className = "options";
@@ -179,7 +169,6 @@ export class TitleBarLayout {
     };
 
     window.electron.ipcRenderer.on("window-changed-to-maximized", () => {
-      console.log("changed to maximized");
       btnRestore.innerHTML = RestoreSVG;
       btnRestore.onclick = () => {
         window.electron.handleWindowRestore("main");
@@ -187,7 +176,6 @@ export class TitleBarLayout {
     });
 
     window.electron.ipcRenderer.on("window-changed-to-restore", () => {
-      console.log("changed to restore");
       btnRestore.innerHTML = MaximizeSVG;
       btnRestore.onclick = () => {
         window.electron.handleWindowMaximize("main");

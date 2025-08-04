@@ -1,9 +1,7 @@
-import { tokensToCssVariables } from "../code/workbench/common/functions.js";
-
 export interface IMainState {
   folder_structure: IFolderStructure;
-  editor_tabs: IEditorTab[];
-  editor_active_tab: IEditorTab;
+  editor_tabs: ITab[];
+  editor_active_tab: ITab;
   terminal_tabs: ITab[];
   terminal_active_tab: ITab;
   active_activityBaritem: string;
@@ -16,14 +14,24 @@ export interface PanelState {
   bottom: "on" | "off";
 }
 
-export interface IEditorTab {
+export interface IContentTab {
+  id: any;
   name: string;
   icon: string;
   active: boolean;
-  is_touched: boolean;
-  uri: string;
-  language?: string;
-  initialContent?: string;
+  content: HTMLElement;
+}
+
+export interface ITab {
+  id: any;
+  name: string;
+  fileIcon?: string;
+  customIcon?: string;
+  editorContent?: string;
+  active: boolean;
+  is_touched?: boolean;
+  uri?: string;
+  content?: string;
 }
 
 export interface IFolderStructure {
@@ -43,12 +51,6 @@ export type TFolderTree = {
   type: "folder" | "file";
 };
 
-export type ITab = {
-  icon: string;
-  name: string;
-  active: boolean;
-};
-
 export type ThemeKind = "light" | "dark" | "highContrast";
 
 export const knownColorKeys = [
@@ -66,6 +68,8 @@ export const knownColorKeys = [
   "activityBar.background",
   "extensionViewlet.background",
   "activityBarContent.background",
+  "activityBar.item.activebackground",
+  "activityBar.item.activeforeground",
   "quickInput.background",
   "tab.inactiveBackground",
   "tab.activeBackground",
@@ -108,8 +112,28 @@ export const knownColorKeys = [
   "explorer.input.border",
   "titleBar.border",
   "textLink.foreground",
-  "charts.green",
-  "charts.red",
+  "accent.green",
+  "accent.red",
+  "accent.blue",
+  // Settings-specific color keys
+  "settings.headerBackground",
+  "settings.contentBackground",
+  "settings.sidebarBackground",
+  "settings.focusedRowBackground",
+  "settings.rowHoverBackground",
+  "settings.dropdownBackground",
+  "settings.dropdownForeground",
+  "settings.dropdownBorder",
+  "settings.checkboxBackground",
+  "settings.checkboxForeground",
+  "settings.checkboxBorder",
+  "settings.textInputBackground",
+  "settings.textInputForeground",
+  "settings.textInputBorder",
+  "settings.numberInputBackground",
+  "settings.numberInputForeground",
+  "settings.numberInputBorder",
+  "settings.modifiedItemIndicator",
 ] as const;
 
 export type KnownColorKey = (typeof knownColorKeys)[number];

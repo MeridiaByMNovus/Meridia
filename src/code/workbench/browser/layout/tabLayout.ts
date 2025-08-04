@@ -4,19 +4,60 @@ import { getIconForFile } from "../../service/IconService/IconService.js";
 
 export class TabLayout {
   public tabDomElement: HTMLDivElement;
+  private tabId: string;
 
   constructor(
-    private icon: string,
     private name: string,
     private active: boolean,
-    private content: HTMLDivElement,
+    private content: HTMLElement,
     private contentWrapper: HTMLDivElement,
     private getStoreTabs: () => any,
     private updateStoreTabs: Function,
-    private isEditor?: boolean
+    private isEditor?: boolean,
+    private onTabClickHook?: Function,
+    private fileIcon?: string,
+    private customIcon?: string,
+    private tabData?: any
   ) {
     this.tabDomElement = document.createElement("div");
+    this.tabId = tabData?.id || this.generateFallbackId();
     this.setupTab();
+  }
+
+  private generateFallbackId(): string {
+    const baseId = this.tabData?.uri || this.tabData?.content || this.name;
+    return btoa(baseId)
+      .replace(/[^a-zA-Z0-9]/g, "")
+      .substring(0, 10);
+  }
+
+  private findTabInStore(): any {
+    const tabs = this.getStoreTabs();
+
+    let currentTab = null;
+
+    if (this.tabId) {
+      currentTab = tabs.find((t: any) => t.id === this.tabId);
+      if (currentTab) return currentTab;
+    }
+
+    if (this.tabData?.uri) {
+      currentTab = tabs.find((t: any) => t.uri === this.tabData.uri);
+      if (currentTab) return currentTab;
+    }
+
+    if (this.tabData?.content) {
+      currentTab = tabs.find((t: any) => t.content === this.tabData.content);
+      if (currentTab) return currentTab;
+    }
+
+    currentTab = tabs.find((t: any) => {
+      const nameMatches = t.name === this.name;
+      const typeMatches = !!t.content === !!this.tabData?.content;
+      return nameMatches && typeMatches;
+    });
+
+    return currentTab;
   }
 
   private setupTab() {
@@ -28,9 +69,21 @@ export class TabLayout {
     name.className = "text-wrap";
     name.innerHTML = this.name;
 
-    const icon = document.createElement("img");
-    icon.alt = this.icon;
-    icon.src = `./code/resources/assets/fileIcons/${getIconForFile(this.icon)}`;
+    const icon = document.createElement("div");
+    icon.className = "tab-icon";
+
+    if (this.customIcon) {
+      // Use custom icon HTML
+      icon.innerHTML = this.customIcon;
+    } else {
+      // Use file icon image
+      const img = document.createElement("img");
+      img.alt = this.fileIcon ? this.fileIcon : "file.py";
+      img.src = `./code/resources/assets/fileIcons/${getIconForFile(
+        this.fileIcon ? this.fileIcon : "file.py"
+      )}`;
+      icon.appendChild(img);
+    }
 
     const iconWrapper = document.createElement("div");
     iconWrapper.className = "icon-wrapper";
@@ -52,9 +105,7 @@ export class TabLayout {
     iconWrapper.appendChild(dot);
     iconWrapper.appendChild(close);
 
-    const currentTab = this.getStoreTabs().find(
-      (t: any) => t.name === this.name
-    );
+    const currentTab = this.findTabInStore();
     const isTouched = !!currentTab?.is_touched;
 
     if (isTouched) {
@@ -63,23 +114,40 @@ export class TabLayout {
 
     this.tabDomElement.onclick = () => {
       const tabs = this.getStoreTabs();
+      const currentTab = this.findTabInStore();
+
+      if (!currentTab) {
+        return;
+      }
+
       const updatedTabs = tabs.map((t: any) => ({
         ...t,
-        active: t.name === this.name,
+        active: t.id === currentTab.id,
       }));
+
       dispatch(this.updateStoreTabs(updatedTabs));
+
+      if (this.onTabClickHook) this.onTabClickHook();
     };
 
     const handleRemove = (e: MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
       const tabs = this.getStoreTabs();
-      const index = tabs.findIndex((t: any) => t.name === this.name);
+      const currentTabToRemove = this.findTabInStore();
+
+      if (!currentTabToRemove) return;
+
+      const index = tabs.findIndex((t: any) => t.id === currentTabToRemove.id);
       if (index === -1) return;
-      if (this.isEditor) EditorService.get().close(tabs[index].uri);
+
+      if (this.isEditor && !this.tabData?.content)
+        EditorService.get().close(tabs[index].uri);
+
       const filtered = tabs.slice(0, index).concat(tabs.slice(index + 1));
       const isActiveClosed = tabs[index].active;
       let updatedTabs = filtered;
+
       if (isActiveClosed && filtered.length > 0) {
         const newActiveIndex =
           index >= filtered.length ? filtered.length - 1 : index;
@@ -88,6 +156,7 @@ export class TabLayout {
           active: i === newActiveIndex,
         }));
       }
+
       dispatch(this.updateStoreTabs(updatedTabs));
       this.tabDomElement.remove();
     };

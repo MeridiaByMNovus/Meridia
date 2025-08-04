@@ -54,7 +54,7 @@ export const run_code = ({
 };
 
 export function handleNewFile() {
-  executeCommand("new-file-tab", "");
+  mainWindow.webContents.send("new-file-tab");
 }
 
 export async function handleOpenFile() {
@@ -94,35 +94,35 @@ export function handleCloseProject() {
 }
 
 export function handleSaveCurrentFile() {
-  executeCommand("save-current-file", "");
+  mainWindow.webContents.send("save-current-file");
 }
 
 export function handleOpenSettings() {
-  executeCommand("open-settings", "");
+  mainWindow.webContents.send("open-settings");
 }
 
 export function handleOpenSidebar() {
-  executeCommand("toggle-left-panel", "");
+  mainWindow.webContents.send("toggle-left-panel");
 }
 
 export function handleOpenRightPanel() {
-  executeCommand("toggle-right-panel", "");
+  mainWindow.webContents.send("toggle-right-panel");
 }
 
 export function handleOpenBottomPanel() {
-  executeCommand("toggle-bottom-panel", "");
+  mainWindow.webContents.send("toggle-bottom-panel");
 }
 
 export function handleOpenTerminal() {
-  executeCommand("open-terminal", "");
+  mainWindow.webContents.send("open-terminal");
 }
 
 export function handleRun() {
-  executeCommand("run-current-file", "");
+  mainWindow.webContents.send("run-current-file");
 }
 
 export function handleOpenCommandPalette() {
-  executeCommand("open-command-palette", "");
+  mainWindow.webContents.send("open-command-palette");
 }
 
 export async function handleOpenSetFolder() {
@@ -228,3 +228,13 @@ export const get_set_folder_structure = ({ path }: { path: string }) => {
   StorageService.set("fileTree", structure);
   mainWindow.reload();
 };
+
+ipcMain.handle("read-file", (event, filePath) => {
+  try {
+    const data = fs.readFileSync(filePath);
+    return data;
+  } catch (error) {
+    console.error("Error reading file:", error);
+    throw error;
+  }
+});

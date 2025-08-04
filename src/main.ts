@@ -13,6 +13,7 @@ import { ProjectService } from "./code/base/services/ProjectService.js";
 import { open_folder } from "./code/base/common/functions.js";
 import { IpcCommandsRegisteryService } from "./code/base/common/IpcCommandsRegisteryService.js";
 import { CommandRegistry } from "./code/base/services/CommandRegistryService.js";
+import { EditorFileSystemService } from "./code/base/services/EditorFileSystemService.js";
 import { Server } from "./code/platform/server/server.js";
 import { SpawnPty } from "./code/base/common/spawnPty.js";
 
@@ -181,7 +182,7 @@ app.whenReady().then(() => {
 
   ptyServer = new SpawnPty(ipcMain, {
     shell: process.platform === "win32" ? "powershell.exe" : "/bin/zsh",
-    cwd: process.cwd(),
+    cwd: cwd,
     defaultCols: 120,
     defaultRows: 40,
   });
@@ -197,6 +198,7 @@ app.whenReady().then(() => {
   new DialogService();
   new UpdateService();
   new ProjectService();
+  new EditorFileSystemService();
 
   RegisterIpcHandlers();
 });

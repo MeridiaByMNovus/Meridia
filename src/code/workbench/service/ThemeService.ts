@@ -200,4 +200,8 @@ export class ThemeService {
       this.setThemeByName(persisted, false);
     }
   }
+
+  getRegisteredThemes() {
+    return this.listThemes();
+  }
 }
