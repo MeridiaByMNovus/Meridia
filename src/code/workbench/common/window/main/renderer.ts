@@ -1,10 +1,11 @@
 import { Workbench } from "../../../workbench.js";
 import { InjectResources } from "../../injectResources.js";
 
-window.onload = () => {
+window.onload = async () => {
   InjectResources();
 
   window.target_window = "main";
+
   new Workbench();
 };
 

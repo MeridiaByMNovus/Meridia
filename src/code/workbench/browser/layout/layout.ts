@@ -35,7 +35,7 @@ export class Layout {
   private terminal!: SpawnTerminal;
   private splitterLayout!: SplitterLayout;
   private tabContentEl!: HTMLDivElement;
-  private editorService = EditorService.get();
+  private editorService = new EditorService();
 
   private isTabSwitching = false;
   private tabSwitchingTimer: NodeJS.Timeout | null = null;

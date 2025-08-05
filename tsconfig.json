@@ -12,6 +12,7 @@
   "include": ["./src/*.ts", "./src/typings", "./src/code/**/*.ts"],
   "exclude": [
     "src/code/workbench/**/*.ts",
+    "src/python-server/**/*",
     "src/code/editor/**/*",
     "node_modules"
   ]

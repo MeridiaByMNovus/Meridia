@@ -122,6 +122,8 @@ function createWindow({
     show: false,
     webPreferences: {
       preload,
+      webSecurity: false,
+      allowRunningInsecureContent: true,
     },
   });
 

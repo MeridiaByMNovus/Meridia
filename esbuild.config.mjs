@@ -15,7 +15,10 @@ const importMetaUrlPlugin = {
 
       if (contents.includes("import.meta.url")) {
         const fileUrl = `file://${args.path.replace(/\\/g, "/")}`;
-        contents = contents.replace(/import\.meta\.url/g, JSON.stringify(fileUrl));
+        contents = contents.replace(
+          /import\.meta\.url/g,
+          JSON.stringify(fileUrl)
+        );
       }
 
       return {
@@ -25,7 +28,6 @@ const importMetaUrlPlugin = {
     });
   },
 };
-
 
 const watch = process.argv.includes("--watch");
 const prod = process.argv.includes("--prod");
@@ -38,6 +40,7 @@ const common = {
   outbase: "src",
   outdir: "out",
   plugins: [importMetaUrlPlugin],
+  logLevel: "error", // Only show errors, not warnings
 };
 
 async function buildAll() {
@@ -45,10 +48,12 @@ async function buildAll() {
   const otherEntries = await fg([
     "src/code/workbench/**/*.ts",
     "src/code/editor/**/*.ts",
-    "!src/code/editor/worker/**/*.ts",
+    "src/code/editor/worker/**/*.ts",
     "!src/code/workbench/**/renderer.ts",
     "!**/*.d.ts",
     "!**/*.test.ts",
+    "!**/node_modules/**/test/**",
+    "!**/node_modules/**/example.ts",
   ]);
 
   const workerEntries = {
@@ -83,7 +88,6 @@ async function buildAll() {
     ".svg": "file",
     ".py": "text",
     ".css": "text",
-    ".py": "file",
   };
 
   const rendererOpts = {
@@ -104,9 +108,20 @@ async function buildAll() {
     ...common,
     entryPoints: otherEntries,
     platform: "node",
-    format: "cjs",
+    format: "esm", // Changed from "cjs" to "esm" to support top-level await
     target: ["node18"],
     loader: Loaders,
+    external: [
+      // Mark all problematic packages as external so they're not bundled
+      "lightningcss",
+      "esbuild",
+      "langium-statemachine-dsl",
+      "vite",
+      "minimist",
+      "fastq",
+      "tsconfig-paths",
+    ],
+    packages: "external", // This tells esbuild to treat all node_modules as external
   };
 
   if (watch) {
