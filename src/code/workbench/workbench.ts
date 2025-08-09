@@ -1,16 +1,12 @@
 import { Layout } from "./browser/layout/layout.js";
 import { InitElementsService } from "./service/InitElementsService.js";
 import {
-  AtomOneDarkTheme,
-  CyberpunkNeonTheme,
-  ForestZenTheme,
-  IntelliJDarkTheme,
-  LightBlueTheme,
-  OceanDeepTheme,
-  PgAdminTheme,
-  SublimeMonokaiTheme,
-  WarmSunsetTheme,
-  XcodeLightTheme,
+  DraculaTechTheme,
+  SolarizedCalmTheme,
+  NordSeaTheme,
+  MinimalLightTheme,
+  OneDarkProTheme,
+  MonokaiClassicTheme,
 } from "../resources/theme/themes.js";
 import { themeService } from "./service/ThemeServiceSingleton.js";
 import {
@@ -62,7 +58,7 @@ export class Workbench {
       })
       .catch((error) => {
         const defaultSettings = {
-          "workbench.colorTheme": WarmSunsetTheme.name,
+          "workbench.colorTheme": DraculaTechTheme.name,
           "workbench.startupAction": "welcomeTab",
           "workbench.enableAnimations": true,
         };
@@ -111,16 +107,12 @@ export class Workbench {
 
   private initializeThemeSystem(): void {
     const availableThemes = [
-      LightBlueTheme,
-      IntelliJDarkTheme,
-      AtomOneDarkTheme,
-      SublimeMonokaiTheme,
-      ForestZenTheme,
-      XcodeLightTheme,
-      CyberpunkNeonTheme,
-      WarmSunsetTheme,
-      OceanDeepTheme,
-      PgAdminTheme,
+      DraculaTechTheme,
+      MinimalLightTheme,
+      MonokaiClassicTheme,
+      OneDarkProTheme,
+      NordSeaTheme,
+      SolarizedCalmTheme,
     ];
 
     themeService.registerMany(availableThemes);
@@ -130,7 +122,11 @@ export class Workbench {
       "workbench.colorTheme"
     ) as string;
     if (currentTheme) {
-      themeService.setThemeByName(currentTheme);
+      try {
+        themeService.setThemeByName(currentTheme);
+      } catch {
+        themeService.setThemeByName(NordSeaTheme.name);
+      }
     }
   }
 

@@ -34,4 +34,8 @@ export class ActivityBar {
       this.bottomActivityBarWrapper.appendChild(item);
     }
   }
+
+  public getDomElement() {
+    return this.ActivityBarWrapper;
+  }
 }

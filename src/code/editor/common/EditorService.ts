@@ -3,6 +3,7 @@ import debounce from "lodash.debounce";
 import { themeService } from "../../workbench/service/ThemeServiceSingleton.js";
 import { dispatch, store } from "../../workbench/common/store/store.js";
 import { update_editor_tabs } from "../../workbench/common/store/mainSlice.js";
+import { PyrightProvider } from "./PyrightProvider.js";
 
 export type OpenTab = {
   uri?: string;
@@ -71,48 +72,50 @@ export class EditorCore {
     return this.nonCodeExtensions.has(this.getFileExtension(path));
   }
 
-  // async mount(container: HTMLElement, _theme: Theme = "dark") {
-  //   if (this.editor) return;
+  async mount(container: HTMLElement, _theme: Theme = "dark") {
+    if (this.editor) return;
 
-  //   this.editorContainer = container;
-  //   this.setupPathDisplay(container);
+    this.editorContainer = container;
+    this.setupPathDisplay(container);
 
-  //   monaco.editor.defineTheme("theme", {
-  //     base: themeService.getCurrent()?.kind === "dark" ? "vs-dark" : "vs",
-  //     inherit: true,
-  //     rules: [],
-  //     colors: {
-  //       "editor.background":
-  //         themeService.getColor("editor.background") ?? (null as any),
-  //       "editor.foreground":
-  //         themeService.getColor("editor.foreground") ?? (null as any),
-  //     },
-  //   });
-  //   monaco.editor.setTheme("theme");
+    monaco.editor.defineTheme("theme", {
+      base: themeService.getCurrent()?.kind === "dark" ? "vs-dark" : "vs",
+      inherit: true,
+      rules: [],
+      colors: {
+        "editor.background":
+          themeService.getColor("editor.background") ?? (null as any),
+        "editor.foreground":
+          themeService.getColor("editor.foreground") ?? (null as any),
+      },
+    });
+    monaco.editor.setTheme("theme");
 
-  //   this.editorDiv = document.createElement("div");
-  //   this.editorDiv.className = "editor-div";
-  //   this.editorDiv.style.height = "100%";
-  //   this.editorDiv.style.width = "100%";
-  //   this.editorDiv.style.flex = "1";
-  //   container.appendChild(this.editorDiv);
+    this.editorDiv = document.createElement("div");
+    this.editorDiv.className = "editor-div";
+    this.editorDiv.style.height = "100%";
+    this.editorDiv.style.width = "100%";
+    this.editorDiv.style.flex = "1";
+    container.appendChild(this.editorDiv);
 
-  //   this.fileViewerDiv = document.createElement("div");
-  //   this.fileViewerDiv.className = "file-viewer-div";
-  //   this.fileViewerDiv.style.height = "100%";
-  //   this.fileViewerDiv.style.width = "100%";
-  //   this.fileViewerDiv.style.flex = "1";
-  //   this.fileViewerDiv.style.display = "none";
-  //   this.fileViewerDiv.style.overflow = "auto";
-  //   this.fileViewerDiv.style.padding = "20px";
-  //   this.fileViewerDiv.style.backgroundColor = "var(--editor-bg)";
-  //   container.appendChild(this.fileViewerDiv);
+    this.fileViewerDiv = document.createElement("div");
+    this.fileViewerDiv.className = "file-viewer-div";
+    this.fileViewerDiv.style.height = "100%";
+    this.fileViewerDiv.style.width = "100%";
+    this.fileViewerDiv.style.flex = "1";
+    this.fileViewerDiv.style.display = "none";
+    this.fileViewerDiv.style.overflow = "auto";
+    this.fileViewerDiv.style.padding = "20px";
+    this.fileViewerDiv.style.backgroundColor = "var(--editor-bg)";
+    container.appendChild(this.fileViewerDiv);
 
-  //   const editorOptions = this.getEditorOptions();
-  //   this.editor = monaco.editor.create(this.editorDiv, editorOptions);
+    const editorOptions = this.getEditorOptions();
+    this.editor = monaco.editor.create(this.editorDiv, editorOptions);
 
-  //   this.setupSettingsWatchers();
-  // }
+    this.setupSettingsWatchers();
+
+    new PyrightProvider(this.editor).loadPyrightProvider();
+  }
 
   getEditorOptions(): monaco.editor.IStandaloneEditorConstructionOptions {
     const defaultOptions: monaco.editor.IStandaloneEditorConstructionOptions = {
@@ -763,6 +766,8 @@ export class EditorCore {
       this.editor = monaco.editor.create(this.editorDiv, editorOptions);
 
       this.setupSettingsWatchers();
+
+      new PyrightProvider(this.editor);
     } catch (error) {
       this.destroy();
       throw error;
@@ -770,48 +775,4 @@ export class EditorCore {
   }
 }
 
-export class EditorService extends EditorCore {
-  mount(container: HTMLElement, _theme?: Theme) {
-    if (this.editor) return;
-
-    // this.editorContainer = container;
-    // this.setupPathDisplay(container);
-
-    // monaco.editor.defineTheme("theme", {
-    //   base: themeService.getCurrent()?.kind === "dark" ? "vs-dark" : "vs",
-    //   inherit: true,
-    //   rules: [],
-    //   colors: {
-    //     "editor.background":
-    //       themeService.getColor("editor.background") ?? (null as any),
-    //     "editor.foreground":
-    //       themeService.getColor("editor.foreground") ?? (null as any),
-    //   },
-    // });
-    // monaco.editor.setTheme("theme");
-
-    // this.editorDiv = document.createElement("div");
-    // this.editorDiv.className = "editor-div";
-    // this.editorDiv.style.height = "100%";
-    // this.editorDiv.style.width = "100%";
-    // this.editorDiv.style.flex = "1";
-    // container.appendChild(this.editorDiv);
-
-    // this.fileViewerDiv = document.createElement("div");
-    // this.fileViewerDiv.className = "file-viewer-div";
-    // this.fileViewerDiv.style.height = "100%";
-    // this.fileViewerDiv.style.width = "100%";
-    // this.fileViewerDiv.style.flex = "1";
-    // this.fileViewerDiv.style.display = "none";
-    // this.fileViewerDiv.style.overflow = "auto";
-    // this.fileViewerDiv.style.padding = "20px";
-    // this.fileViewerDiv.style.backgroundColor = "var(--editor-bg)";
-    // container.appendChild(this.fileViewerDiv);
-
-    // const editorOptions = this.getEditorOptions();
-    // this.editor = monaco.editor.create(this.editorDiv, editorOptions);
-
-    this.setupSettingsWatchers();
-  }
-  open(tab: OpenTab, preserveViewState?: boolean): void {}
-}
+export class EditorService extends EditorCore {}

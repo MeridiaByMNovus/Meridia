@@ -66,39 +66,48 @@ export class SettingsController {
         id: "editor",
         title: "Editor",
         icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-          <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-        </svg>`,
+        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+      </svg>`,
         description: "Customize editor behavior and appearance",
       },
       {
         id: "workbench",
         title: "Workbench",
         icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-          <path d="M3 3h18v18H3V3zm2 2v14h14V5H5zm2 2h10v2H7V7zm0 4h10v2H7v-2zm0 4h7v2H7v-2z"/>
-        </svg>`,
+        <path d="M3 3h18v18H3V3zm2 2v14h14V5H5zm2 2h10v2H7V7zm0 4h10v2H7v-2zm0 4h7v2H7v-2z"/>
+      </svg>`,
         description: "Control the appearance and layout of the workbench",
       },
       {
         id: "terminal",
         title: "Terminal",
         icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-          <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM4 18V8h16v10H4z"/>
-          <path d="M6 10l4 2-4 2z"/>
-          <path d="M12 14h6v2h-6z"/>
-        </svg>`,
+        <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM4 18V8h16v10H4z"/>
+        <path d="M6 10l4 2-4 2z"/>
+        <path d="M12 14h6v2h-6z"/>
+      </svg>`,
         description: "Configure terminal settings and behavior",
       },
       {
         id: "theme",
         title: "Theme",
         icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-          <path d="M12 18c-.89 0-1.74-.19-2.5-.56C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.44C10.26 6.19 11.11 6 12 6c3.31 0 6 2.69 6 6s-2.69 6-6 6z"/>
-        </svg>`,
+        <path d="M12 18c-.89 0-1.74-.19-2.5-.56C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.44C10.26 6.19 11.11 6 12 6c3.31 0 6 2.69 6 6s-2.69 6-6 6z"/>
+      </svg>`,
         description: "Choose and customize your color theme",
+      },
+      {
+        id: "files",
+        title: "Files",
+        icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+        <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12V8l-6-6z"/>
+      </svg>`,
+        description: "Control file saving and auto-save options",
       },
     ];
 
     this.settingsConfig = [
+      // ===== Editor =====
       {
         id: "editor.fontSize",
         title: "Font Size",
@@ -159,7 +168,47 @@ export class SettingsController {
         category: "editor",
         defaultValue: true,
       },
+      {
+        id: "editor.lineNumbers",
+        title: "Line Numbers",
+        description: "Controls how line numbers are displayed",
+        type: "select",
+        category: "editor",
+        defaultValue: "on",
+        options: [
+          { label: "On", value: "on" },
+          { label: "Relative", value: "relative" },
+          { label: "Off", value: "off" },
+        ],
+      },
+      {
+        id: "editor.cursorStyle",
+        title: "Cursor Style",
+        description: "Controls the appearance of the text cursor",
+        type: "select",
+        category: "editor",
+        defaultValue: "line",
+        options: [
+          { label: "Line", value: "line" },
+          { label: "Block", value: "block" },
+          { label: "Underline", value: "underline" },
+        ],
+      },
+      {
+        id: "editor.renderWhitespace",
+        title: "Render Whitespace",
+        description: "Controls how whitespace characters are rendered",
+        type: "select",
+        category: "editor",
+        defaultValue: "none",
+        options: [
+          { label: "None", value: "none" },
+          { label: "Boundary", value: "boundary" },
+          { label: "All", value: "all" },
+        ],
+      },
 
+      // ===== Workbench =====
       {
         id: "workbench.iconTheme",
         title: "File Icon Theme",
@@ -223,6 +272,7 @@ export class SettingsController {
         defaultValue: true,
       },
 
+      // ===== Terminal =====
       {
         id: "terminal.integrated.fontSize",
         title: "Font Size",
@@ -256,7 +306,42 @@ export class SettingsController {
           { label: "Git Bash", value: "gitbash" },
         ],
       },
+      {
+        id: "terminal.cursorBlink",
+        title: "Cursor Blink",
+        description: "Controls whether the terminal cursor blinks",
+        type: "toggle",
+        category: "terminal",
+        defaultValue: true,
+      },
 
+      // ===== Files =====
+      {
+        id: "files.autoSave",
+        title: "Auto Save",
+        description: "Controls auto-save behavior",
+        type: "select",
+        category: "files",
+        defaultValue: "off",
+        options: [
+          { label: "Off", value: "off" },
+          { label: "After Delay", value: "afterDelay" },
+          { label: "On Window Change", value: "onWindowChange" },
+        ],
+      },
+      {
+        id: "files.autoSaveDelay",
+        title: "Auto Save Delay",
+        description: "Controls the delay in ms when 'After Delay' is selected",
+        type: "number",
+        category: "files",
+        defaultValue: 1000,
+        min: 100,
+        max: 10000,
+        step: 100,
+      },
+
+      // ===== Theme =====
       {
         id: "workbench.colorTheme",
         title: "Color Theme",
@@ -303,8 +388,6 @@ export class SettingsController {
     }
 
     this.emitChange(key, value, oldValue);
-
-    console.log(`Setting updated: ${key} = ${value} (was: ${oldValue})`);
   }
 
   createSetting(setting: Setting): void {

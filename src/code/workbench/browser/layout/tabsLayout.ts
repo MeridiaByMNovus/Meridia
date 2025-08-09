@@ -7,24 +7,24 @@ export class TabsLayout {
   private ps: PerfectScrollbar;
   private ps2?: PerfectScrollbar;
 
-  constructor(private parent: HTMLDivElement, private props?: any[]) {
+  constructor(
+    private parent: HTMLDivElement,
+    private props?: any[]
+  ) {
     this.container = document.createElement("div");
     this.container.className = "tabs-layout-container";
-    this.container.style.display = "flex";
-    this.container.style.flexDirection = "row";
-    this.container.style.alignItems = "center";
+    this.container.style.height = "42px";
     this.container.style.width = "100%";
 
     this.wrapper = document.createElement("div");
     this.wrapper.className = "tabs-layout-wrapper scrollbar-container";
-    this.wrapper.style.flex = "1 1 auto";
-    this.wrapper.style.overflow = "hidden";
 
     this.container.appendChild(this.wrapper);
 
     this.ps = new PerfectScrollbar(this.wrapper, {
       wheelPropagation: false,
       suppressScrollY: true,
+      suppressScrollX: false,
     });
 
     if (Array.isArray(this.props) && this.props.length > 0) {

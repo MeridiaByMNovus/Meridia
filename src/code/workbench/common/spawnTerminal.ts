@@ -33,6 +33,8 @@ export class SpawnTerminal {
     regex: false,
     wholeWord: false,
   };
+  private resizeObserver?: ResizeObserver;
+  private isDisposed = false;
 
   constructor(
     container: HTMLDivElement,
@@ -56,7 +58,7 @@ export class SpawnTerminal {
     this.terminal = new Terminal({
       theme,
       fontFamily: FONT_STACK,
-      fontSize: 20,
+      fontSize: 16,
       lineHeight: 1.25,
       letterSpacing: 0,
       cols: size.cols,
@@ -93,35 +95,68 @@ export class SpawnTerminal {
     this.bindSearchKeys(this.host);
 
     this.initAfterFonts().then(() => {
+      if (this.isDisposed) return;
+
       setTimeout(() => {
-        this.fitAddon.fit();
+        if (!this.isDisposed) {
+          this.fitAddon.fit();
+        }
       }, 0);
       this.sendResize();
-      window.electron.ipcRenderer.send("ptyInstance.spawn", ptyId);
-      window.addEventListener("resize", () => this.fitIfNeeded());
+
+      this.resizeObserver = new ResizeObserver(() => {
+        if (!this.isDisposed) {
+          this.fitIfNeeded();
+        }
+      });
+      this.resizeObserver.observe(container);
     });
 
     this.terminal.onData((data) => {
-      window.electron.ipcRenderer.send("ptyInstance.keystroke", {
-        id: ptyId,
-        data,
-      });
+      if (!this.isDisposed) {
+        window.electron.ipcRenderer.send("ptyInstance.keystroke", {
+          id: this.ptyId,
+          data,
+        });
+      }
     });
 
     window.electron.ipcRenderer.on(
-      `ptyInstance.incomingData.${ptyId}`,
+      `ptyInstance.incomingData.${this.ptyId}`,
       (_e: unknown, data: string) => {
-        this.terminal.write(data);
-        this.scrollbar?.update();
+        if (!this.isDisposed) {
+          this.terminal.write(data);
+          this.scrollbar?.update();
+        }
       }
     );
 
-    const ro = new ResizeObserver(() => this.fitIfNeeded());
-    ro.observe(container);
+    this.addWindowResizeListener();
+  }
+
+  private addWindowResizeListener() {
+    let resizeTimeout: NodeJS.Timeout;
+    const handleWindowResize = () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        if (!this.isDisposed) {
+          this.fitIfNeeded();
+        }
+      }, 100);
+    };
+
+    window.addEventListener("resize", handleWindowResize);
+
+    (this as any).cleanupWindowResize = () => {
+      window.removeEventListener("resize", handleWindowResize);
+      clearTimeout(resizeTimeout);
+    };
   }
 
   attachTo(container: HTMLElement) {
-    this.terminal.open(container);
+    if (!this.isDisposed) {
+      this.terminal.open(container);
+    }
   }
 
   private async initAfterFonts() {
@@ -136,6 +171,8 @@ export class SpawnTerminal {
   }
 
   fitToContainer() {
+    if (this.isDisposed) return;
+
     const dims = this.fitAddon.proposeDimensions();
     if (!dims) return;
 
@@ -146,6 +183,8 @@ export class SpawnTerminal {
   }
 
   fitIfNeeded() {
+    if (this.isDisposed) return;
+
     const dims = this.fitAddon.proposeDimensions();
     if (!dims) return;
 
@@ -162,33 +201,57 @@ export class SpawnTerminal {
   }
 
   forceFit() {
-    this.fitIfNeeded();
+    if (!this.isDisposed) {
+      this.fitIfNeeded();
+    }
   }
 
   private sendResize() {
-    window.electron.ipcRenderer.send("ptyInstance.resize", {
-      id: this.ptyId,
-      cols: this.terminal.cols,
-      rows: this.terminal.rows,
-    });
+    if (!this.isDisposed) {
+      window.electron.ipcRenderer.send("ptyInstance.resize", {
+        id: this.ptyId,
+        cols: this.terminal.cols,
+        rows: this.terminal.rows,
+      });
+    }
   }
 
   resize(cols: number, rows: number) {
-    this.terminal.resize(cols, rows);
-    this.sendResize();
-    this.scrollbar?.update();
+    if (!this.isDisposed) {
+      this.terminal.resize(cols, rows);
+      this.sendResize();
+      this.scrollbar?.update();
+    }
   }
 
   dispose() {
+    this.isDisposed = true;
+
+    if ((this as any).cleanupWindowResize) {
+      (this as any).cleanupWindowResize();
+    }
+
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+    }
+
+    window.electron.ipcRenderer.removeAllListeners(
+      `ptyInstance.incomingData.${this.ptyId}`
+    );
+
     this.scrollbar?.destroy();
+
     window.electron.ipcRenderer.send("ptyInstance.kill", this.ptyId);
+
     this.terminal.dispose();
   }
 
   private bindTheme(cssVar: KnownColorKey, key: keyof ITheme) {
     themeService.watchVar(cssVar, (val) => {
-      const theme = this.terminal.options.theme ?? {};
-      this.terminal.options.theme = { ...theme, [key]: val };
+      if (!this.isDisposed) {
+        const theme = this.terminal.options.theme ?? {};
+        this.terminal.options.theme = { ...theme, [key]: val };
+      }
     });
   }
 
@@ -274,7 +337,6 @@ export class SpawnTerminal {
       return true;
     });
 
-    // Changed this: removed passive:true
     root.addEventListener(
       "keydown",
       (e) => {
@@ -290,24 +352,35 @@ export class SpawnTerminal {
   }
 
   clearAndAttachTo(container: HTMLElement) {
+    if (!this.isDisposed) {
+      container.innerHTML = "";
+      this.attachTo(container);
+      this.fitToContainer();
+    }
+  }
+
+  executeCommand(command: string) {
+    if (!this.isDisposed) {
+      window.electron.ipcRenderer.send("ptyInstance.keystroke", {
+        id: this.ptyId,
+        data: command + "\r",
+      });
+    }
+  }
+
+  moveTo(container: HTMLElement) {
+    if (!this.host || !container || this.isDisposed) return;
+
     container.innerHTML = "";
     this.attachTo(container);
     this.fitToContainer();
   }
 
-  executeCommand(command: string) {
-    window.electron.ipcRenderer.send("ptyInstance.keystroke", {
-      id: this.ptyId,
-      data: command + "\r",
-    });
+  getPtyId(): number {
+    return this.ptyId;
   }
 
-  moveTo(container: HTMLElement) {
-    if (!this.host || !container) return;
-
-    container.innerHTML = "";
-
-
-    this.fitToContainer();
+  getIsDisposed(): boolean {
+    return this.isDisposed;
   }
 }

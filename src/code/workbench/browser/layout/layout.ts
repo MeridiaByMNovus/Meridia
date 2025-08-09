@@ -25,17 +25,26 @@ import { SpawnTerminal } from "../../common/spawnTerminal.js";
 import { StatusBarController } from "./common/StatusBarController.js";
 import { TabContentRegistry } from "../../common/registrey/TabContentRegistery.js";
 import { SettingsLayout } from "./settingsLayout.js";
-import { handleOpenSettingsTab } from "../../common/functions.js";
+import {
+  handleOpenMeridiaStudioTab,
+  handleOpenSettingsTab,
+} from "../../common/functions.js";
+import { SettingsController } from "./common/SettingsController.js";
+import { MeridiaStudioLayout } from "./meridiaStudioLayout.js";
 
 const randomUUID = () => crypto.randomUUID();
 
 export class Layout {
   private fileTree: any = null;
   private layoutService = new LayoutService();
-  private terminal!: SpawnTerminal;
+  private terminals = new Map<string, SpawnTerminal>();
+  private currentTerminal: SpawnTerminal | null = null;
   private splitterLayout!: SplitterLayout;
   private tabContentEl!: HTMLDivElement;
-  private editorService = new EditorService();
+  private editorService = EditorService.get();
+  private terminalContentWrapper!: HTMLDivElement;
+  private terminalInstanceWrapper!: HTMLDivElement;
+  private settingsWatchers: (() => void)[] = [];
 
   private isTabSwitching = false;
   private tabSwitchingTimer: NodeJS.Timeout | null = null;
@@ -61,7 +70,9 @@ export class Layout {
 
   private registerApplicationTabContents() {
     const SettingsEl = new SettingsLayout();
+    const StudioEl = new MeridiaStudioLayout();
     TabContentRegistry.set("elements://settings", SettingsEl.getDomElement());
+    TabContentRegistry.set("elements://studio", StudioEl.getDomElement());
   }
 
   private setupKeyboardShortcuts() {
@@ -184,6 +195,124 @@ export class Layout {
     }
   }
 
+  private async createNewTerminalTab() {
+    const terminalTabs = select((s) => s.main.terminal_tabs) || [];
+    const terminalId = randomUUID();
+    const terminalNumber = terminalTabs.length + 1;
+
+    const updatedExistingTabs = terminalTabs.map((t) => ({
+      ...t,
+      active: false,
+    }));
+
+    const newTerminalTab: ITab = {
+      id: terminalId,
+      name: `Terminal ${terminalNumber}`,
+      fileIcon: "file.bat",
+      active: true,
+      uri: terminalId,
+      is_touched: false,
+    };
+
+    dispatch(update_terminal_tabs([...updatedExistingTabs, newTerminalTab]));
+  }
+
+  private async createTerminalInstance(
+    terminalId: string
+  ): Promise<SpawnTerminal> {
+    if (this.terminals.has(terminalId)) {
+      return this.terminals.get(terminalId)!;
+    }
+
+    const terminalContainer = document.createElement("div");
+    terminalContainer.className = "terminal-instance";
+    terminalContainer.style.width = "100%";
+    terminalContainer.style.height = "400px";
+    terminalContainer.style.display = "none";
+
+    this.terminalInstanceWrapper.appendChild(terminalContainer);
+
+    const terminalIdStr = String(terminalId);
+    let ptyId: number;
+
+    if (terminalIdStr.length >= 8) {
+      ptyId = parseInt(terminalIdStr.slice(-8), 16) % 10000;
+    } else {
+      ptyId =
+        terminalIdStr.split("").reduce((acc, char, index) => {
+          return acc + char.charCodeAt(0) * (index + 1);
+        }, 0) % 10000;
+    }
+
+    if (ptyId === 0) ptyId = 1;
+
+    const terminal = new SpawnTerminal(terminalContainer, ptyId, {
+      rows: 30,
+      cols: 80,
+    });
+
+    this.terminals.set(terminalId, terminal);
+
+    await window.electron.ipcRenderer.send("ptyInstance.spawn", ptyId);
+
+    return terminal;
+  }
+
+  private async switchToTerminal(terminalId: string) {
+    const terminalIdStr = String(terminalId);
+    if (this.currentTerminal) {
+      const currentContainer = this.terminalContentWrapper.querySelector(
+        '.terminal-instance[style*="display: block"], .terminal-instance[style="width: 100%; height: 100%;"]'
+      ) as HTMLElement;
+      if (currentContainer) {
+        currentContainer.style.display = "none";
+      }
+    }
+    const terminal = await this.createTerminalInstance(terminalIdStr);
+    const containers =
+      this.terminalContentWrapper.querySelectorAll(".terminal-instance");
+
+    let targetContainer: HTMLElement;
+    containers.forEach((container) => {
+      const containerElement = container as HTMLElement;
+      if (
+        this.terminals.get(terminalIdStr)?.terminal.element?.parentElement
+          ?.parentElement === containerElement
+      ) {
+        targetContainer = containerElement;
+      }
+    });
+    if (targetContainer!) {
+      targetContainer.style.display = "block";
+      this.currentTerminal = terminal;
+      setTimeout(() => {
+        terminal.forceFit();
+      }, 50);
+    } else {
+    }
+  }
+
+  private disposeTerminal(terminalId: string) {
+    const terminalIdStr = String(terminalId);
+    const terminal = this.terminals.get(terminalIdStr);
+    if (terminal) {
+      terminal.dispose();
+      this.terminals.delete(terminalIdStr);
+
+      const containers =
+        this.terminalContentWrapper.querySelectorAll(".terminal-instance");
+      containers.forEach((container) => {
+        const containerElement = container as HTMLElement;
+        if (
+          terminal.terminal.element?.parentElement?.parentElement ===
+          containerElement
+        ) {
+          containerElement.remove();
+        }
+      });
+    }
+  }
+
   private finalizeTabSwitch() {
     this.isTabSwitching = false;
     if (this.tabSwitchingTimer) {
@@ -211,6 +340,8 @@ export class Layout {
 
     const layout = this.layoutService.RegisterLayout("main");
     const leftActivityBar = new ActivityBar("left");
+
+    const fileTreeLayout = new FileTreeLayout(this.fileTree);
 
     this.splitterLayout = new SplitterLayout(layout, 70, 30);
 
@@ -264,12 +395,19 @@ export class Layout {
     editorContentWrapper.style.width = "100%";
     editorContentWrapper.style.height = "100%";
 
-    const terminalContentWrapper = document.createElement("div");
-    terminalContentWrapper.className = "terminal-content-wrapper";
-    terminalContentWrapper.style.width = "100%";
-    terminalContentWrapper.style.height = "100%";
+    this.terminalContentWrapper = document.createElement("div");
+    this.terminalContentWrapper.className = "terminal-content-wrapper";
+    this.terminalContentWrapper.style.width = "100%";
+    this.terminalContentWrapper.style.height = "100%";
+    this.terminalContentWrapper.style.position = "relative";
 
-    terminalLayout.getDomElement().appendChild(terminalContentWrapper);
+    this.terminalInstanceWrapper = document.createElement("div");
+    this.terminalInstanceWrapper.className = "terminal-instance-wrapper";
+    this.terminalInstanceWrapper.style.width = "100%";
+    this.terminalInstanceWrapper.style.height = "100%";
+    this.terminalInstanceWrapper.style.position = "relative";
+
+    terminalLayout.getDomElement().appendChild(this.terminalContentWrapper);
 
     const addEditorTabButton = document.createElement("button");
     addEditorTabButton.innerHTML = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="var(--icon-color)"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <title></title> <g id="Complete"> <g data-name="add" id="add-2"> <g> <line fill="none" stroke="var(--icon-color)" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="12" x2="12" y1="19" y2="5"></line> <line fill="none" stroke="var(--icon-color)" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="5" x2="19" y1="12" y2="12"></line> </g> </g> </g> </g></svg>`;
@@ -278,14 +416,24 @@ export class Layout {
       await this.createNewEditorTab();
     };
 
+    const addTerminalTabButton = document.createElement("button");
+    addTerminalTabButton.innerHTML = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="var(--icon-color)"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <title></title> <g id="Complete"> <g data-name="add" id="add-2"> <g> <line fill="none" stroke="var(--icon-color)" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="12" x2="12" y1="19" y2="5"></line> <line fill="none" stroke="var(--icon-color)" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="5" x2="19" y1="12" y2="12"></line> </g> </g> </g> </g></svg>`;
+
+    addTerminalTabButton.onclick = async () => {
+      await this.createNewTerminalTab();
+    };
+
     const editorTabs = this.layoutService.RegisterTabsLayout(
       editorLayout.getDomElement(),
       [addEditorTabButton]
     );
 
     const terminalTabs = this.layoutService.RegisterTabsLayout(
-      terminalLayout.getDomElement()
+      this.terminalContentWrapper,
+      [addTerminalTabButton]
     );
+
+    this.terminalContentWrapper.appendChild(this.terminalInstanceWrapper);
 
     document
       .querySelector(".editor-layout-wrapper")
@@ -341,15 +489,12 @@ export class Layout {
         terminalTabs.hide();
         return;
       }
-
       terminalTabs.show();
       terminalTabs.removeAllTabs();
-
       tabs.forEach(async (tab) => {
         const tabContent = document.createElement("div");
         tabContent.style.width = "100%";
         tabContent.style.height = "100%";
-
         this.layoutService.RegisterTabLayout(
           tab.name,
           tab.active,
@@ -359,7 +504,9 @@ export class Layout {
           getStateTabs,
           updateAction,
           false,
-          () => {},
+          () => {
+            this.switchToTerminal(String(tab.uri!));
+          },
           tab.fileIcon as string,
           undefined,
           tab
@@ -405,7 +552,7 @@ export class Layout {
         } else {
           setTabContentDisplay("none");
           this.editorService.mount(editorContentWrapper);
-          EditorService.get().open(active);
+          this.editorService.open(active);
         }
 
         return;
@@ -414,17 +561,22 @@ export class Layout {
       if (active) {
         setTabContentDisplay("none");
         this.editorService.mount(editorContentWrapper);
-        EditorService.get().open(active);
+        this.editorService.open(active);
       }
     };
 
-    const renderTerminalTabs = (tabs: ITab[]) =>
+    const renderTerminalTabs = (tabs: ITab[]) => {
       updateTerminalTabsLayout(
         tabs,
-        document.querySelector(".terminal-content-wrapper") as HTMLDivElement,
+        this.terminalContentWrapper,
         getTerminalTabsState,
         update_terminal_tabs
       );
+      const activeTerminal = tabs.find((t) => t.active);
+      if (activeTerminal) {
+        this.switchToTerminal(String(activeTerminal.uri!));
+      }
+    };
 
     const editorTabsState = select((s) => s.main.editor_tabs);
     const terminalTabsState = select((s) => s.main.terminal_tabs);
@@ -438,19 +590,33 @@ export class Layout {
       (s) => s.main.editor_tabs,
       (next) => renderEditorTabs(next)
     );
+
     watch(
       (s) => s.main.terminal_tabs,
-      (next) => renderTerminalTabs(next)
+      (next) => {
+        const previous = select((s) => s.main.terminal_tabs);
+
+        if (previous) {
+          const removedTabs = previous.filter(
+            (prevTab) => !next.find((nextTab) => nextTab.id === prevTab.id)
+          );
+          removedTabs.forEach((removedTab) => {
+            this.disposeTerminal(String(removedTab.uri!));
+          });
+        }
+
+        renderTerminalTabs(next);
+      }
     );
 
     dispatch(
       update_terminal_tabs([
         {
-          id: "1",
-          name: "Local 1",
+          id: randomUUID(),
+          name: "Terminal 1",
           fileIcon: "file.bat",
           active: true,
-          uri: "",
+          uri: randomUUID(),
           is_touched: false,
         },
       ])
@@ -458,18 +624,28 @@ export class Layout {
 
     const explorerIcon = `
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke=var(--icon-color)>
-        <path d="M3 8.2C3 7.07989 3 6.51984 3.21799 6.09202C3.40973 5.71569 3.71569 5.40973 4.09202 5.21799C4.51984 5 5.0799 5 6.2 5H9.67452C10.1637 5 10.4083 5 10.6385 5.05526C10.8425 5.10425 11.0376 5.18506 11.2166 5.29472C11.4184 5.4184 11.5914 5.59135 11.9373 5.93726L12.0627 6.06274C12.4086 6.40865 12.5816 6.5816 12.7834 6.70528C12.9624 6.81494 13.1575 6.89575 13.3615 6.94474C13.5917 7 13.8363 7 14.3255 7H17.8C18.9201 7 19.4802 7 19.908 7.21799C20.2843 7.40973 20.5903 7.71569 20.782 8.09202C21 8.51984 21 9.0799 21 10.2V15.8C21 16.9201 21 17.4802 20.782 17.908C20.5903 18.2843 20.2843 18.5903 19.908 18.782C19.4802 19 18.9201 19 17.8 19H6.2C5.07989 19 4.51984 19 4.09202 18.782C3.71569 18.5903 3.40973 18.2843 3.21799 17.908C3 17.4802 3 16.9201 3 15.8V8.2Z" stroke="#d2d2d2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/> 
+        <path d="M3 8.2C3 7.07989 3 6.51984 3.21799 6.09202C3.40973 5.71569 3.71569 5.40973 4.09202 5.21799C4.51984 5 5.0799 5 6.2 5H9.67452C10.1637 5 10.4083 5 10.6385 5.05526C10.8425 5.10425 11.0376 5.18506 11.2166 5.29472C11.4184 5.4184 11.5914 5.59135 11.9373 5.93726L12.0627 6.06274C12.4086 6.40865 12.5816 6.5816 12.7834 6.70528C12.9624 6.81494 13.1575 6.89575 13.3615 6.94474C13.5917 7 13.8363 7 14.3255 7H17.8C18.9201 7 19.4802 7 19.908 7.21799C20.2843 7.40973 20.5903 7.71569 20.782 8.09202C21 8.51984 21 9.0799 21 10.2V15.8C21 16.9201 21 17.4802 20.782 17.908C20.5903 18.2843 20.2843 18.5903 19.908 18.782C19.4802 19 18.9201 19 17.8 19H6.2C5.07989 19 4.51984 19 4.09202 18.782C3.71569 18.5903 3.40973 18.2843 3.21799 17.908C3 17.4802 3 16.9201 3 15.8V8.2Z" stroke="var(--icon-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/> 
       </svg>
     `;
 
     this.layoutService.RegisterActivityBarItem(
       leftActivityBar,
-      new FileTreeLayout(this.fileTree).render() as any,
+      fileTreeLayout.render(),
       leftActivityBarContent!.getDomElement(),
       explorerIcon,
       "explorer",
       "top",
       true
+    );
+
+    this.layoutService.RegisterActivityBarItem(
+      leftActivityBar,
+      document.createElement("div"),
+      leftActivityBarContent!.getDomElement(),
+      `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path fill-rule="evenodd" clip-rule="evenodd" d="M13 3H21V11H13V3ZM15 5H19V9H15V5Z" fill="var(--icon-color)"></path> <path fill-rule="evenodd" clip-rule="evenodd" d="M17 21V13H11V7H3V21H17ZM9 9H5V13H9V9ZM5 19L5 15H9V19H5ZM11 19V15H15V19H11Z" fill="var(--icon-color)"></path> </g></svg>`,
+      "extension",
+      "top",
+      false
     );
 
     this.layoutService.RegisterActivityBarItem(
@@ -483,9 +659,42 @@ export class Layout {
       handleOpenSettingsTab
     );
 
-    await window.electron.ipcRenderer.send("ptyInstance.spawn", "1");
+    const statusBar = new StatusBarLayout();
 
-    new StatusBarLayout();
+    const settingsController = SettingsController.getInstance();
+
+    function setElementVisibility(element: HTMLElement, visible: boolean) {
+      element.style.display = visible ? "flex" : "none";
+    }
+
+    const statusBarElement = statusBar.getDomElement();
+    const activityBarElement = leftActivityBar.getDomElement();
+
+    const updateStatusBarVisibility = (visible: boolean) =>
+      setElementVisibility(statusBarElement, visible);
+    const updateActivityBarVisibility = (visible: boolean) =>
+      setElementVisibility(activityBarElement, visible);
+
+    const defaultStatusBarVisibility = settingsController.get(
+      "workbench.statusBar.visible"
+    );
+    const defaultActivityBarVisibility = settingsController.get(
+      "workbench.activityBar.visible"
+    );
+
+    updateStatusBarVisibility(defaultStatusBarVisibility);
+    updateActivityBarVisibility(defaultActivityBarVisibility);
+
+    const watcherStatusBar = settingsController.onChange(
+      "workbench.statusBar.visible",
+      updateStatusBarVisibility
+    );
+    const watcherActivityBar = settingsController.onChange(
+      "workbench.activityBar.visible",
+      updateActivityBarVisibility
+    );
+
+    this.settingsWatchers.push(watcherStatusBar, watcherActivityBar);
 
     const statusBarController = new StatusBarController();
     const mainItem = statusBarController.createActivityItem({
@@ -525,12 +734,15 @@ export class Layout {
       }
     );
 
-    this.terminal = new SpawnTerminal(terminalLayout.getDomElement(), 1, {
-      rows: 80,
-      cols: 30,
-    });
+    dispatch(
+      update_panel_state({
+        left: "off",
+        right: "off",
+        bottom: "off",
+      })
+    );
 
-    await window.electron.ipcRenderer.send("ptyInstance.spawn", "1");
+    handleOpenMeridiaStudioTab();
 
     this.registerRunButtonHandler();
     this.loadScrollbar();
@@ -550,7 +762,7 @@ export class Layout {
 
       if (!activeTermTab) return;
 
-      const terminal = this.terminal;
+      const terminal = this.terminals.get(String(activeTermTab.uri!));
       if (!terminal) return;
 
       const activeEditorTab = select((s) =>

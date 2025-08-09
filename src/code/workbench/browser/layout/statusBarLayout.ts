@@ -11,4 +11,8 @@ export class StatusBarLayout {
       statusBarWrapper
     );
   }
+
+  getDomElement() {
+    return document.querySelector(".status-bar") as HTMLDivElement;
+  }
 }

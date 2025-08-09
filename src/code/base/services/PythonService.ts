@@ -12,7 +12,5 @@ const getAvaiablePythonScript = path.resolve(
 
 export class PythonService {
   private window = mainWindow;
-  constructor() {
-    console.log(getAvaiablePythonScript);
-  }
+  constructor() {}
 }

@@ -32,6 +32,7 @@ export interface ITab {
   is_touched?: boolean;
   uri?: string;
   content?: string;
+  language?: string;
 }
 
 export interface IFolderStructure {
@@ -62,7 +63,6 @@ export const knownColorKeys = [
   "cursor.foreground",
   "activityBar.background",
   "activityBar.foreground",
-
   "titleBar.activeBackground",
   "statusBar.background",
   "activityBar.background",
@@ -98,7 +98,7 @@ export const knownColorKeys = [
   "tree.indentGuidesStroke",
   "scrollbarSlider.background",
   "scrollbarSlider.hoverBackground",
-  "scrollbar.shadow",
+  "scrollbarSlider.activeBackground",
   "scrollbarSlider.activeBackground",
   "splitView.dragAndDropBackground",
   "splitView.inactiveBackground",
@@ -115,7 +115,6 @@ export const knownColorKeys = [
   "accent.green",
   "accent.red",
   "accent.blue",
-  // Settings-specific color keys
   "settings.headerBackground",
   "settings.contentBackground",
   "settings.sidebarBackground",

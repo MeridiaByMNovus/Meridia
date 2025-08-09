@@ -205,7 +205,7 @@ body {
 
 .main-wrapper .layout-row {
   display: flex;
-  height: calc(100vh - 64px);
+  height: calc(100vh - 42px);
   overflow: hidden;
 }
 
@@ -364,6 +364,7 @@ body {
 }
 
 .main-wrapper .layout-row .splitter-layout-wrapper .tabs-layout-wrapper {
+  position: relative;
   display: flex;
   width: 100%;
   height: 42px;
@@ -928,6 +929,7 @@ body {
 }
 
 .main-wrapper .settings-wrapper .settings-body .settings-nav {
+  position: relative;
   width: 280px;
   flex-shrink: 0;
   background: var(--settings-nav-background);
@@ -1037,7 +1039,6 @@ body {
 .main-wrapper .settings-wrapper .settings-body .settings-content {
   position: relative;
   flex: 1;
-  overflow-y: auto;
   padding: 24px;
   background: var(--settings-content-background);
   max-height: 100%;
@@ -1399,29 +1400,6 @@ body {
   color: var(--active-text-color);
 }
 
-/* .bottom-splitter-layout-wrapper {
-  flex: 1;
-  display: flex;
-  flex-direction: row;
-}
-
-.split-horizontal-pane {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-.terminal-layout-wrapper {
-  flex: 1;
-}
-
-.terminal-content-wrapper {
-  flex: 1;
-  width: 100%;
-  height: 100%;
-  background: black;
-} */
-
 .editor-layout-wrapper {
   position: relative;
   transition: all 0.2s ease;
@@ -1477,14 +1455,12 @@ body {
   }
 }
 
-/* Enhance file tree dragging visual feedback */
 .filetree-label.dragging {
   opacity: 0.5;
   transform: scale(0.95);
   transition: all 0.2s ease;
 }
 
-/* Additional visual feedback for valid drop targets */
 .editor-layout-wrapper.drag-over::before {
   content: "";
   position: absolute;

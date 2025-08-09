@@ -12,14 +12,12 @@ import { UpdateService } from "./code/base/services/UpdateService.js";
 import { ProjectService } from "./code/base/services/ProjectService.js";
 import { open_folder } from "./code/base/common/functions.js";
 import { IpcCommandsRegisteryService } from "./code/base/common/IpcCommandsRegisteryService.js";
-import { CommandRegistry } from "./code/base/services/CommandRegistryService.js";
-import { EditorFileSystemService } from "./code/base/services/EditorFileSystemService.js";
 import { Server } from "./code/platform/server/server.js";
 import { SpawnPty } from "./code/base/common/spawnPty.js";
 
 dotenv.config();
 
-let server;
+let server: Server;
 let ptyServer: SpawnPty;
 
 if (process.env.NODE_ENV === "development") {
@@ -50,8 +48,6 @@ const WELCOME_WIZARD_HTML_PATH = path.join(
 
 export let mainWindow: BrowserWindow;
 export let welcomeWizardWindow: BrowserWindow;
-
-const CommandRegister = new CommandRegistry().register;
 
 function RegisterIpcHandlers(): void {
   ipcMain.handle("minimize", (_, window: "main" | "welcomeWizard") =>
@@ -200,7 +196,6 @@ app.whenReady().then(() => {
   new DialogService();
   new UpdateService();
   new ProjectService();
-  new EditorFileSystemService();
 
   RegisterIpcHandlers();
 });

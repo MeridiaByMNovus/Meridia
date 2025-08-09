@@ -149,6 +149,7 @@ export class FileTreeController {
         uri: node.path,
         is_touched: false,
         editorContent: editor_content,
+        language: get_file_types(node.name),
       };
       dispatch(
         update_editor_tabs([

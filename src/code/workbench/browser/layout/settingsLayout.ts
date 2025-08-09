@@ -12,6 +12,7 @@ export class SettingsLayout {
   private searchInput: HTMLInputElement | null = null;
   private settingsContent: HTMLDivElement | null = null;
   private categoryNav: HTMLDivElement | null = null;
+  private scrollbars: PerfectScrollbar[] = [];
 
   constructor() {
     this.controller = SettingsController.getInstance();
@@ -28,8 +29,6 @@ export class SettingsLayout {
 
     this.settingsEl.appendChild(header);
     this.settingsEl.appendChild(body);
-
-    this.loadScrollbar();
   }
 
   private createHeader(): HTMLDivElement {
@@ -81,7 +80,7 @@ export class SettingsLayout {
 
   private createCategoryNav(): HTMLDivElement {
     const nav = document.createElement("div");
-    nav.className = "settings-nav";
+    nav.className = "settings-nav scrollbar-container";
 
     const categories = this.controller.getCategories();
     categories.forEach((category, index) => {
@@ -130,7 +129,7 @@ export class SettingsLayout {
 
   private createSettingsContent(): HTMLDivElement {
     const content = document.createElement("div");
-    content.className = "settings-content";
+    content.className = "settings-content scrollbar-container";
 
     this.renderCategorySettings(this.currentCategory);
 
@@ -459,7 +458,46 @@ export class SettingsLayout {
     return this.settingsEl;
   }
 
+  initializeScrollbars() {
+    if (!this.settingsEl || !this.settingsEl.parentNode) {
+      console.warn(
+        "Settings element must be added to DOM before initializing scrollbars"
+      );
+      return;
+    }
+
+    // Clear existing scrollbars
+    this.destroyScrollbars();
+
+    // Find scrollbar containers within this settings element
+    const scrollbarContainers = this.settingsEl.querySelectorAll(
+      ".scrollbar-container"
+    );
+
+    scrollbarContainers.forEach((container) => {
+      try {
+        const scrollbar = new PerfectScrollbar(container as HTMLDivElement);
+        this.scrollbars.push(scrollbar);
+      } catch (error) {
+        console.warn("Failed to initialize PerfectScrollbar:", error);
+      }
+    });
+  }
+
+  private destroyScrollbars() {
+    this.scrollbars.forEach((scrollbar) => {
+      try {
+        scrollbar.destroy();
+      } catch (error) {
+        console.warn("Failed to destroy PerfectScrollbar:", error);
+      }
+    });
+    this.scrollbars = [];
+  }
+
   destroy() {
+    this.destroyScrollbars();
+
     if (this.settingsEl) {
       this.settingsEl.remove();
       this.settingsEl = null;
@@ -467,10 +505,5 @@ export class SettingsLayout {
     this.settingsContent = null;
     this.categoryNav = null;
     this.searchInput = null;
-  }
-
-  loadScrollbar() {
-    new PerfectScrollbar(this.categoryNav!);
-    new PerfectScrollbar(this.settingsContent!);
   }
 }
