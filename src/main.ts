@@ -12,19 +12,11 @@ import { UpdateService } from "./code/base/services/UpdateService.js";
 import { ProjectService } from "./code/base/services/ProjectService.js";
 import { open_folder } from "./code/base/common/functions.js";
 import { IpcCommandsRegisteryService } from "./code/base/common/IpcCommandsRegisteryService.js";
-import { Server } from "./code/platform/server/server.js";
 import { SpawnPty } from "./code/base/common/spawnPty.js";
 
 dotenv.config();
 
-let server: Server;
 let ptyServer: SpawnPty;
-
-if (process.env.NODE_ENV === "development") {
-  server = new Server();
-}
-
-let PORT = (server && server.port) ?? 2222;
 
 if (process.env.NODE_ENV === "development") {
   const electronReload = require("electron-reload");
@@ -36,10 +28,9 @@ const PRELOAD_PATH = path.join(
   "./code/base/window/preload/preload.js"
 );
 
-const MAIN_HTML_PATH =
-  process.env.NODE_ENV === "development"
-    ? `http://localhost:${PORT}`
-    : path.join(__dirname, "index.html");
+const MAIN_HTML_PATH = path.join(__dirname, "index.html");
+
+console.log(MAIN_HTML_PATH);
 
 const WELCOME_WIZARD_HTML_PATH = path.join(
   __dirname,
