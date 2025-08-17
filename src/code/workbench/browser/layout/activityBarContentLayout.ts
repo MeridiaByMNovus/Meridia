@@ -1,16 +1,17 @@
-export class ActivityBarContentLayout {
-  constructor(private uniqueId: string) {}
+import { ElementCore } from "./elementCore.js";
 
-  public render() {
-    const sidebarContentWrapper = document.createElement("div");
-    sidebarContentWrapper.className = `activity-bar-content activity-bar-content-${this.uniqueId} scrollbar-container`;
+export class ActivityBarContentLayout extends ElementCore {
+  constructor(
+    private uniqueId: string,
+    private scrollbar?: boolean
+  ) {
+    super();
 
-    return sidebarContentWrapper;
+    this.render();
   }
 
-  public getDomElement() {
-    return document.querySelector(
-      `.activity-bar-content-${this.uniqueId}`
-    ) as HTMLDivElement;
+  private render() {
+    this.elementEl = document.createElement("div");
+    this.elementEl.className = `activity-bar-content activity-bar-content-${this.uniqueId} ${this.scrollbar && "scrollbar-container"}`;
   }
 }

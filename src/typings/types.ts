@@ -4,7 +4,10 @@ export interface IMainState {
   editor_active_tab: ITab;
   terminal_tabs: ITab[];
   terminal_active_tab: ITab;
-  active_activityBaritem: string;
+  active_activityBaritem: {
+    left: string;
+    right: string;
+  };
   panel_state: PanelState;
 }
 
@@ -77,7 +80,6 @@ export const knownColorKeys = [
   "tab.activeBorder",
   "tab.activeForeground",
   "tab.inactiveForeground",
-  "editor.background",
   "button.foreground",
   "settings.editor.background",
   "settings.activityBar.background",
@@ -98,7 +100,6 @@ export const knownColorKeys = [
   "tree.indentGuidesStroke",
   "scrollbarSlider.background",
   "scrollbarSlider.hoverBackground",
-  "scrollbarSlider.activeBackground",
   "scrollbarSlider.activeBackground",
   "splitView.dragAndDropBackground",
   "splitView.inactiveBackground",
@@ -133,6 +134,58 @@ export const knownColorKeys = [
   "settings.numberInputForeground",
   "settings.numberInputBorder",
   "settings.modifiedItemIndicator",
+
+  "button.background",
+  "button.hoverBackground",
+  "button.activeBackground",
+  "button.secondaryBackground",
+  "button.secondaryForeground",
+  "button.secondaryHoverBackground",
+  "button.dangerBackground",
+  "button.dangerForeground",
+  "button.dangerHoverBackground",
+  "modal.background",
+  "modal.foreground",
+  "modal.border",
+  "modal.backdrop",
+  "notification.background",
+  "notification.foreground",
+  "notification.border",
+  "notification.successBackground",
+  "notification.errorBackground",
+  "notification.warningBackground",
+  "dialog.background",
+  "dialog.foreground",
+  "dialog.border",
+  "panel.background",
+  "panel.foreground",
+  "panel.border",
+
+  "gemini.background",
+  "gemini.foreground",
+  "gemini.border",
+  "gemini.headingGradient",
+  "gemini.tabsBackground",
+  "gemini.tabsBorder",
+  "gemini.tabActiveBackground",
+  "gemini.tabActiveForeground",
+  "gemini.tabInactiveBackground",
+  "gemini.tabInactiveForeground",
+  "gemini.tabHoverBackground",
+  "gemini.agentBackground",
+  "gemini.agentForeground",
+  "gemini.chatBackground",
+  "gemini.chatForeground",
+  "gemini.chatboxBackground",
+  "gemini.chatboxBorder",
+  "gemini.chatboxForeground",
+  "gemini.userchatBackground",
+  "gemini.userchatForeground",
+  "gemini.userchatBorder",
+  "gemini.assistantchatForeground",
+  "gemini.sendButtonBackground",
+  "gemini.sendButtonForeground",
+  "gemini.sendButtonHoverBackground",
 ] as const;
 
 export type KnownColorKey = (typeof knownColorKeys)[number];

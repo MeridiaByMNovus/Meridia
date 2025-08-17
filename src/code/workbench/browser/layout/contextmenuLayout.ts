@@ -1,20 +1,23 @@
-export class ContextMenuLayout {
-  public menu: HTMLDivElement;
+import { ElementCore } from "./elementCore";
+
+export class ContextMenuLayout extends ElementCore {
   private id: string;
 
   constructor(pos: { x: number; y: number }, onRequestClose: () => void) {
+    super();
+
     this.id = crypto.randomUUID();
     this.registerAsOwner();
 
     const mainWrapper = document.querySelector(
       ".main-wrapper"
     ) as HTMLDivElement;
-    this.menu = document.createElement("div");
-    this.menu.className = "contextmenu-layout-wrapper";
-    this.menu.style.left = `${pos.x}px`;
-    this.menu.style.top = `${pos.y}px`;
+    this.elementEl = document.createElement("div");
+    this.elementEl.className = "contextmenu-layout-wrapper";
+    this.elementEl.style.left = `${pos.x}px`;
+    this.elementEl.style.top = `${pos.y}px`;
 
-    mainWrapper.appendChild(this.menu);
+    mainWrapper.appendChild(this.elementEl);
     mainWrapper.addEventListener("mousedown", this.handleClickOutside);
     document.addEventListener("keydown", this.handleKeyDown);
     this.cleanup = () => {
@@ -22,14 +25,14 @@ export class ContextMenuLayout {
       document.removeEventListener("keydown", this.handleKeyDown);
       this.clearOwner();
       onRequestClose();
-      this.menu.remove();
+      this.elementEl!.remove();
     };
   }
 
   createSeparator() {
     const sep = document.createElement("div");
     sep.className = "separator";
-    this.menu.appendChild(sep);
+    this.elementEl!.appendChild(sep);
   }
 
   createBtn(text: string, fn: Function) {
@@ -38,15 +41,15 @@ export class ContextMenuLayout {
     btn.textContent = text;
     btn.onclick = () => {
       fn();
-      this.menu?.remove();
+      this.elementEl?.remove();
     };
-    this.menu.appendChild(btn);
+    this.elementEl!.appendChild(btn);
   }
 
   private cleanup: () => void;
 
   private handleClickOutside = (event: MouseEvent) => {
-    if (!this.menu.contains(event.target as Node)) {
+    if (!this.elementEl!.contains(event.target as Node)) {
       this.cleanup();
     }
   };

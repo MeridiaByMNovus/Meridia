@@ -1,7 +1,8 @@
 import { app, BrowserWindow, ipcMain } from "electron";
-import * as path from "path";
+import path from "path";
+import chokidar from "chokidar";
 import fs from "fs";
-import * as dotenv from "dotenv";
+import dotenv from "dotenv";
 import { StorageService } from "./code/base/services/StorageService.js";
 import { MenuService } from "./code/base/services/MenuService.js";
 import { FileTreeService } from "./code/base/services/FileTreeService.js";
@@ -12,19 +13,13 @@ import { UpdateService } from "./code/base/services/UpdateService.js";
 import { ProjectService } from "./code/base/services/ProjectService.js";
 import { open_folder } from "./code/base/common/functions.js";
 import { IpcCommandsRegisteryService } from "./code/base/common/IpcCommandsRegisteryService.js";
-import { Server } from "./code/platform/server/server.js";
 import { SpawnPty } from "./code/base/common/spawnPty.js";
 
 dotenv.config();
 
-let server: Server;
 let ptyServer: SpawnPty;
 
-if (process.env.NODE_ENV === "development") {
-  server = new Server();
-}
-
-let PORT = (server && server.port) ?? 2222;
+const PORT = 3123;
 
 if (process.env.NODE_ENV === "development") {
   const electronReload = require("electron-reload");
@@ -41,30 +36,15 @@ const MAIN_HTML_PATH =
     ? `http://localhost:${PORT}`
     : path.join(__dirname, "index.html");
 
-const WELCOME_WIZARD_HTML_PATH = path.join(
-  __dirname,
-  "./code/base/window/welcomeWizard/index.html"
-);
-
 export let mainWindow: BrowserWindow;
 export let welcomeWizardWindow: BrowserWindow;
 
 function RegisterIpcHandlers(): void {
-  ipcMain.handle("minimize", (_, window: "main" | "welcomeWizard") =>
-    getWindow(window).minimize()
-  );
-  ipcMain.handle("maximize", (_, window: "main" | "welcomeWizard") =>
-    getWindow(window).maximize()
-  );
-  ipcMain.handle("restore", (_, window: "main" | "welcomeWizard") =>
-    getWindow(window).restore()
-  );
-  ipcMain.handle("isMaximized", (_, window: "main" | "welcomeWizard") =>
-    getWindow(window).isMaximized()
-  );
-  ipcMain.handle("close", (_, window: "main" | "welcomeWizard") =>
-    getWindow(window).close()
-  );
+  ipcMain.handle("minimize", () => mainWindow.minimize());
+  ipcMain.handle("maximize", () => mainWindow.maximize());
+  ipcMain.handle("restore", () => mainWindow.restore());
+  ipcMain.handle("isMaximized", () => mainWindow.isMaximized());
+  ipcMain.handle("close", () => mainWindow.close());
 
   ipcMain.handle("read-image-base-64", (_, path) => {
     const ext = path.split(".").pop();
@@ -77,12 +57,6 @@ function RegisterIpcHandlers(): void {
   });
 }
 
-function getWindow(name: "main" | "welcomeWizard"): BrowserWindow {
-  if (name === "main") return mainWindow;
-  if (name === "welcomeWizard") return welcomeWizardWindow;
-  throw new Error(`Window '${name}' is not initialized`);
-}
-
 interface CreateWindowOptions {
   width: number;
   height: number;
@@ -91,6 +65,7 @@ interface CreateWindowOptions {
   title: string;
   isMain?: boolean;
   resizable?: boolean;
+  show?: boolean;
 }
 
 function createWindow({
@@ -99,6 +74,7 @@ function createWindow({
   preload,
   entry,
   title,
+  show = false,
   isMain = false,
   resizable = true,
 }: CreateWindowOptions): BrowserWindow {
@@ -114,16 +90,25 @@ function createWindow({
     resizable: resizable,
     maximizable: isMain,
     backgroundColor: "#1A1A1A",
-    icon: path.resolve(__dirname, "..", "..", "src", "assets", "icon.ico"),
-    show: false,
+    icon: path.resolve(
+      __dirname,
+      "code",
+      "resources",
+      "assets",
+      "icons",
+      "icon.ico"
+    ),
+    show: show,
     webPreferences: {
       preload,
       webSecurity: false,
-      allowRunningInsecureContent: true,
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: false,
     },
   });
 
-  if (isMain) window.maximize();
+  window.maximize();
 
   window.loadURL(entry);
 
@@ -148,16 +133,15 @@ function createWindow({
   });
 
   window.once("ready-to-show", () => {
-    if (process.env.NODE_ENV === "development") {
+    if (process.env.NODE_ENV === "development")
       window.webContents.openDevTools();
-    }
-    isMain && window.show();
+    if (isMain) window.show();
   });
 
   return window;
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   const cwd = StorageService.get("fileTree")?.root || "/";
 
   mainWindow = createWindow({
@@ -167,15 +151,7 @@ app.whenReady().then(() => {
     entry: MAIN_HTML_PATH,
     title: "Meridia",
     isMain: true,
-  });
-
-  welcomeWizardWindow = createWindow({
-    width: 1100,
-    height: 750,
-    preload: PRELOAD_PATH,
-    entry: WELCOME_WIZARD_HTML_PATH,
-    title: "Meridia – Welcome",
-    resizable: false,
+    show: true,
   });
 
   ptyServer = new SpawnPty(ipcMain, {
@@ -189,13 +165,25 @@ app.whenReady().then(() => {
 
   IpcCommandsRegisteryService();
 
+  const fileTreeService = new FileTreeService();
+  const fileInitService = new FileInitService();
   new MenuService();
-  new FileTreeService();
-  new FileInitService();
   new PythonService();
   new DialogService();
   new UpdateService();
   new ProjectService();
+
+  window.store_path = fileInitService.STORE_JSON_PATH;
+
+  const watcher = chokidar.watch(window.store_path);
+
+  watcher.on("change", (filePath) => {
+    const content = JSON.parse(
+      fs.readFileSync(filePath, { encoding: "utf-8" })
+    );
+
+    fileTreeService.changeCwd(content.fileTree.root);
+  });
 
   RegisterIpcHandlers();
 });

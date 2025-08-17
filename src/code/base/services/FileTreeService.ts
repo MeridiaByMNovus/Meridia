@@ -19,11 +19,18 @@ export class FileTreeService {
     this.setupIPC();
   }
 
+  public changeCwd(cwd: string) {
+    this.watcher?.close();
+    this.watcher = chokidar.watch(cwd, {
+      persistent: true,
+      ignorePermissionErrors: true,
+      depth: Infinity,
+    });
+    this.watch(this.fileTree);
+  }
+
   private setupIPC() {
     this.watch(this.fileTree);
-    ipcMain.on("chokidar-change-folder", () => {
-      this.watch(this.fileTree);
-    });
 
     ipcMain.handle("get-folder", async () => StorageService.get("fileTree"));
 

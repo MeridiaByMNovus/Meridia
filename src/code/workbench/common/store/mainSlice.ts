@@ -13,11 +13,14 @@ const initialState: IMainState = {
   editor_active_tab: {} as ITab,
   terminal_tabs: [] as ITab[],
   terminal_active_tab: {} as ITab,
-  active_activityBaritem: "",
+  active_activityBaritem: {
+    left: "",
+    right: "",
+  },
   panel_state: {
     left: "on",
     bottom: "on",
-    right: "off",
+    right: "on",
   },
 };
 
@@ -40,8 +43,11 @@ export const mainSlice = createSlice({
     update_terminal_active_tab: (state, action: PayloadAction<ITab>) => {
       state.terminal_active_tab = action.payload;
     },
-    update_active_activitybar_item: (state, action: PayloadAction<string>) => {
-      state.active_activityBaritem = action.payload;
+    update_active_activitybar_item: (
+      state,
+      action: PayloadAction<{ bar: "left" | "right"; id: string }>
+    ) => {
+      state.active_activityBaritem[action.payload.bar] = action.payload.id;
     },
     update_panel_state: (state, action: PayloadAction<PanelState>) => {
       state.panel_state = action.payload;

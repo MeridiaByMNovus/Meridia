@@ -9,8 +9,6 @@ export class TabLayout {
   constructor(
     private name: string,
     private active: boolean,
-    private content: HTMLElement,
-    private contentWrapper: HTMLDivElement,
     private getStoreTabs: () => any,
     private updateStoreTabs: Function,
     private isEditor?: boolean,
@@ -138,22 +136,19 @@ export class TabLayout {
 
       if (!currentTabToRemove) return;
 
+      this.onTabClickHook!();
+
       const index = tabs.findIndex((t: any) => t.id === currentTabToRemove.id);
       if (index === -1) return;
 
-      // Close editor if it's an editor tab
       if (this.isEditor && !this.tabData?.content) {
         EditorService.get().close(tabs[index].uri);
       }
-
-      // For terminal tabs, the Layout class will handle cleanup via the watch function
-      // We just need to remove from the store and the Layout will dispose the terminal instance
 
       const filtered = tabs.slice(0, index).concat(tabs.slice(index + 1));
       const isActiveClosed = tabs[index].active;
       let updatedTabs = filtered;
 
-      // If the active tab was closed and there are other tabs, activate an adjacent one
       if (isActiveClosed && filtered.length > 0) {
         const newActiveIndex =
           index >= filtered.length ? filtered.length - 1 : index;
@@ -169,7 +164,6 @@ export class TabLayout {
 
     close.onclick = handleRemove;
 
-    // Middle mouse button click to close tab
     this.tabDomElement.onmousedown = (e) => {
       if (e.button === 1) handleRemove(e);
     };

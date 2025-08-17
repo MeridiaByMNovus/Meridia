@@ -1,4 +1,3 @@
-export { InitElementsService } from "../../service/InitElementsService.js";
 export { FileTreeLayout } from "./fileTreeLayout.js";
 export { EditorLayout } from "./editorLayout.js";
 export { StatusBarLayout } from "./statusBarLayout.js";

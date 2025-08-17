@@ -3,10 +3,10 @@ import {
   SettingsController,
   Setting,
   SettingsCategory,
-} from "./common/SettingsController.js";
+} from "./common/controller/SettingsController.js";
+import { ElementCore } from "./elementCore.js";
 
-export class SettingsLayout {
-  private settingsEl: HTMLDivElement | null = null;
+export class SettingsLayout extends ElementCore {
   private controller: SettingsController;
   private currentCategory: string = "editor";
   private searchInput: HTMLInputElement | null = null;
@@ -15,20 +15,21 @@ export class SettingsLayout {
   private scrollbars: PerfectScrollbar[] = [];
 
   constructor() {
+    super();
     this.controller = SettingsController.getInstance();
     this.render();
     this.setupEventListeners();
   }
 
   private render() {
-    this.settingsEl = document.createElement("div");
-    this.settingsEl.className = "settings-wrapper";
+    this.elementEl = document.createElement("div");
+    this.elementEl.className = "settings-wrapper";
 
     const header = this.createHeader();
     const body = this.createBody();
 
-    this.settingsEl.appendChild(header);
-    this.settingsEl.appendChild(body);
+    this.elementEl.appendChild(header);
+    this.elementEl.appendChild(body);
   }
 
   private createHeader(): HTMLDivElement {
@@ -80,7 +81,7 @@ export class SettingsLayout {
 
   private createCategoryNav(): HTMLDivElement {
     const nav = document.createElement("div");
-    nav.className = "settings-nav scrollbar-container";
+    nav.className = "settings-nav ";
 
     const categories = this.controller.getCategories();
     categories.forEach((category, index) => {
@@ -141,6 +142,9 @@ export class SettingsLayout {
 
     this.settingsContent.innerHTML = "";
 
+    new PerfectScrollbar(this.settingsContent);
+    new PerfectScrollbar(this.categoryNav!);
+
     const category = this.controller
       .getCategories()
       .find((c) => c.id === categoryId);
@@ -167,6 +171,8 @@ export class SettingsLayout {
       const settingEl = this.createSettingElement(setting);
       this.settingsContent!.appendChild(settingEl);
     });
+
+    this.updateScrollbars();
   }
 
   private createSettingElement(setting: Setting): HTMLDivElement {
@@ -417,6 +423,7 @@ export class SettingsLayout {
       noResults.className = "settings-no-results";
       noResults.textContent = "No settings found";
       this.settingsContent.appendChild(noResults);
+      this.updateScrollbars();
       return;
     }
 
@@ -449,38 +456,53 @@ export class SettingsLayout {
         this.settingsContent!.appendChild(settingEl);
       });
     });
+
+    this.updateScrollbars();
   }
 
   getDomElement(): HTMLDivElement {
-    if (!this.settingsEl) {
+    if (!this.elementEl) {
       throw new Error("Settings element not initialized");
     }
-    return this.settingsEl;
+    return this.elementEl;
   }
 
   initializeScrollbars() {
-    if (!this.settingsEl || !this.settingsEl.parentNode) {
-      console.warn(
-        "Settings element must be added to DOM before initializing scrollbars"
-      );
-      return;
-    }
-
-    // Clear existing scrollbars
-    this.destroyScrollbars();
-
-    // Find scrollbar containers within this settings element
-    const scrollbarContainers = this.settingsEl.querySelectorAll(
-      ".scrollbar-container"
-    );
-
-    scrollbarContainers.forEach((container) => {
-      try {
-        const scrollbar = new PerfectScrollbar(container as HTMLDivElement);
-        this.scrollbars.push(scrollbar);
-      } catch (error) {
-        console.warn("Failed to initialize PerfectScrollbar:", error);
+    requestAnimationFrame(() => {
+      if (!this.elementEl || !this.elementEl.parentNode) {
+        console.warn(
+          "Settings element must be added to DOM before initializing scrollbars"
+        );
+        return;
       }
+
+      this.destroyScrollbars();
+
+      const scrollbarContainers = [this.categoryNav, this.settingsContent];
+
+      scrollbarContainers.forEach((container) => {
+        try {
+          const htmlContainer = container as HTMLDivElement;
+          htmlContainer.style.position = "relative";
+
+          const scrollbar = new PerfectScrollbar(htmlContainer);
+          this.scrollbars.push(scrollbar);
+        } catch (error) {
+          console.warn("Failed to initialize PerfectScrollbar:", error);
+        }
+      });
+    });
+  }
+
+  private updateScrollbars() {
+    requestAnimationFrame(() => {
+      this.scrollbars.forEach((scrollbar) => {
+        try {
+          scrollbar.update();
+        } catch (error) {
+          console.warn("Failed to update PerfectScrollbar:", error);
+        }
+      });
     });
   }
 
@@ -498,9 +520,9 @@ export class SettingsLayout {
   destroy() {
     this.destroyScrollbars();
 
-    if (this.settingsEl) {
-      this.settingsEl.remove();
-      this.settingsEl = null;
+    if (this.elementEl) {
+      this.elementEl.remove();
+      this.elementEl = null;
     }
     this.settingsContent = null;
     this.categoryNav = null;

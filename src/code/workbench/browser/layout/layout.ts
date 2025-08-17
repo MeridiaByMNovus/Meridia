@@ -1,5 +1,5 @@
 import PerfectScrollbar from "perfect-scrollbar";
-import debounce from "lodash.debounce";
+import monaco from "monaco-editor";
 import {
   ActivityBar,
   ActivityBarContentLayout,
@@ -9,81 +9,94 @@ import {
   TerminalLayoutWrapper,
   TitleBarLayout,
 } from "./imports.js";
-import { LayoutService } from "./common/LayoutRegistery.js";
+import { GeminiLayout } from "../Gemini/browser/geminiLayout.js";
+import { GeminiIcon } from "../Gemini/browser/icons.js";
+import { LayoutService } from "./common/services/LayoutService.js";
 import { StatusBarLayout } from "./statusBarLayout.js";
 import { select, watch } from "../../common/store/selectors.js";
 import { dispatch, store } from "../../common/store/store.js";
 import {
   set_folder_structure,
+  update_editor_active_tab,
   update_editor_tabs,
   update_panel_state,
   update_terminal_tabs,
 } from "../../common/store/mainSlice.js";
-import { ITab } from "../../../../typings/types.js";
+import { IFolderStructure, ITab } from "../../../../typings/types.js";
 import { EditorService } from "../../../editor/common/EditorService.js";
 import { SpawnTerminal } from "../../common/spawnTerminal.js";
-import { StatusBarController } from "./common/StatusBarController.js";
-import { TabContentRegistry } from "../../common/registrey/TabContentRegistery.js";
-import { SettingsLayout } from "./settingsLayout.js";
+import { StatusBarController } from "./common/controller/StatusBarController.js";
 import {
-  handleOpenMeridiaStudioTab,
+  get_file_types,
   handleOpenSettingsTab,
+  randomUUID,
 } from "../../common/functions.js";
-import { SettingsController } from "./common/SettingsController.js";
-import { MeridiaStudioLayout } from "./meridiaStudioLayout.js";
-
-const randomUUID = () => crypto.randomUUID();
+import { SettingsController } from "./common/controller/SettingsController.js";
+import { ExtensionLayout } from "./extensionLayout.js";
+import { Core } from "../../../platform/extension/core.js";
+import { TabManager } from "./common/manager/tabManager.js";
+import { VariableLayout } from "./variableLayout.js";
+import { commands } from "../../common/classInstances/commandsInstance.js";
+import { ShortcutsManager } from "./common/manager/shortcutsManager.js";
+import { TabContentManager } from "./common/manager/tabContentManager.js";
+import { init } from "../init.js";
 
 export class Layout {
-  private fileTree: any = null;
+  private fileTree: IFolderStructure | null = null;
   private layoutService = new LayoutService();
   private terminals = new Map<string, SpawnTerminal>();
   private currentTerminal: SpawnTerminal | null = null;
   private splitterLayout!: SplitterLayout;
+  private geminiLayout!: GeminiLayout;
+  private variableLayout!: VariableLayout;
   private tabContentEl!: HTMLDivElement;
   private editorService = EditorService.get();
   private terminalContentWrapper!: HTMLDivElement;
   private terminalInstanceWrapper!: HTMLDivElement;
   private settingsWatchers: (() => void)[] = [];
+  cursorListener: monaco.IDisposable | null = null;
+
+  private editorTabManager: TabManager<ITab>;
+  private terminalTabManager: TabManager<ITab>;
 
   private isTabSwitching = false;
   private tabSwitchingTimer: NodeJS.Timeout | null = null;
   private currentTabIndex = 0;
 
-  constructor() {
-    this.registerApplicationTabContents();
+  constructor(private core: Core) {
+    this.editorTabManager = new TabManager(update_editor_tabs);
+    this.terminalTabManager = new TabManager(update_terminal_tabs);
+
+    const mainWrapper = document.createElement("div");
+    mainWrapper.className = "main-wrapper";
+
     this.initialize();
     this.setupKeyboardShortcuts();
-    this.handleMenuShortcuts();
   }
 
   private loadScrollbar() {
-    new PerfectScrollbar(
-      document.querySelector(".scrollbar-container") as HTMLDivElement
-    );
+    document.querySelectorAll(".scrollbar-container").forEach((el) => {
+      new PerfectScrollbar(el as HTMLDivElement);
+    });
   }
 
   private async initialize() {
     await this.loadData();
     this.buildLayout();
+    init(this.core, this.layoutService);
   }
 
-  private registerApplicationTabContents() {
-    const SettingsEl = new SettingsLayout();
-    const StudioEl = new MeridiaStudioLayout();
-    TabContentRegistry.set("elements://settings", SettingsEl.getDomElement());
-    TabContentRegistry.set("elements://studio", StudioEl.getDomElement());
+  public dispose() {
+    this.editorService.destroy();
   }
 
   private setupKeyboardShortcuts() {
-    document.addEventListener("keydown", (event) => {
-      if (event.ctrlKey && event.key === "Tab" && !event.shiftKey) {
-        event.preventDefault();
-        this.handleTabSwitch("editor", "forward");
-      } else if (event.ctrlKey && event.key === "Tab" && event.shiftKey) {
-        event.preventDefault();
-        this.handleTabSwitch("editor", "backward");
-      }
+    ShortcutsManager.addShortcut("ctrl+tab", () => {
+      this.handleTabSwitch("editor", "forward");
+    });
+
+    ShortcutsManager.addShortcut("ctrl+shift+tab", () => {
+      this.handleTabSwitch("editor", "backward");
     });
 
     document.addEventListener("keyup", (event) => {
@@ -91,50 +104,6 @@ export class Layout {
         this.finalizeTabSwitch();
       }
     });
-  }
-
-  private handleMenuShortcuts() {
-    window.electron.ipcRenderer.on(
-      "new-file-tab",
-      debounce(() => {
-        this.createNewEditorTab();
-      })
-    );
-
-    window.electron.ipcRenderer.on(
-      "open-settings",
-      debounce(() => {
-        handleOpenSettingsTab();
-      })
-    );
-
-    window.electron.ipcRenderer.on(
-      "toggle-left-panel",
-      debounce(() => {
-        const { left, right, bottom } = store.getState().main.panel_state;
-        dispatch(
-          update_panel_state({
-            left: left === "on" ? "off" : "on",
-            right,
-            bottom,
-          })
-        );
-      })
-    );
-
-    window.electron.ipcRenderer.on(
-      "toggle-bottom-panel",
-      debounce(() => {
-        const { left, right, bottom } = store.getState().main.panel_state;
-        dispatch(
-          update_panel_state({
-            left,
-            right,
-            bottom: bottom === "on" ? "off" : "on",
-          })
-        );
-      })
-    );
   }
 
   private handleTabSwitch(type: "editor", direction: "forward" | "backward") {
@@ -176,11 +145,12 @@ export class Layout {
     const { path, name } = await window.electron.createTempPythonFile();
 
     const tabs = select((s) => s.main.editor_tabs) || [];
-    const exists = tabs.find((t) => t.uri === path);
-    const next = tabs.map((t) => ({ ...t, active: t.uri === path }));
+    const existingTab = tabs.find((t) => t.uri === path);
 
-    if (!exists) {
-      const tab: ITab = {
+    if (existingTab) {
+      this.editorTabManager.switchToTab(existingTab.id);
+    } else {
+      const newTab: ITab = {
         id: randomUUID(),
         fileIcon: "file.py",
         name,
@@ -189,9 +159,7 @@ export class Layout {
         is_touched: false,
       };
 
-      dispatch(update_editor_tabs([...next, tab]));
-    } else {
-      dispatch(update_editor_tabs(next));
+      this.editorTabManager.addTab(newTab);
     }
   }
 
@@ -199,11 +167,6 @@ export class Layout {
     const terminalTabs = select((s) => s.main.terminal_tabs) || [];
     const terminalId = randomUUID();
     const terminalNumber = terminalTabs.length + 1;
-
-    const updatedExistingTabs = terminalTabs.map((t) => ({
-      ...t,
-      active: false,
-    }));
 
     const newTerminalTab: ITab = {
       id: terminalId,
@@ -214,7 +177,7 @@ export class Layout {
       is_touched: false,
     };
 
-    dispatch(update_terminal_tabs([...updatedExistingTabs, newTerminalTab]));
+    this.terminalTabManager.addTab(newTerminalTab);
   }
 
   private async createTerminalInstance(
@@ -227,8 +190,28 @@ export class Layout {
     const terminalContainer = document.createElement("div");
     terminalContainer.className = "terminal-instance";
     terminalContainer.style.width = "100%";
-    terminalContainer.style.height = "400px";
     terminalContainer.style.display = "none";
+    terminalContainer.style.position = "relative";
+
+    const updateHeight = () => {
+      const availableHeight = this.terminalInstanceWrapper.offsetHeight;
+      const calculatedHeight = Math.max(availableHeight - 42, 200);
+      terminalContainer.style.height = calculatedHeight + "px";
+    };
+
+    updateHeight();
+
+    const observer = new ResizeObserver(() => {
+      updateHeight();
+
+      setTimeout(() => {
+        const terminal = this.terminals.get(terminalId);
+        if (terminal && !terminal.getIsDisposed()) {
+          terminal.forceFit();
+        }
+      }, 100);
+    });
+    observer.observe(this.terminalInstanceWrapper);
 
     this.terminalInstanceWrapper.appendChild(terminalContainer);
 
@@ -260,35 +243,41 @@ export class Layout {
 
   private async switchToTerminal(terminalId: string) {
     const terminalIdStr = String(terminalId);
+
     if (this.currentTerminal) {
       const currentContainer = this.terminalContentWrapper.querySelector(
-        '.terminal-instance[style*="display: block"], .terminal-instance[style="width: 100%; height: 100%;"]'
+        '.terminal-instance[style*="display: block"], .terminal-instance[style*="display: flex"]'
       ) as HTMLElement;
       if (currentContainer) {
         currentContainer.style.display = "none";
       }
     }
+
     const terminal = await this.createTerminalInstance(terminalIdStr);
+
     const containers =
       this.terminalContentWrapper.querySelectorAll(".terminal-instance");
+    let targetContainer: any = null;
 
-    let targetContainer: HTMLElement;
     containers.forEach((container) => {
       const containerElement = container as HTMLElement;
       if (
-        this.terminals.get(terminalIdStr)?.terminal.element?.parentElement
-          ?.parentElement === containerElement
+        terminal.terminal.element?.parentElement?.parentElement ===
+        containerElement
       ) {
         targetContainer = containerElement;
       }
     });
-    if (targetContainer!) {
+
+    if (targetContainer) {
       targetContainer.style.display = "block";
       this.currentTerminal = terminal;
+
       setTimeout(() => {
-        terminal.forceFit();
-      }, 50);
-    } else {
+        if (!terminal.getIsDisposed()) {
+          terminal.forceFit();
+        }
+      }, 150);
     }
   }
 
@@ -324,6 +313,7 @@ export class Layout {
   private async loadData() {
     const folder = await window.electron.get_folder();
     if (folder) this.fileTree = folder;
+    else this.fileTree = null;
   }
 
   private async buildLayout() {
@@ -341,9 +331,16 @@ export class Layout {
     const layout = this.layoutService.RegisterLayout("main");
     const leftActivityBar = new ActivityBar("left");
 
-    const fileTreeLayout = new FileTreeLayout(this.fileTree);
+    const fileTreeLayout = new FileTreeLayout(
+      (this.fileTree as IFolderStructure) ?? null
+    );
+    const extensionLayout = new ExtensionLayout();
+    this.geminiLayout = new GeminiLayout();
+    this.variableLayout = new VariableLayout();
 
     this.splitterLayout = new SplitterLayout(layout, 70, 30);
+
+    const rightActivityBar = new ActivityBar("right");
 
     const leftPane = this.layoutService.RegisterSplitterPane(
       "leftPane",
@@ -353,25 +350,38 @@ export class Layout {
     );
 
     let leftActivityBarContent: ActivityBarContentLayout;
+    let rightActivityBarContent: ActivityBarContentLayout;
 
-    if (this.fileTree) {
-      leftActivityBarContent = this.layoutService.RegisterActivityBarContent(
-        leftPane,
-        "leftActivityBarContent"
-      );
-    }
+    leftActivityBarContent = this.layoutService.RegisterActivityBarContent(
+      leftPane,
+      "leftActivityBarContent",
+      undefined,
+      true
+    );
 
     const middlePane = this.layoutService.RegisterSplitterPane(
       "middlePane",
       this.splitterLayout,
       "top",
-      80
+      50
+    );
+
+    const rightPane = this.layoutService.RegisterSplitterPane(
+      "rightPane",
+      this.splitterLayout,
+      "top",
+      30
     );
 
     const bottomPane = this.layoutService.RegisterSplitterPane(
       "bottomPane",
       this.splitterLayout,
       "bottom"
+    );
+
+    rightActivityBarContent = this.layoutService.RegisterActivityBarContent(
+      rightPane,
+      "rightActivityBarContent"
     );
 
     const editorLayout = this.layoutService.RegisterEditorLayout(middlePane);
@@ -407,7 +417,7 @@ export class Layout {
     this.terminalInstanceWrapper.style.height = "100%";
     this.terminalInstanceWrapper.style.position = "relative";
 
-    terminalLayout.getDomElement().appendChild(this.terminalContentWrapper);
+    terminalLayout.getDomElement()!.appendChild(this.terminalContentWrapper);
 
     const addEditorTabButton = document.createElement("button");
     addEditorTabButton.innerHTML = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="var(--icon-color)"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <title></title> <g id="Complete"> <g data-name="add" id="add-2"> <g> <line fill="none" stroke="var(--icon-color)" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="12" x2="12" y1="19" y2="5"></line> <line fill="none" stroke="var(--icon-color)" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="5" x2="19" y1="12" y2="12"></line> </g> </g> </g> </g></svg>`;
@@ -424,7 +434,7 @@ export class Layout {
     };
 
     const editorTabs = this.layoutService.RegisterTabsLayout(
-      editorLayout.getDomElement(),
+      editorLayout.getDomElement()!,
       [addEditorTabButton]
     );
 
@@ -444,7 +454,6 @@ export class Layout {
 
     const updateEditorTabs = (
       tabs: ITab[],
-      contentWrapper: HTMLDivElement,
       getStateTabs: () => ITab[],
       updateAction: any,
       onTabClick?: Function
@@ -465,8 +474,6 @@ export class Layout {
         this.layoutService.RegisterTabLayout(
           tab.name,
           tab.active,
-          document.createElement("div"),
-          contentWrapper,
           editorTabs,
           getStateTabs,
           updateAction,
@@ -481,7 +488,6 @@ export class Layout {
 
     const updateTerminalTabsLayout = (
       tabs: ITab[],
-      contentWrapper: HTMLDivElement,
       getStateTabs: () => ITab[],
       updateAction: any
     ) => {
@@ -498,8 +504,6 @@ export class Layout {
         this.layoutService.RegisterTabLayout(
           tab.name,
           tab.active,
-          tabContent,
-          contentWrapper,
           terminalTabs,
           getStateTabs,
           updateAction,
@@ -515,13 +519,9 @@ export class Layout {
     };
 
     const renderEditorTabs = (tabs: ITab[]) => {
-      updateEditorTabs(
-        tabs,
-        editorContentWrapper,
-        getEditorTabsState,
-        update_editor_tabs,
-        () => {}
-      );
+      this.editorTabManager.tabs = tabs;
+
+      updateEditorTabs(tabs, getEditorTabsState, update_editor_tabs, () => {});
 
       const active = tabs.find((t) => t.active);
 
@@ -543,7 +543,7 @@ export class Layout {
       if (active?.content) {
         this.editorService.hide();
         const contentKey = active?.content ?? active?.uri;
-        const contentEl = TabContentRegistry.get(contentKey);
+        const contentEl = TabContentManager.getContent(contentKey);
 
         if (contentEl instanceof Node) {
           setTabContentDisplay("block");
@@ -566,9 +566,10 @@ export class Layout {
     };
 
     const renderTerminalTabs = (tabs: ITab[]) => {
+      this.terminalTabManager.tabs = tabs;
+
       updateTerminalTabsLayout(
         tabs,
-        this.terminalContentWrapper,
         getTerminalTabsState,
         update_terminal_tabs
       );
@@ -588,7 +589,12 @@ export class Layout {
 
     watch(
       (s) => s.main.editor_tabs,
-      (next) => renderEditorTabs(next)
+      (next) => {
+        renderEditorTabs(next);
+        dispatch(
+          update_editor_active_tab(next.find((tab) => tab.active) as ITab)
+        );
+      }
     );
 
     watch(
@@ -609,18 +615,16 @@ export class Layout {
       }
     );
 
-    dispatch(
-      update_terminal_tabs([
-        {
-          id: randomUUID(),
-          name: "Terminal 1",
-          fileIcon: "file.bat",
-          active: true,
-          uri: randomUUID(),
-          is_touched: false,
-        },
-      ])
-    );
+    const initialTerminalTab: ITab = {
+      id: randomUUID(),
+      name: "Terminal 1",
+      fileIcon: "file.bat",
+      active: true,
+      uri: randomUUID(),
+      is_touched: false,
+    };
+
+    this.terminalTabManager.addTab(initialTerminalTab);
 
     const explorerIcon = `
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke=var(--icon-color)>
@@ -631,7 +635,7 @@ export class Layout {
     this.layoutService.RegisterActivityBarItem(
       leftActivityBar,
       fileTreeLayout.render(),
-      leftActivityBarContent!.getDomElement(),
+      leftActivityBarContent!.getDomElement() as HTMLDivElement,
       explorerIcon,
       "explorer",
       "top",
@@ -640,8 +644,8 @@ export class Layout {
 
     this.layoutService.RegisterActivityBarItem(
       leftActivityBar,
-      document.createElement("div"),
-      leftActivityBarContent!.getDomElement(),
+      extensionLayout.getDomElement()!,
+      leftActivityBarContent!.getDomElement() as HTMLDivElement,
       `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path fill-rule="evenodd" clip-rule="evenodd" d="M13 3H21V11H13V3ZM15 5H19V9H15V5Z" fill="var(--icon-color)"></path> <path fill-rule="evenodd" clip-rule="evenodd" d="M17 21V13H11V7H3V21H17ZM9 9H5V13H9V9ZM5 19L5 15H9V19H5ZM11 19V15H15V19H11Z" fill="var(--icon-color)"></path> </g></svg>`,
       "extension",
       "top",
@@ -659,6 +663,26 @@ export class Layout {
       handleOpenSettingsTab
     );
 
+    this.layoutService.RegisterActivityBarItem(
+      rightActivityBar,
+      this.geminiLayout.getDomElement() as HTMLDivElement,
+      rightActivityBarContent!.getDomElement() as HTMLDivElement,
+      GeminiIcon,
+      "gemini",
+      "top",
+      false
+    );
+
+    this.layoutService.RegisterActivityBarItem(
+      rightActivityBar,
+      this.variableLayout.getDomElement() as HTMLDivElement,
+      rightActivityBarContent!.getDomElement() as HTMLDivElement,
+      `<svg fill="var(--icon-color)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52" enable-background="new 0 0 52 52" xml:space="preserve"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M42.6,17.8c2.4,0,7.2-2,7.2-8.4c0-6.4-4.6-6.8-6.1-6.8c-2.8,0-5.6,2-8.1,6.3c-2.5,4.4-5.3,9.1-5.3,9.1 l-0.1,0c-0.6-3.1-1.1-5.6-1.3-6.7c-0.5-2.7-3.6-8.4-9.9-8.4c-6.4,0-12.2,3.7-12.2,3.7l0,0C5.8,7.3,5.1,8.5,5.1,9.9 c0,2.1,1.7,3.9,3.9,3.9c0.6,0,1.2-0.2,1.7-0.4l0,0c0,0,4.8-2.7,5.9,0c0.3,0.8,0.6,1.7,0.9,2.7c1.2,4.2,2.4,9.1,3.3,13.5l-4.2,6 c0,0-4.7-1.7-7.1-1.7s-7.2,2-7.2,8.4s4.6,6.8,6.1,6.8c2.8,0,5.6-2,8.1-6.3c2.5-4.4,5.3-9.1,5.3-9.1c0.8,4,1.5,7.1,1.9,8.5 c1.6,4.5,5.3,7.2,10.1,7.2c0,0,5,0,10.9-3.3c1.4-0.6,2.4-2,2.4-3.6c0-2.1-1.7-3.9-3.9-3.9c-0.6,0-1.2,0.2-1.7,0.4l0,0 c0,0-4.2,2.4-5.6,0.5c-1-2-1.9-4.6-2.6-7.8c-0.6-2.8-1.3-6.2-2-9.5l4.3-6.2C35.5,16.1,40.2,17.8,42.6,17.8z"></path> </g></svg>`,
+      "variable",
+      "top",
+      true
+    );
+
     const statusBar = new StatusBarLayout();
 
     const settingsController = SettingsController.getInstance();
@@ -673,7 +697,7 @@ export class Layout {
     const updateStatusBarVisibility = (visible: boolean) =>
       setElementVisibility(statusBarElement, visible);
     const updateActivityBarVisibility = (visible: boolean) =>
-      setElementVisibility(activityBarElement, visible);
+      setElementVisibility(activityBarElement!, visible);
 
     const defaultStatusBarVisibility = settingsController.get(
       "workbench.statusBar.visible"
@@ -697,13 +721,72 @@ export class Layout {
     this.settingsWatchers.push(watcherStatusBar, watcherActivityBar);
 
     const statusBarController = new StatusBarController();
-    const mainItem = statusBarController.createActivityItem({
-      id: "fileName",
+
+    const mainItem = statusBarController.createActivityItem({ id: "fileName" });
+    const languageItem = statusBarController.createActivityItem({
+      id: "language",
+    });
+    const spacingItem = statusBarController.createActivityItem({
+      id: "spacing",
+    });
+    const lineItem = statusBarController.createActivityItem({ id: "line" });
+    const encodingItem = statusBarController.createActivityItem({
+      id: "encoding",
     });
 
     mainItem.textContent = "main";
+    languageItem.textContent = "Python";
+    spacingItem.textContent = "Spaces: 4";
+    encodingItem.textContent = "UTF-8";
+    lineItem.textContent = "Ln 1, Col 35";
 
     statusBarController.addItemToPrimary(mainItem);
+
+    let debounceTimer: number | null = null;
+
+    watch(
+      (s) => s.main.editor_active_tab,
+      (next) => {
+        if (debounceTimer) clearTimeout(debounceTimer);
+
+        debounceTimer = window.setTimeout(() => {
+          debounceTimer = null;
+
+          this.cursorListener?.dispose();
+          this.cursorListener = null;
+
+          mainItem.textContent = next?.name ?? "main";
+
+          if (next && next.uri && this.editorService.editor) {
+            const { line, column } = this.editorService.getLineCols() || {};
+            const { spaces } = this.editorService.getIndent() || {};
+            const fileType = get_file_types(next.name);
+            const language =
+              fileType.charAt(0).toUpperCase() + fileType.slice(1);
+
+            lineItem.textContent = `Ln ${line}, Col ${column}`;
+            spacingItem.textContent = `Spaces: ${spaces}`;
+            languageItem.textContent = language;
+
+            statusBarController.addItemToGlobal(lineItem);
+            statusBarController.addItemToGlobal(encodingItem);
+            statusBarController.addItemToGlobal(spacingItem);
+            statusBarController.addItemToGlobal(languageItem);
+
+            this.cursorListener =
+              this.editorService.editor.onDidChangeCursorPosition((e) => {
+                lineItem.textContent = `Ln ${e.position.lineNumber}, Col ${e.position.column}`;
+              });
+          } else {
+            ["indent", "line", "encoding", "spacing", "language"].forEach(
+              (id) => {
+                statusBarController.removeItemById(id);
+              }
+            );
+          }
+        }, 50);
+      }
+    );
 
     watch(
       (s) => s.main.editor_active_tab,
@@ -728,64 +811,86 @@ export class Layout {
     watch(
       (s) => s.main.panel_state,
       (next) => {
+        const paneEl = rightPane.getDomElement();
+
+        if (!paneEl) return;
+
+        if (next.right === "off") {
+          this.splitterLayout.hideTopPane(paneEl);
+        } else {
+          this.splitterLayout.showTopPane(paneEl);
+        }
+      }
+    );
+
+    watch(
+      (s) => s.main.panel_state,
+      (next) => {
         if (next.bottom === "on")
           this.splitterLayout.toggleBottomSplitter(true);
         else this.splitterLayout.toggleBottomSplitter(false);
       }
     );
 
-    dispatch(
-      update_panel_state({
-        left: "off",
-        right: "off",
-        bottom: "off",
-      })
-    );
-
-    handleOpenMeridiaStudioTab();
-
     this.registerRunButtonHandler();
     this.loadScrollbar();
   }
 
   private registerRunButtonHandler() {
-    const runButton = document.querySelector(
-      ".run-button"
-    ) as HTMLButtonElement;
-
-    runButton.onclick = () => {
+    commands.addCommand("workbench.editor.run", async () => {
       const { left, right } = store.getState().main.panel_state;
 
       const activeTermTab = select((s) =>
         s.main.terminal_tabs.find((t) => t.active)
       );
 
-      if (!activeTermTab) return;
+      if (!activeTermTab) {
+        await this.createNewTerminalTab();
 
-      const terminal = this.terminals.get(String(activeTermTab.uri!));
-      if (!terminal) return;
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        const newActiveTermTab = select((s) =>
+          s.main.terminal_tabs.find((t) => t.active)
+        );
+        if (!newActiveTermTab) return;
+      }
+
+      const terminalId = String(activeTermTab?.uri!);
+      let terminal = this.terminals.get(terminalId);
+
+      if (!terminal) {
+        terminal = await this.createTerminalInstance(terminalId);
+        if (!terminal) {
+          window.electron.ipcRenderer.invoke("show-error-message-box", {
+            title: "Error",
+            content: "Please open a terminal to run a file.",
+          });
+          return;
+        }
+      }
 
       const activeEditorTab = select((s) =>
         s.main.editor_tabs.find((t) => t.active)
       );
 
-      if (!activeEditorTab) {
+      if (!activeEditorTab || !activeEditorTab.uri) {
+        window.electron.ipcRenderer.invoke("show-error-message-box", {
+          title: "Error",
+          content: "Please open an editor to run a file.",
+        });
         return;
       }
 
-      if (!activeEditorTab.uri!.endsWith(".py")) {
+      const currentFilePath = activeEditorTab.uri;
+
+      if (!currentFilePath.endsWith(".py")) {
         window.electron.ipcRenderer.invoke("show-error-message-box", {
-          title: "Error invalid file type.",
+          title: "Error: Invalid file type",
           content: "Only Python files are allowed to run.",
         });
-
         return;
       }
 
-      const filePath = activeEditorTab.uri;
-
-      const command = `python "${filePath}"`;
-
+      const command = `python "${currentFilePath}"`;
       terminal.executeCommand(command);
 
       dispatch(
@@ -795,6 +900,8 @@ export class Layout {
           bottom: "on",
         })
       );
-    };
+
+      this.geminiLayout.scrollToBottom();
+    });
   }
 }

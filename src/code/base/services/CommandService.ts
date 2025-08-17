@@ -1,4 +1,3 @@
-import { ipcMain } from "electron";
 import {
   handleNewFile,
   handleOpenFile,

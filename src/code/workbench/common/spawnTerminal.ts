@@ -3,7 +3,7 @@ import { FitAddon } from "@xterm/addon-fit";
 import { WebglAddon } from "@xterm/addon-webgl";
 import { SearchAddon, ISearchOptions } from "@xterm/addon-search";
 import PerfectScrollbar from "perfect-scrollbar";
-import { themeService } from "../service/ThemeServiceSingleton.js";
+import { themeService } from "./classInstances/themeInstance.js";
 import { KnownColorKey } from "../../../typings/types.js";
 
 const FONT_STACK =
@@ -35,6 +35,7 @@ export class SpawnTerminal {
   };
   private resizeObserver?: ResizeObserver;
   private isDisposed = false;
+  private commandExecuting = false;
 
   constructor(
     container: HTMLDivElement,
@@ -97,15 +98,15 @@ export class SpawnTerminal {
     this.initAfterFonts().then(() => {
       if (this.isDisposed) return;
 
-      setTimeout(() => {
+      requestAnimationFrame(() => {
         if (!this.isDisposed) {
           this.fitAddon.fit();
         }
-      }, 0);
+      });
       this.sendResize();
 
       this.resizeObserver = new ResizeObserver(() => {
-        if (!this.isDisposed) {
+        if (!this.isDisposed && !this.commandExecuting) {
           this.fitIfNeeded();
         }
       });
@@ -127,6 +128,16 @@ export class SpawnTerminal {
         if (!this.isDisposed) {
           this.terminal.write(data);
           this.scrollbar?.update();
+
+          if (this.commandExecuting) {
+            this.commandExecuting = false;
+
+            setTimeout(() => {
+              if (!this.isDisposed) {
+                this.fitIfNeeded();
+              }
+            }, 50);
+          }
         }
       }
     );
@@ -139,7 +150,7 @@ export class SpawnTerminal {
     const handleWindowResize = () => {
       clearTimeout(resizeTimeout);
       resizeTimeout = setTimeout(() => {
-        if (!this.isDisposed) {
+        if (!this.isDisposed && !this.commandExecuting) {
           this.fitIfNeeded();
         }
       }, 100);
@@ -171,7 +182,7 @@ export class SpawnTerminal {
   }
 
   fitToContainer() {
-    if (this.isDisposed) return;
+    if (this.isDisposed || this.commandExecuting) return;
 
     const dims = this.fitAddon.proposeDimensions();
     if (!dims) return;
@@ -183,13 +194,17 @@ export class SpawnTerminal {
   }
 
   fitIfNeeded() {
-    if (this.isDisposed) return;
+    if (this.isDisposed || this.commandExecuting) return;
 
     const dims = this.fitAddon.proposeDimensions();
     if (!dims) return;
 
     const cols = Math.floor(dims.cols);
     const rows = Math.floor(dims.rows);
+
+    if (cols < 10 || rows < 5) {
+      return;
+    }
 
     if (
       Number.isInteger(cols) &&
@@ -201,7 +216,7 @@ export class SpawnTerminal {
   }
 
   forceFit() {
-    if (!this.isDisposed) {
+    if (!this.isDisposed && !this.commandExecuting) {
       this.fitIfNeeded();
     }
   }
@@ -217,7 +232,7 @@ export class SpawnTerminal {
   }
 
   resize(cols: number, rows: number) {
-    if (!this.isDisposed) {
+    if (!this.isDisposed && cols > 0 && rows > 0) {
       this.terminal.resize(cols, rows);
       this.sendResize();
       this.scrollbar?.update();
@@ -361,6 +376,8 @@ export class SpawnTerminal {
 
   executeCommand(command: string) {
     if (!this.isDisposed) {
+      this.commandExecuting = true;
+
       window.electron.ipcRenderer.send("ptyInstance.keystroke", {
         id: this.ptyId,
         data: command + "\r",

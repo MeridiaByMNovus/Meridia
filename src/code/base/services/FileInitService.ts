@@ -1,32 +1,26 @@
 import path from "path";
 import fs from "fs";
-import { app } from "electron";
 
 export class FileInitService {
+  public readonly appDataPath =
+    process.platform === "win32"
+      ? process.env.APPDATA
+      : path.join(process.env.HOME, ".config");
+
   public readonly PUBLIC_FOLDER_PATH = path.join(
-    app.getPath("userData"),
-    "MeridiaLocalStorage"
-  );
-  public readonly PUBLIC_THEME_FOLDER_PATH = path.join(
-    this.PUBLIC_FOLDER_PATH,
-    "theme"
-  );
-  public readonly PUBLIC_DATA_FOLDER_PATH = path.join(
-    this.PUBLIC_FOLDER_PATH,
-    "data"
+    this.appDataPath,
+    "MeridiaLocalStorage",
+    "config"
   );
 
   public readonly SETTINGS_JSON_PATH = path.join(
     this.PUBLIC_FOLDER_PATH,
     "settings.json"
   );
-  public readonly DATA_JSON_PATH = path.join(
-    this.PUBLIC_DATA_FOLDER_PATH,
-    "data.json"
-  );
-  public readonly STORAGE_JSON_PATH = path.join(
+
+  public readonly STORE_JSON_PATH = path.join(
     this.PUBLIC_FOLDER_PATH,
-    "storage.json"
+    "store.json"
   );
 
   constructor() {
@@ -35,11 +29,7 @@ export class FileInitService {
   }
 
   private ensureFolders() {
-    const folders = [
-      this.PUBLIC_FOLDER_PATH,
-      this.PUBLIC_THEME_FOLDER_PATH,
-      this.PUBLIC_DATA_FOLDER_PATH,
-    ];
+    const folders = [this.PUBLIC_FOLDER_PATH];
     folders.forEach((folder) => {
       if (!fs.existsSync(folder)) {
         fs.mkdirSync(folder, { recursive: true });
@@ -50,8 +40,7 @@ export class FileInitService {
   private ensureFiles() {
     const jsonDefaults = {
       [this.SETTINGS_JSON_PATH]: {},
-      [this.DATA_JSON_PATH]: {},
-      [this.STORAGE_JSON_PATH]: {},
+      [this.STORE_JSON_PATH]: {},
     };
 
     Object.entries(jsonDefaults).forEach(([filePath, defaultContent]) => {

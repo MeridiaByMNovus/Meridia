@@ -12,7 +12,7 @@ import { mainWindow } from "../../../main.js";
 
 export class ProjectService {
   private window = mainWindow;
-  private DATA_JSON_PATH = new FileInitService().DATA_JSON_PATH;
+  private STORE_JSON_PATH = new FileInitService().STORE_JSON_PATH;
 
   private registerIpcListeners() {
     ipcMain.on("create-project", (_, data: any) => {
@@ -73,11 +73,11 @@ export class ProjectService {
 
       const folder_structure = StorageService.get("fileTree");
       const folder_tree = JSON.parse(
-        fs.readFileSync(this.DATA_JSON_PATH, "utf8")
+        fs.readFileSync(this.STORE_JSON_PATH, "utf8")
       )["fileTree"];
 
       handleDataChange(
-        this.DATA_JSON_PATH,
+        this.STORE_JSON_PATH,
         folder_tree,
         folder_structure,
         "fileTree",

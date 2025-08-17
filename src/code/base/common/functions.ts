@@ -85,7 +85,7 @@ export async function handleOpenFolder() {
     };
 
     StorageService.set("fileTree", structure);
-    mainWindow.reload();
+    mainWindow.webContents.send("window-reset");
   }
 }
 
@@ -140,7 +140,7 @@ export async function handleOpenSetFolder() {
       children,
     };
     StorageService.set("fileTree", structure);
-    mainWindow.reload();
+    mainWindow.webContents.send("window-reset");
   }
 }
 
@@ -213,7 +213,7 @@ export const refresh_window = ({ folder }: { folder: string }) => {
   };
 
   StorageService.set("fileTree", structure);
-  mainWindow.reload();
+  mainWindow.webContents.send("window-reset");
 };
 
 export const get_set_folder_structure = ({ path }: { path: string }) => {
@@ -226,7 +226,7 @@ export const get_set_folder_structure = ({ path }: { path: string }) => {
   };
 
   StorageService.set("fileTree", structure);
-  mainWindow.reload();
+  mainWindow.webContents.send("window-reset");
 };
 
 ipcMain.handle("read-file", (event, filePath) => {

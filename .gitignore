@@ -42,6 +42,7 @@ build/Release
 
 # Dependency directories
 node_modules/
+installer/
 jspm_packages/
 certs/
 
@@ -136,10 +137,3 @@ build
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
-
-
-# certain files and folders
-anantam.key
-anantam.pfx
-setup.iss
-Output

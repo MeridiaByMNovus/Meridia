@@ -1,9 +1,9 @@
 import * as monaco from "monaco-editor";
 import debounce from "lodash.debounce";
-import { themeService } from "../../workbench/service/ThemeServiceSingleton.js";
+import { themeService } from "../../workbench/common/classInstances/themeInstance.js";
 import { dispatch, store } from "../../workbench/common/store/store.js";
 import { update_editor_tabs } from "../../workbench/common/store/mainSlice.js";
-import { PyrightProvider } from "./PyrightProvider.js";
+import { PyrightProvider } from "../../platform/extension/pyright-api.js";
 
 export type OpenTab = {
   uri?: string;
@@ -12,6 +12,8 @@ export type OpenTab = {
 };
 
 type Theme = "dark" | "light";
+
+let globalPyrightProvider: PyrightProvider | null = null;
 
 function toFileUri(path: string) {
   return monaco.Uri.file(path);
@@ -43,12 +45,15 @@ export class EditorCore {
     ".ico",
     ".tiff",
     ".tif",
+    ".avif",
   ]);
   private readonly svgExtensions = new Set([".svg"]);
   private readonly nonCodeExtensions = new Set([
     ...this.imageExtensions,
     ...this.svgExtensions,
   ]);
+
+  constructor() {}
 
   static get() {
     if (!this.i) this.i = new EditorCore();
@@ -72,6 +77,15 @@ export class EditorCore {
     return this.nonCodeExtensions.has(this.getFileExtension(path));
   }
 
+  private initializePyrightProvider(): void {
+    if (!this.editor) return;
+
+    if (!globalPyrightProvider) {
+      globalPyrightProvider = new PyrightProvider(this.editor);
+      globalPyrightProvider.init();
+    }
+  }
+
   async mount(container: HTMLElement, _theme: Theme = "dark") {
     if (this.editor) return;
 
@@ -93,20 +107,10 @@ export class EditorCore {
 
     this.editorDiv = document.createElement("div");
     this.editorDiv.className = "editor-div";
-    this.editorDiv.style.height = "100%";
-    this.editorDiv.style.width = "100%";
-    this.editorDiv.style.flex = "1";
     container.appendChild(this.editorDiv);
 
     this.fileViewerDiv = document.createElement("div");
     this.fileViewerDiv.className = "file-viewer-div";
-    this.fileViewerDiv.style.height = "100%";
-    this.fileViewerDiv.style.width = "100%";
-    this.fileViewerDiv.style.flex = "1";
-    this.fileViewerDiv.style.display = "none";
-    this.fileViewerDiv.style.overflow = "auto";
-    this.fileViewerDiv.style.padding = "20px";
-    this.fileViewerDiv.style.backgroundColor = "var(--editor-bg)";
     container.appendChild(this.fileViewerDiv);
 
     const editorOptions = this.getEditorOptions();
@@ -114,7 +118,7 @@ export class EditorCore {
 
     this.setupSettingsWatchers();
 
-    new PyrightProvider(this.editor).loadPyrightProvider();
+    this.initializePyrightProvider();
   }
 
   getEditorOptions(): monaco.editor.IStandaloneEditorConstructionOptions {
@@ -126,6 +130,8 @@ export class EditorCore {
       smoothScrolling: true,
       minimap: { enabled: false },
       fontSize: 18,
+      glyphMargin: true,
+      lineNumbers: "on",
     };
 
     try {
@@ -149,6 +155,7 @@ export class EditorCore {
           enabled:
             SettingsRegistryManager.get("editor.minimap.enabled") !== "false",
         },
+        glyphMargin: true,
       };
     } catch (error) {
       return defaultOptions;
@@ -158,7 +165,7 @@ export class EditorCore {
   async setupSettingsWatchers(): Promise<void> {
     try {
       const { SettingsController } = await import(
-        "../../workbench/browser/layout/common/SettingsController.js"
+        "../../workbench/browser/layout/common/controller/SettingsController.js"
       );
       const settingsController = SettingsController.getInstance();
 
@@ -238,16 +245,9 @@ export class EditorCore {
     this.pathDisplayEl.className = "editor-path-display";
 
     const left = document.createElement("div");
-    left.style.overflow = "hidden";
-    left.style.whiteSpace = "nowrap";
-    left.style.textOverflow = "ellipsis";
-    left.style.flex = "1";
     left.className = "editor-path-display-left";
 
     const right = document.createElement("div");
-    right.style.display = "flex";
-    right.style.gap = "10px";
-    right.style.alignItems = "center";
     right.className = "editor-path-display-right";
 
     const actions = [
@@ -287,14 +287,9 @@ export class EditorCore {
 
     for (const action of actions) {
       const btn = document.createElement("span");
+      btn.className = "editor-path-display-action";
       btn.innerHTML = action.svg;
       btn.title = action.title;
-      btn.style.cursor = "pointer";
-      btn.style.userSelect = "none";
-      btn.style.fontSize = "14px";
-      btn.style.opacity = "0.7";
-      btn.addEventListener("mouseenter", () => (btn.style.opacity = "1"));
-      btn.addEventListener("mouseleave", () => (btn.style.opacity = "0.7"));
       btn.addEventListener("click", () => {
         const editor = this.editor;
         if (!editor) return;
@@ -306,8 +301,8 @@ export class EditorCore {
 
     this.pathDisplayEl.appendChild(left);
     this.pathDisplayEl.appendChild(right);
-    container.style.display = "flex";
-    container.style.flexDirection = "column";
+
+    container.className = "editor-container";
     container.appendChild(this.pathDisplayEl);
   }
 
@@ -376,18 +371,42 @@ export class EditorCore {
     this.fileViewerDiv.innerHTML = "";
 
     const container = document.createElement("div");
-    container.className = "scrollbar-container";
-    container.style.display = "flex";
-    container.style.flexDirection = "column";
-    container.style.alignItems = "center";
-    container.style.justifyContent = "center";
-    container.style.height = "100%";
-    container.style.gap = "20px";
+    container.className = "image-viewer-container scrollbar-container";
 
     const img = document.createElement("img");
+    img.className = "image-viewer-img";
+
+    const info = document.createElement("div");
+    info.className = "image-viewer-info";
+    info.textContent = `Image: ${path.split("/").pop()}`;
+
+    const handleImageLoad = () => {
+      info.textContent += ` (${img.naturalWidth} × ${img.naturalHeight})`;
+    };
+
+    const handleImageError = () => {
+      img.style.display = "none";
+      const errorDiv = document.createElement("div");
+      errorDiv.className = "image-viewer-error";
+
+      const mainError = document.createElement("div");
+      mainError.textContent = "Unable to load image";
+
+      const details = document.createElement("div");
+      details.className = "image-viewer-error-details";
+      details.innerHTML = `File: ${path.split("/").pop()}<br>Reason: Security restrictions prevent loading local files`;
+
+      errorDiv.appendChild(mainError);
+      errorDiv.appendChild(details);
+      container.appendChild(errorDiv);
+      return;
+    };
+
+    img.addEventListener("load", handleImageLoad, { once: true });
+    img.addEventListener("error", handleImageError, { once: true });
 
     try {
-      if (window.electron.readFile) {
+      if (window.electron?.readFile) {
         const imageData = await window.electron.readFile(path);
         if (imageData) {
           const base64 = btoa(
@@ -404,47 +423,11 @@ export class EditorCore {
         img.src = `safe-file:///${normalizedPath}`;
       }
     } catch (error) {
-      img.style.display = "none";
-      const errorDiv = document.createElement("div");
-      errorDiv.style.color = "var(--red-color)";
-      errorDiv.style.fontSize = "16px";
-      errorDiv.style.textAlign = "center";
-      errorDiv.style.padding = "20px";
-      errorDiv.innerHTML = `
-        <div>Unable to load image</div>
-        <div style="font-size: 12px; margin-top: 10px; opacity: 0.8;">
-          File: ${path.split("/").pop()}<br>
-          Reason: Security restrictions prevent loading local files
-        </div>
-      `;
-      container.appendChild(errorDiv);
+      console.log(error);
+      handleImageError();
       this.fileViewerDiv.appendChild(container);
       return;
     }
-
-    img.style.maxWidth = "100%";
-    img.style.maxHeight = "calc(100% - 100px)";
-    img.style.objectFit = "contain";
-    img.style.border = "1px solid var(--border-color)";
-    img.style.borderRadius = "4px";
-
-    const info = document.createElement("div");
-    info.style.color = "var(--text-color)";
-    info.style.fontSize = "14px";
-    info.style.textAlign = "center";
-    info.textContent = `Image: ${path.split("/").pop()}`;
-
-    if (!img.onload) {
-      img.onload = () => {
-        info.textContent += ` (${img.naturalWidth} × ${img.naturalHeight})`;
-      };
-    }
-
-    img.onerror = () => {
-      img.style.display = "none";
-      info.textContent = `Error loading image: ${path.split("/").pop()}`;
-      info.style.color = "var(--red-color)";
-    };
 
     container.appendChild(img);
     container.appendChild(info);
@@ -473,29 +456,14 @@ export class EditorCore {
     this.fileViewerDiv.innerHTML = "";
 
     const container = document.createElement("div");
-    container.style.display = "flex";
-    container.style.flexDirection = "column";
-    container.style.alignItems = "center";
-    container.style.justifyContent = "center";
-    container.style.height = "100%";
-    container.style.gap = "20px";
-    container.style.overflow = "hidden";
+    container.className = "svg-viewer-container";
 
     const svgContainer = document.createElement("div");
-    svgContainer.className = "scrollbar-container";
-    svgContainer.style.maxWidth = "100%";
-    svgContainer.style.maxHeight = "calc(100% - 100px)";
-    svgContainer.style.overflow = "auto";
-    svgContainer.style.border = "1px solid var(--border-color)";
-    svgContainer.style.borderRadius = "4px";
-    svgContainer.style.padding = "20px";
-    svgContainer.style.backgroundColor = "var(--editor-bg)";
+    svgContainer.className = "svg-viewer-content scrollbar-container";
     svgContainer.innerHTML = content;
 
     const info = document.createElement("div");
-    info.style.color = "var(--text-color)";
-    info.style.fontSize = "14px";
-    info.style.textAlign = "center";
+    info.className = "svg-viewer-info";
     info.textContent = `SVG: ${path.split("/").pop()}`;
 
     container.appendChild(svgContainer);
@@ -581,13 +549,14 @@ export class EditorCore {
     });
 
     this.applyModelSettings(model);
-
     this.editor.focus();
   }
 
   private applyModelSettings(model: monaco.editor.ITextModel): void {
     try {
-      import("../../workbench/browser/layout/common/SettingsController.js")
+      import(
+        "../../workbench/browser/layout/common/controller/SettingsController.js"
+      )
         .then(({ SettingsController }) => {
           const settingsController = SettingsController.getInstance();
           const tabSize = settingsController.get("editor.tabSize") ?? 4;
@@ -689,6 +658,10 @@ export class EditorCore {
     this.pathDisplayEl = null;
     this.editorDiv = null;
     this.fileViewerDiv = null;
+
+    if (globalPyrightProvider) {
+      globalPyrightProvider = null;
+    }
   }
 
   hide() {
@@ -746,20 +719,10 @@ export class EditorCore {
 
       this.editorDiv = document.createElement("div");
       this.editorDiv.className = "editor-div";
-      this.editorDiv.style.height = "100%";
-      this.editorDiv.style.width = "100%";
-      this.editorDiv.style.flex = "1";
       container.appendChild(this.editorDiv);
 
       this.fileViewerDiv = document.createElement("div");
       this.fileViewerDiv.className = "file-viewer-div";
-      this.fileViewerDiv.style.height = "100%";
-      this.fileViewerDiv.style.width = "100%";
-      this.fileViewerDiv.style.flex = "1";
-      this.fileViewerDiv.style.display = "none";
-      this.fileViewerDiv.style.overflow = "auto";
-      this.fileViewerDiv.style.padding = "20px";
-      this.fileViewerDiv.style.backgroundColor = "var(--editor-bg)";
       container.appendChild(this.fileViewerDiv);
 
       const editorOptions = this.getEditorOptions();
@@ -767,10 +730,108 @@ export class EditorCore {
 
       this.setupSettingsWatchers();
 
-      new PyrightProvider(this.editor);
+      this.initializePyrightProvider();
     } catch (error) {
       this.destroy();
       throw error;
+    }
+  }
+
+  getLineCols() {
+    const position = this.editor?.getPosition();
+    if (!position) return null;
+
+    return {
+      line: position.lineNumber,
+      column: position.column,
+    };
+  }
+
+  getIndent() {
+    return {
+      spaces: this.getEditorOptions().tabSize ?? 2,
+    };
+  }
+
+  public getSelectedText(): string {
+    if (!this.editor) {
+      console.warn("Editor not initialized");
+      return "";
+    }
+
+    try {
+      const selection = this.editor.getSelection();
+      const model = this.editor.getModel();
+
+      if (!selection || !model) {
+        console.warn("No selection or model available");
+        return "";
+      }
+
+      if (selection.isEmpty()) {
+        return "";
+      }
+
+      const selectedText = model.getValueInRange(selection);
+
+      if (!selectedText || typeof selectedText !== "string") {
+        return "";
+      }
+
+      return selectedText.trim();
+    } catch (error) {
+      console.error("Error getting selected text:", error);
+      return "";
+    }
+  }
+
+  public hasSelection(): boolean {
+    if (!this.editor) return false;
+
+    try {
+      const selection = this.editor.getSelection();
+      return selection ? !selection.isEmpty() : false;
+    } catch (error) {
+      console.error("Error checking selection:", error);
+      return false;
+    }
+  }
+
+  public getSelectionInfo(): {
+    hasSelection: boolean;
+    text: string;
+    range?: any;
+  } {
+    if (!this.editor) {
+      return { hasSelection: false, text: "" };
+    }
+
+    try {
+      const selection = this.editor.getSelection();
+      const model = this.editor.getModel();
+
+      if (!selection || !model) {
+        return { hasSelection: false, text: "" };
+      }
+
+      const hasSelection = !selection.isEmpty();
+      const text = hasSelection ? model.getValueInRange(selection) : "";
+
+      return {
+        hasSelection,
+        text: text.trim(),
+        range: hasSelection
+          ? {
+              startLine: selection.startLineNumber,
+              startColumn: selection.startColumn,
+              endLine: selection.endLineNumber,
+              endColumn: selection.endColumn,
+            }
+          : undefined,
+      };
+    } catch (error) {
+      console.error("Error getting selection info:", error);
+      return { hasSelection: false, text: "" };
     }
   }
 }

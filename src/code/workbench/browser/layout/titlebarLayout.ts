@@ -1,8 +1,9 @@
-import { handleOpenMeridiaStudioTab } from "../../common/functions.js";
+import { commands } from "../../common/classInstances/commandsInstance.js";
 import { update_panel_state } from "../../common/store/mainSlice.js";
 import { select, watch } from "../../common/store/selectors.js";
 import { dispatch } from "../../common/store/store.js";
-import { TitleBarController } from "./common/TitlebarController.js";
+import { TitleBarController } from "./common/controller/TitlebarController.js";
+import { ElementCore } from "./elementCore.js";
 
 const panelLeftOnSvg = `
 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32" fill="none">
@@ -39,10 +40,11 @@ const panelRightOffSvg = `
 <svg fill="var(--icon-color)" viewBox="0 0 32 32" id="icon" xmlns="http://www.w3.org/2000/svg" transform="rotate(180)"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><defs><style>.cls-1{fill:none;}</style></defs><title>open-panel--left</title><path d="M28,4H4A2,2,0,0,0,2,6V26a2,2,0,0,0,2,2H28a2,2,0,0,0,2-2V6A2,2,0,0,0,28,4ZM4,6h6V26H4ZM28,26H12V6H28Z"></path><rect id="_Transparent_Rectangle_" data-name="&lt;Transparent Rectangle&gt;" class="cls-1" width="32" height="32"></rect></g></svg>
 `;
 
-export class TitleBarLayout {
+export class TitleBarLayout extends ElementCore {
   constructor() {
-    this.createTitlebar();
+    super();
 
+    this.createTitlebar();
     new TitleBarController();
   }
 
@@ -83,10 +85,9 @@ export class TitleBarLayout {
 
     const logoDiv = document.createElement("div");
     logoDiv.className = "logo";
-    const logoImg = document.createElement("img");
-    logoImg.alt = "logo";
-    logoImg.src = "./code/resources/assets/icons/logo.svg";
-    logoDiv.appendChild(logoImg);
+    const logoTxt = document.createElement("p");
+    logoTxt.textContent = "Meridia";
+    logoDiv.appendChild(logoTxt);
 
     const menuDiv = document.createElement("div");
     menuDiv.className = "menu";
@@ -101,36 +102,33 @@ export class TitleBarLayout {
     commandsDiv.className = "commands";
 
     const runButton = document.createElement("button");
-    runButton.className = "run-button";
     runButton.innerHTML = `<svg viewBox="-3 0 28 28" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:sketch="http://www.bohemiancoding.com/sketch/ns" fill="var(--icon-color)"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <title>play</title> <desc>Created with Sketch Beta.</desc> <defs> </defs> <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" sketch:type="MSPage"> <g id="Icon-Set" sketch:type="MSLayerGroup" transform="translate(-417.000000, -569.000000)" fill="var(--icon-color)"> <path d="M418.983,594.247 L418.983,571.722 L436.831,582.984 L418.983,594.247 L418.983,594.247 Z M438.204,581.536 L419.394,569.279 C418.278,568.672 417,568.943 417,570.917 L417,595.052 C417,597.012 418.371,597.361 419.394,596.689 L438.204,584.433 C439.288,583.665 439.258,582.242 438.204,581.536 L438.204,581.536 Z" id="play" sketch:type="MSShapeGroup"> </path> </g> </g> </g></svg>`;
-
-    const meridiaStudio = document.createElement("button");
-    meridiaStudio.className = "meridia-button";
-    meridiaStudio.textContent = "Meridia Studio";
-
-    meridiaStudio.onclick = () => {
-      handleOpenMeridiaStudioTab();
+    runButton.onclick = () => {
+      commands.runCommand("workbench.editor.run");
     };
 
     commandsDiv.appendChild(runButton);
-    commandsDiv.appendChild(meridiaStudio);
 
     const panelControlsDiv = document.createElement("div");
     panelControlsDiv.className = "panel-controls";
 
     const getState = () => select((s) => s.main.panel_state);
     const btnPanelLeft = document.createElement("button");
-
     const btnPanelBottom = document.createElement("button");
+    const btnPanelRight = document.createElement("button");
+
     const updateBtn = () => {
       const { left, right, bottom } = getState();
       btnPanelLeft.innerHTML = left === "on" ? panelLeftOnSvg : panelLeftOffSvg;
-
       btnPanelBottom.innerHTML =
         bottom === "on" ? panelBottomOnSvg : panelBottomOffSvg;
+      btnPanelRight.innerHTML =
+        right === "on" ? panelRightOnSvg : panelRightOffSvg;
     };
     updateBtn();
+
     watch((s) => s.main.panel_state, updateBtn);
+
     btnPanelLeft.onclick = () => {
       const { left, right, bottom } = getState();
       dispatch(
@@ -153,8 +151,20 @@ export class TitleBarLayout {
       );
     };
 
+    btnPanelRight.onclick = () => {
+      const { left, right, bottom } = getState();
+      dispatch(
+        update_panel_state({
+          left,
+          right: right === "on" ? "off" : "on",
+          bottom,
+        })
+      );
+    };
+
     panelControlsDiv.appendChild(btnPanelLeft);
     panelControlsDiv.appendChild(btnPanelBottom);
+    panelControlsDiv.appendChild(btnPanelRight);
 
     const optionsDiv = document.createElement("div");
     optionsDiv.className = "options";
@@ -165,32 +175,32 @@ export class TitleBarLayout {
     const btnMinimize = document.createElement("button");
     btnMinimize.innerHTML = MinimizeSvg;
     btnMinimize.onclick = () => {
-      window.electron.handleWindowMinimize("main");
+      window.electron.handleWindowMinimize();
     };
 
     const btnRestore = document.createElement("button");
-    btnRestore.innerHTML = MaximizeSVG;
+    btnRestore.innerHTML = RestoreSVG;
     btnRestore.onclick = () => {
-      window.electron.handleWindowMaximize("main");
+      window.electron.handleWindowRestore();
     };
 
     const btnClose = document.createElement("button");
     btnClose.innerHTML = CloseSvg;
     btnClose.onclick = () => {
-      window.electron.handleWindowClose("main");
+      window.electron.handleWindowClose();
     };
 
     window.electron.ipcRenderer.on("window-changed-to-maximized", () => {
       btnRestore.innerHTML = RestoreSVG;
       btnRestore.onclick = () => {
-        window.electron.handleWindowRestore("main");
+        window.electron.handleWindowRestore();
       };
     });
 
     window.electron.ipcRenderer.on("window-changed-to-restore", () => {
       btnRestore.innerHTML = MaximizeSVG;
       btnRestore.onclick = () => {
-        window.electron.handleWindowMaximize("main");
+        window.electron.handleWindowMaximize();
       };
     });
 

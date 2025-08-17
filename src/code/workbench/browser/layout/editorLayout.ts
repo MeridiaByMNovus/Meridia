@@ -1,45 +1,32 @@
-export class EditorLayout {
-  private editorLayoutWrapper: HTMLDivElement | null = null;
+import { ElementCore } from "./elementCore.js";
 
-  constructor() {}
+export class EditorLayout extends ElementCore {
+  constructor() {
+    super();
 
-  public render() {
-    this.editorLayoutWrapper = document.createElement("div");
-    this.editorLayoutWrapper.className = "editor-layout-wrapper";
-
-    this.setupDropZone();
-
-    return this.editorLayoutWrapper;
+    this.render();
   }
 
-  public getDomElement() {
-    if (!this.editorLayoutWrapper) {
-      this.editorLayoutWrapper = document.querySelector(
-        ".editor-layout-wrapper"
-      ) as HTMLDivElement;
-    }
-    return this.editorLayoutWrapper;
+  private render() {
+    this.elementEl = document.createElement("div");
+    this.elementEl.className = "editor-layout-wrapper";
+
+    this.setupDropZone();
   }
 
   private setupDropZone() {
-    if (!this.editorLayoutWrapper) return;
+    if (!this.elementEl) return;
 
-    this.editorLayoutWrapper.addEventListener(
+    this.elementEl.addEventListener(
       "dragenter",
       this.handleDragEnter.bind(this)
     );
-    this.editorLayoutWrapper.addEventListener(
-      "dragover",
-      this.handleDragOver.bind(this)
-    );
-    this.editorLayoutWrapper.addEventListener(
+    this.elementEl.addEventListener("dragover", this.handleDragOver.bind(this));
+    this.elementEl.addEventListener(
       "dragleave",
       this.handleDragLeave.bind(this)
     );
-    this.editorLayoutWrapper.addEventListener(
-      "drop",
-      this.handleDrop.bind(this)
-    );
+    this.elementEl.addEventListener("drop", this.handleDrop.bind(this));
   }
 
   private handleDragEnter(e: DragEvent) {
@@ -50,8 +37,8 @@ export class EditorLayout {
       "application/x-meridia-node"
     );
 
-    if (hasFileData && this.editorLayoutWrapper) {
-      this.editorLayoutWrapper.classList.add("drag-over");
+    if (hasFileData && this.elementEl) {
+      this.elementEl.classList.add("drag-over");
       this.showDropIndicator(true);
     }
   }
@@ -72,8 +59,8 @@ export class EditorLayout {
     e.preventDefault();
     e.stopPropagation();
 
-    if (!this.editorLayoutWrapper?.contains(e.relatedTarget as Node)) {
-      this.editorLayoutWrapper?.classList.remove("drag-over");
+    if (!this.elementEl?.contains(e.relatedTarget as Node)) {
+      this.elementEl?.classList.remove("drag-over");
       this.showDropIndicator(false);
     }
   }
@@ -82,11 +69,11 @@ export class EditorLayout {
     e.preventDefault();
     e.stopPropagation();
 
-    if (!this.editorLayoutWrapper) {
+    if (!this.elementEl) {
       return;
     }
 
-    this.editorLayoutWrapper.classList.remove("drag-over");
+    this.elementEl.classList.remove("drag-over");
     this.showDropIndicator(false);
 
     const nodeData = e.dataTransfer?.getData("application/x-meridia-node");
@@ -108,10 +95,9 @@ export class EditorLayout {
   }
 
   private showDropIndicator(show: boolean) {
-    if (!this.editorLayoutWrapper) return;
+    if (!this.elementEl) return;
 
-    const existingIndicator =
-      this.editorLayoutWrapper.querySelector(".drop-indicator");
+    const existingIndicator = this.elementEl.querySelector(".drop-indicator");
 
     if (show && !existingIndicator) {
       const indicator = document.createElement("div");
@@ -125,8 +111,8 @@ export class EditorLayout {
           <p>Drop file here to open</p>
         </div>
       `;
-      this.editorLayoutWrapper.style.position = "relative";
-      this.editorLayoutWrapper.appendChild(indicator);
+      this.elementEl.style.position = "relative";
+      this.elementEl.appendChild(indicator);
     } else if (!show && existingIndicator) {
       existingIndicator.remove();
     }
@@ -211,7 +197,7 @@ export class EditorLayout {
   public initializeDropZone() {
     const element = this.getDomElement();
     if (element && !element.hasAttribute("data-drop-initialized")) {
-      this.editorLayoutWrapper = element;
+      this.elementEl = element;
       this.setupDropZone();
       element.setAttribute("data-drop-initialized", "true");
     }

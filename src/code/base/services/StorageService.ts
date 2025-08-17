@@ -1,15 +1,18 @@
 import fs from "fs";
 import { FileInitService } from "./FileInitService";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 export class StorageService {
-  private static DATA_JSON_PATH: string;
+  private static STORE_JSON_PATH: string;
   private static filePath: string;
   private static data: Record<string, any>;
 
   static {
     const fileInit = new FileInitService();
-    this.DATA_JSON_PATH = fileInit.DATA_JSON_PATH;
-    this.filePath = this.DATA_JSON_PATH;
+    this.STORE_JSON_PATH = fileInit.STORE_JSON_PATH;
+    this.filePath = this.STORE_JSON_PATH;
     this.data = this.load();
   }
 

@@ -1,15 +1,27 @@
 {
   "appId": "com.mnovus.meridia",
   "productName": "Meridia",
-  "asar": true,
+  "asar": false,
   "directories": {
-    "output": "dist"
+    "output": "dist/"
   },
-  "files": ["out/**/*", "package.json", "node_modules/**/*", "!**/*.map"],
+  "files": ["out/**/*", "package.json", "!**/*.map"],
   "extraMetadata": {
     "main": "out/main.js"
   },
   "win": {
-    "target": "nsis"
+    "target": [
+      {
+        "target": "nsis",
+        "arch": ["x64"]
+      }
+    ],
+    "artifactName": "${productName}-Setup-${version}.${ext}"
+  },
+  "nsis": {
+    "oneClick": false,
+    "perMachine": false,
+    "allowToChangeInstallationDirectory": true,
+    "deleteAppDataOnUninstall": false
   }
 }

@@ -1,17 +1,13 @@
-export class TerminalLayoutWrapper {
-  constructor() {}
+import { ElementCore } from "./elementCore.js";
 
-  public render() {
-    const terminalLayoutWrapper = document.createElement("div");
-    terminalLayoutWrapper.className = "terminal-layout-wrapper";
-
-    return terminalLayoutWrapper;
+export class TerminalLayoutWrapper extends ElementCore {
+  constructor() {
+    super();
+    this.render();
   }
 
-  public getDomElement() {
-    const terminalLayoutWrapper = document.querySelector(
-      ".terminal-layout-wrapper"
-    ) as HTMLDivElement;
-    return terminalLayoutWrapper;
+  private render() {
+    this.elementEl = document.createElement("div");
+    this.elementEl.className = "terminal-layout-wrapper";
   }
 }

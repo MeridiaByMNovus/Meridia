@@ -1,15 +1,54 @@
 import monacoCss from "monaco-editor/min/vs/editor/editor.main.css";
-import codiconCss from "monaco-editor/esm/vs/base/browser/ui/codicons/codicon/codicon.css";
-import codiconTtfUrl from "monaco-editor/esm/vs/base/browser/ui/codicons/codicon/codicon.ttf";
 import xtermCss from "@xterm/xterm/css/xterm.css";
+import GoogleSansCode from "../../resources/fonts/GoogleSansCode.ttf";
+import MozillaText from "../../resources/fonts/MozillaText.ttf";
+import Poppins from "../../resources/fonts/PoppinsRegular.ttf";
+import Codicon from "../../resources/fonts/Codicon.ttf";
 
 export function InjectResources() {
-  const patched = codiconCss.replace(
-    /url\([^)]*codicon\.ttf[^)]*\)/,
-    `url("${codiconTtfUrl}")`
-  );
+  const codiconFontFace = `
+  @font-face {
+    font-family: "codicon";
+    src: url("${Codicon}") format("truetype");
+    font-weight: normal;
+    font-style: normal;
+  }
+  `;
+
+  const googleSansCodeFontFace = `
+  @font-face {
+    font-family: "Google Sans Code";
+    src: url("${GoogleSansCode}") format("truetype");
+    font-weight: normal;
+    font-style: normal;
+  }
+  `;
+
+  const mozillaTextFontFace = `
+  @font-face {
+    font-family: "Mozilla Text";
+    src: url("${MozillaText}") format("truetype");
+    font-weight: normal;
+    font-style: normal;
+  }
+  `;
+
+  const poppinsFontFace = `
+  @font-face {
+    font-family: "Poppins";
+    src: url("${Poppins}") format("truetype");
+    font-weight: normal;
+    font-style: normal;
+  }
+  `;
 
   const style = document.createElement("style");
-  style.textContent = monacoCss + xtermCss + patched;
-  document.head.appendChild(style);
+  style.textContent =
+    codiconFontFace +
+    googleSansCodeFontFace +
+    mozillaTextFontFace +
+    poppinsFontFace +
+    monacoCss +
+    xtermCss +
+    document.head.appendChild(style);
 }

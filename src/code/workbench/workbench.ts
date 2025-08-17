@@ -1,51 +1,47 @@
 import { Layout } from "./browser/layout/layout.js";
-import { InitElementsService } from "./service/InitElementsService.js";
 import {
-  DraculaTechTheme,
-  SolarizedCalmTheme,
-  NordSeaTheme,
-  MinimalLightTheme,
-  OneDarkProTheme,
-  MonokaiClassicTheme,
+  CyberpunkGold,
+  LavenderDreams,
+  MeridiaDark,
+  MeridiaLight,
+  NeonSynthwave,
+  OceanBreeze,
+  SunsetVibes,
 } from "../resources/theme/themes.js";
-import { themeService } from "./service/ThemeServiceSingleton.js";
+import { themeService } from "./common/classInstances/themeInstance.js";
 import {
   SettingsRegistry,
   SettingsRegistryManager,
-} from "./common/registrey/SettingsRegistery.js";
+} from "./common/registery/SettingsRegistery.js";
+import { Core } from "../platform/extension/core.js";
 
 export class Workbench {
   private readonly settingsRegistry: typeof SettingsRegistry;
   private readonly settingsManager: typeof SettingsRegistryManager;
   private layout?: Layout;
-  private initElementsService?: InitElementsService;
   private settingsWatchers: (() => void)[] = [];
 
-  constructor() {
+  constructor(private core: Core) {
     this.settingsRegistry = SettingsRegistry;
     this.settingsManager = SettingsRegistryManager;
 
-    try {
-      this.initialize();
-    } catch (error) {
-      throw new Error("Workbench initialization failed");
-    }
+    this.initialize();
   }
 
   private async initialize(): Promise<void> {
     this.registerDefaultSettings();
     this.initializeThemeSystem();
     this.setupSettingsWatchers();
-    await this.initializeCoreServices();
     this.initializeLayout();
   }
 
   private registerDefaultSettings(): void {
-    import("./browser/layout/common/SettingsController.js")
+    import("./browser/layout/common/controller/SettingsController.js")
       .then(({ SettingsController }) => {
         const settingsController = SettingsController.getInstance();
 
         const workbenchSettings = {
+          "workbench.colorTheme": MeridiaDark.name,
           "workbench.startupAction": "welcomeTab",
           "workbench.enableAnimations": true,
         };
@@ -58,7 +54,7 @@ export class Workbench {
       })
       .catch((error) => {
         const defaultSettings = {
-          "workbench.colorTheme": DraculaTechTheme.name,
+          "workbench.colorTheme": MeridiaDark.name,
           "workbench.startupAction": "welcomeTab",
           "workbench.enableAnimations": true,
         };
@@ -72,7 +68,7 @@ export class Workbench {
   }
 
   private setupSettingsWatchers(): void {
-    import("./browser/layout/common/SettingsController.js")
+    import("./browser/layout/common/controller/SettingsController.js")
       .then(({ SettingsController }) => {
         const settingsController = SettingsController.getInstance();
 
@@ -107,39 +103,34 @@ export class Workbench {
 
   private initializeThemeSystem(): void {
     const availableThemes = [
-      DraculaTechTheme,
-      MinimalLightTheme,
-      MonokaiClassicTheme,
-      OneDarkProTheme,
-      NordSeaTheme,
-      SolarizedCalmTheme,
+      MeridiaDark,
+      MeridiaLight,
+      LavenderDreams,
+      SunsetVibes,
+      CyberpunkGold,
+      OceanBreeze,
+      NeonSynthwave,
     ];
-
     themeService.registerMany(availableThemes);
     themeService.initFromPersisted();
 
-    const currentTheme = this.settingsManager.get(
+    let currentTheme = this.settingsManager.get(
       "workbench.colorTheme"
     ) as string;
-    if (currentTheme) {
-      try {
-        themeService.setThemeByName(currentTheme);
-      } catch {
-        themeService.setThemeByName(NordSeaTheme.name);
-      }
+    if (!currentTheme) {
+      currentTheme = MeridiaDark.name;
+      this.settingsManager.set("workbench.colorTheme", currentTheme);
     }
-  }
 
-  private async initializeCoreServices(): Promise<void> {
-    this.initElementsService = new InitElementsService();
-
-    if (this.initElementsService && "initialize" in this.initElementsService) {
-      await (this.initElementsService as any).initialize();
+    try {
+      themeService.setThemeByName(currentTheme);
+    } catch {
+      themeService.setThemeByName(MeridiaDark.name);
     }
   }
 
   private initializeLayout(): void {
-    this.layout = new Layout();
+    this.layout = new Layout(this.core);
   }
 
   public getLayout(): Layout | undefined {
@@ -154,24 +145,6 @@ export class Workbench {
     try {
       themeService.setThemeByName(themeName);
       this.settingsManager.set("workbench.colorTheme", themeName);
-    } catch (error) {}
-  }
-
-  public dispose(): void {
-    try {
-      this.settingsWatchers.forEach((unwatch) => unwatch());
-      this.settingsWatchers = [];
-
-      if (this.layout && "dispose" in this.layout) {
-        (this.layout as any).dispose();
-      }
-
-      if (this.initElementsService && "dispose" in this.initElementsService) {
-        (this.initElementsService as any).dispose();
-      }
-
-      this.layout = undefined;
-      this.initElementsService = undefined;
     } catch (error) {}
   }
 }

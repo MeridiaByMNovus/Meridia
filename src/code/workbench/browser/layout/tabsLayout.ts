@@ -1,25 +1,32 @@
 import PerfectScrollbar from "perfect-scrollbar";
+import { ElementCore } from "./elementCore.js";
 
-export class TabsLayout {
-  private container: HTMLDivElement;
+export class TabsLayout extends ElementCore {
   private wrapper: HTMLDivElement;
   private extraButtonsContainer?: HTMLDivElement;
   private ps: PerfectScrollbar;
-  private ps2?: PerfectScrollbar;
 
   constructor(
     private parent: HTMLDivElement,
     private props?: any[]
   ) {
-    this.container = document.createElement("div");
-    this.container.className = "tabs-layout-container";
-    this.container.style.height = "42px";
-    this.container.style.width = "100%";
+    super();
+    this.elementEl = document.createElement("div");
+    this.elementEl.className = "tabs-layout-container";
+    this.elementEl.style.height = "42px";
+    this.elementEl.style.width = "100%";
+    this.elementEl.style.position = "relative";
+    this.elementEl.style.display = "flex";
+    this.elementEl.style.alignItems = "flex-end";
 
     this.wrapper = document.createElement("div");
     this.wrapper.className = "tabs-layout-wrapper scrollbar-container";
+    this.wrapper.style.flex = "1";
+    this.wrapper.style.display = "flex";
+    this.wrapper.style.alignItems = "center";
+    this.wrapper.style.minHeight = "0";
 
-    this.container.appendChild(this.wrapper);
+    this.elementEl.appendChild(this.wrapper);
 
     this.ps = new PerfectScrollbar(this.wrapper, {
       wheelPropagation: false,
@@ -27,16 +34,16 @@ export class TabsLayout {
       suppressScrollX: false,
     });
 
+    this.fixScrollbarPosition();
+
     if (Array.isArray(this.props) && this.props.length > 0) {
       this.extraButtonsContainer = document.createElement("div");
       this.extraButtonsContainer.className =
         "tabs-layout-extra-buttons scrollbar-container";
-      this.container.appendChild(this.extraButtonsContainer);
+      this.extraButtonsContainer.style.display = "flex";
+      this.extraButtonsContainer.style.alignItems = "center";
 
-      this.ps2 = new PerfectScrollbar(this.extraButtonsContainer, {
-        wheelPropagation: false,
-        suppressScrollY: true,
-      });
+      this.elementEl.appendChild(this.extraButtonsContainer);
 
       this.props.forEach((buttonEl) => {
         if (buttonEl instanceof HTMLElement) {
@@ -45,7 +52,7 @@ export class TabsLayout {
       });
     }
 
-    this.parent.appendChild(this.container);
+    this.parent.appendChild(this.elementEl);
 
     this.wrapper.addEventListener(
       "wheel",
@@ -57,14 +64,31 @@ export class TabsLayout {
           e.preventDefault();
           e.stopPropagation();
           this.ps.update();
-          this.ps2?.update();
         }
       },
       { passive: false }
     );
 
-    requestAnimationFrame(() => this.ps.update());
-    if (this.ps2) requestAnimationFrame(() => this.ps2!.update());
+    requestAnimationFrame(() => {
+      this.ps.update();
+      this.fixScrollbarPosition();
+    });
+  }
+
+  private fixScrollbarPosition(scrollbar?: PerfectScrollbar) {
+    const element = scrollbar ? this.extraButtonsContainer : this.wrapper;
+
+    if (element) {
+      requestAnimationFrame(() => {
+        const rail = element.querySelector(".ps__rail-x") as HTMLElement;
+        if (rail) {
+          rail.style.bottom = "0px";
+          rail.style.top = "auto";
+          rail.style.transform = "none";
+          rail.style.height = "6px";
+        }
+      });
+    }
   }
 
   public addTab(tab: HTMLDivElement) {
@@ -108,7 +132,8 @@ export class TabsLayout {
         }
 
         this.ps.update();
-        this.ps2?.update();
+
+        this.fixScrollbarPosition();
       }
 
       this.clearDropIndicators();
@@ -118,7 +143,8 @@ export class TabsLayout {
     requestAnimationFrame(() => {
       this.wrapper.scrollLeft = this.wrapper.scrollWidth;
       this.ps.update();
-      this.ps2?.update();
+
+      this.fixScrollbarPosition();
     });
   }
 
@@ -131,21 +157,25 @@ export class TabsLayout {
   public removeAllTabs() {
     this.wrapper.innerHTML = "";
     this.ps.update();
-    this.ps2?.update();
+
+    this.fixScrollbarPosition();
   }
 
   public hide() {
-    this.container.style.display = "none";
+    this.elementEl!.style.display = "none";
   }
 
   public show() {
-    this.container.style.display = "flex";
-    requestAnimationFrame(() => this.ps.update());
-    if (this.ps2) requestAnimationFrame(() => this.ps2!.update());
+    this.elementEl!.style.display = "flex";
+    requestAnimationFrame(() => {
+      this.ps.update();
+      this.fixScrollbarPosition();
+    });
   }
 
   public refresh() {
     this.ps.update();
-    this.ps2?.update();
+
+    this.fixScrollbarPosition();
   }
 }

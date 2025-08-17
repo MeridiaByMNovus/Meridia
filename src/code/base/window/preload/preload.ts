@@ -1,3 +1,5 @@
+import path from "path";
+import fs from "fs";
 import { contextBridge, ipcRenderer } from "electron";
 import { IFolderStructure } from "../../../../typings/types.js";
 
@@ -76,14 +78,10 @@ export const ERenderer = {
 
   handleMenuClick: (menuId: any) => ipcRenderer.invoke("menu-click", menuId),
 
-  handleWindowClose: (window: "main" | "welcomeWizard") =>
-    ipcRenderer.invoke("close", window),
-  handleWindowMinimize: (window: "main" | "welcomeWizard") =>
-    ipcRenderer.invoke("minimize", window),
-  handleWindowMaximize: (window: "main" | "welcomeWizard") =>
-    ipcRenderer.invoke("maximize", window),
-  handleWindowRestore: (window: "main" | "welcomeWizard") =>
-    ipcRenderer.invoke("restore", window),
+  handleWindowClose: () => ipcRenderer.invoke("close"),
+  handleWindowMinimize: () => ipcRenderer.invoke("minimize"),
+  handleWindowMaximize: () => ipcRenderer.invoke("maximize"),
+  handleWindowRestore: () => ipcRenderer.invoke("restore"),
 
   createTempPythonFile: async () => {
     return (await ipcRenderer.invoke("create-temp-file")) as {
@@ -101,4 +99,26 @@ ipcRenderer.on("command-update-folder-structure", (event, data) => {
   event.sender.send("folder-updated", data.updatedData);
 });
 
+export const fsBridge = {
+  readFileSync: (filePath: string, encoding: BufferEncoding) =>
+    fs.readFileSync(filePath, { encoding: encoding }),
+  writeFileSync: (filePath: string, data: string, encoding?: BufferEncoding) =>
+    fs.writeFileSync(filePath, data, { encoding: encoding }),
+  existsSync: (filePath: string) => fs.existsSync(filePath),
+  readdirSync: (dirPath: string) => fs.readdirSync(dirPath),
+  isDirectory: (dirPath: string) =>
+    fs.existsSync(dirPath) && fs.statSync(dirPath).isDirectory(),
+};
+
+export const pathBridge = {
+  resolve: (...args: string[]) => path.resolve(...args),
+  dirname: (p: string) => path.dirname(p),
+  join: (...args: string[]) => path.join(...args),
+  __dirname: () => {
+    return __dirname;
+  },
+};
+
+contextBridge.exposeInMainWorld("fsBridge", fsBridge);
+contextBridge.exposeInMainWorld("pathBridge", pathBridge);
 contextBridge.exposeInMainWorld("electron", ERenderer);

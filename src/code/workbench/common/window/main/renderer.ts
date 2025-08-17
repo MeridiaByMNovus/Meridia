@@ -1,4 +1,6 @@
 import { Workbench } from "../../../workbench.js";
+import { ExtensionManager } from "../../../../platform/extension/manager.js";
+import { Core } from "../../../../platform/extension/core.js";
 import { InjectResources } from "../../injectResources.js";
 
 window.onload = async () => {
@@ -6,7 +8,31 @@ window.onload = async () => {
 
   window.target_window = "main";
 
-  new Workbench();
+  const extensionCore = new Core();
+
+  window.extensionManager = new ExtensionManager(
+    extensionCore,
+    window.pathBridge.join(
+      window.pathBridge.__dirname(),
+      "..",
+      "..",
+      "..",
+      "..",
+      "extensions"
+    )
+  );
+
+  await window.extensionManager.loadExtensions();
+
+  new Workbench(extensionCore);
+
+  setTimeout(() => {
+    window.extensionManager.runAllExtensions();
+  }, 500);
+
+  window.electron.ipcRenderer.on("window-reset", async () => {
+    window.location.reload();
+  });
 };
 
 self.MonacoEnvironment = {

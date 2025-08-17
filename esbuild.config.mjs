@@ -40,20 +40,13 @@ const common = {
   outbase: "src",
   outdir: "out",
   plugins: [importMetaUrlPlugin],
-  logLevel: "error", // Only show errors, not warnings
+  logLevel: "error",
 };
 
 async function buildAll() {
-  const rendererEntries = await fg(["src/code/workbench/**/renderer.ts"]);
-  const otherEntries = await fg([
-    "src/code/workbench/**/*.ts",
-    "src/code/editor/**/*.ts",
-    "src/code/editor/worker/**/*.ts",
-    "!src/code/workbench/**/renderer.ts",
-    "!**/*.d.ts",
-    "!**/*.test.ts",
-    "!**/node_modules/**/test/**",
-    "!**/node_modules/**/example.ts",
+  const rendererEntries = await fg([
+    "src/code/workbench/**/renderer.ts",
+    "src/code/platform/**/*.ts",
   ]);
 
   const workerEntries = {
@@ -98,43 +91,20 @@ async function buildAll() {
     splitting: true,
     target: ["chrome114", "firefox115"],
     define: { "process.env.NODE_ENV": JSON.stringify(env) },
-    assetNames: "assets/[name]-[hash]",
+    assetNames: "assets/[name]",
     chunkNames: "chunks/[name]-[hash]",
     metafile: true,
     loader: Loaders,
   };
 
-  const nodeOpts = {
-    ...common,
-    entryPoints: otherEntries,
-    platform: "node",
-    format: "esm", // Changed from "cjs" to "esm" to support top-level await
-    target: ["node18"],
-    loader: Loaders,
-    external: [
-      // Mark all problematic packages as external so they're not bundled
-      "lightningcss",
-      "esbuild",
-      "langium-statemachine-dsl",
-      "vite",
-      "minimist",
-      "fastq",
-      "tsconfig-paths",
-    ],
-    packages: "external", // This tells esbuild to treat all node_modules as external
-  };
-
   if (watch) {
     const rendererCtx = await esbuild.context(rendererOpts);
-    const nodeCtx = await esbuild.context(nodeOpts);
     const workersCtx = await esbuild.context(workersOpts);
     await workersCtx.watch();
     await rendererCtx.watch();
-    await nodeCtx.watch();
   } else {
     await Promise.all([
       esbuild.build(rendererOpts),
-      esbuild.build(nodeOpts),
       esbuild.build(workersOpts),
     ]);
   }

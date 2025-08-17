@@ -1,15 +1,19 @@
-export class SplitterPaneLayout {
-  private domElement?: HTMLDivElement;
+import { ElementCore } from "./elementCore.js";
 
-  constructor(public id: string) {}
+export class SplitterPaneLayout extends ElementCore {
+  constructor(public id: string) {
+    super();
 
-  public render(): HTMLDivElement {
-    if (!this.domElement) {
-      this.domElement = document.createElement("div");
-      this.domElement.id = this.id;
-      this.domElement.className = "splitter-pane-layout";
+    this.render();
+  }
+
+  private render(): HTMLDivElement {
+    if (!this.elementEl) {
+      this.elementEl = document.createElement("div");
+      this.elementEl.id = this.id;
+      this.elementEl.className = "splitter-pane-layout";
     }
-    return this.domElement;
+    return this.elementEl;
   }
 
   public mount(parent: HTMLDivElement) {
@@ -22,11 +26,5 @@ export class SplitterPaneLayout {
     if (el) {
       el.appendChild(content);
     }
-  }
-
-  public getDomElement(): HTMLDivElement | null {
-    return (
-      this.domElement || (document.getElementById(this.id) as HTMLDivElement)
-    );
   }
 }
