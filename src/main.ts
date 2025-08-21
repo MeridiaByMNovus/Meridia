@@ -144,6 +144,8 @@ function createWindow({
 app.whenReady().then(async () => {
   const cwd = StorageService.get("fileTree")?.root || "/";
 
+  RegisterIpcHandlers();
+
   mainWindow = createWindow({
     width: 800,
     height: 600,
@@ -184,8 +186,6 @@ app.whenReady().then(async () => {
 
     fileTreeService.changeCwd(content.fileTree.root);
   });
-
-  RegisterIpcHandlers();
 });
 
 app.on("window-all-closed", () => {

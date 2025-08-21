@@ -20,7 +20,7 @@ const initialState: IMainState = {
   panel_state: {
     left: "on",
     bottom: "on",
-    right: "on",
+    right: "off",
   },
 };
 

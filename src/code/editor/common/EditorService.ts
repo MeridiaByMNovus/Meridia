@@ -125,12 +125,8 @@ export class EditorCore {
     const defaultOptions: monaco.editor.IStandaloneEditorConstructionOptions = {
       automaticLayout: true,
       largeFileOptimizations: true,
-      cursorBlinking: "smooth",
-      cursorSmoothCaretAnimation: "on",
-      smoothScrolling: true,
       minimap: { enabled: false },
       fontSize: 18,
-      glyphMargin: true,
       lineNumbers: "on",
     };
 

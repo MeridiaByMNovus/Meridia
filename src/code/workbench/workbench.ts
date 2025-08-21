@@ -1,13 +1,5 @@
 import { Layout } from "./browser/layout/layout.js";
-import {
-  CyberpunkGold,
-  LavenderDreams,
-  MeridiaDark,
-  MeridiaLight,
-  NeonSynthwave,
-  OceanBreeze,
-  SunsetVibes,
-} from "../resources/theme/themes.js";
+import { MeridiaDark, MeridiaLight } from "../resources/theme/themes.js";
 import { themeService } from "./common/classInstances/themeInstance.js";
 import {
   SettingsRegistry,
@@ -102,15 +94,7 @@ export class Workbench {
   }
 
   private initializeThemeSystem(): void {
-    const availableThemes = [
-      MeridiaDark,
-      MeridiaLight,
-      LavenderDreams,
-      SunsetVibes,
-      CyberpunkGold,
-      OceanBreeze,
-      NeonSynthwave,
-    ];
+    const availableThemes = [MeridiaDark, MeridiaLight];
     themeService.registerMany(availableThemes);
     themeService.initFromPersisted();
 

@@ -170,7 +170,7 @@ export class Layout {
 
     const newTerminalTab: ITab = {
       id: terminalId,
-      name: `Terminal ${terminalNumber}`,
+      name: `Local ${terminalNumber}`,
       fileIcon: "file.bat",
       active: true,
       uri: terminalId,
@@ -435,7 +435,9 @@ export class Layout {
 
     const editorTabs = this.layoutService.RegisterTabsLayout(
       editorLayout.getDomElement()!,
-      [addEditorTabButton]
+      [addEditorTabButton],
+      null as any,
+      "--editor-tabs-bg"
     );
 
     const terminalTabs = this.layoutService.RegisterTabsLayout(
@@ -617,7 +619,7 @@ export class Layout {
 
     const initialTerminalTab: ITab = {
       id: randomUUID(),
-      name: "Terminal 1",
+      name: "Local 1",
       fileIcon: "file.bat",
       active: true,
       uri: randomUUID(),
@@ -830,6 +832,14 @@ export class Layout {
           this.splitterLayout.toggleBottomSplitter(true);
         else this.splitterLayout.toggleBottomSplitter(false);
       }
+    );
+
+    dispatch(
+      update_panel_state({
+        left: "on",
+        bottom: "on",
+        right: "off",
+      })
     );
 
     this.registerRunButtonHandler();

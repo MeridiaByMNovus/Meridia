@@ -195,17 +195,17 @@ export class LayoutService {
   public RegisterTabsLayout(
     parent: HTMLDivElement,
     props?: any[],
-    id?: string
+    id?: string,
+    customBg?: string
   ): TabsLayout {
     const tabsId = id || `tabs-${Date.now()}`;
 
-    // Check if already exists
     const existing = this.cache.tabsLayouts.get(tabsId);
     if (existing) {
       return existing;
     }
 
-    const tabsWrapper = new TabsLayout(parent, props);
+    const tabsWrapper = new TabsLayout(parent, props, customBg);
     this.cache.tabsLayouts.set(tabsId, tabsWrapper);
 
     return tabsWrapper;

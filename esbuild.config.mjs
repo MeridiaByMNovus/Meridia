@@ -75,7 +75,9 @@ async function buildAll() {
   };
 
   const Loaders = {
-    ".ttf": "file",
+    ".ttf": "dataurl",
+    ".woff": "dataurl",
+    ".woff2": "dataurl",
     ".woff": "file",
     ".woff2": "file",
     ".svg": "file",

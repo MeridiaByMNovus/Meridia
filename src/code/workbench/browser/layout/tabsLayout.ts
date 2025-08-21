@@ -8,16 +8,18 @@ export class TabsLayout extends ElementCore {
 
   constructor(
     private parent: HTMLDivElement,
-    private props?: any[]
+    private props?: any[],
+    customBg?: string
   ) {
     super();
     this.elementEl = document.createElement("div");
     this.elementEl.className = "tabs-layout-container";
-    this.elementEl.style.height = "42px";
+    this.elementEl.style.height = "53px";
     this.elementEl.style.width = "100%";
     this.elementEl.style.position = "relative";
     this.elementEl.style.display = "flex";
     this.elementEl.style.alignItems = "flex-end";
+    this.elementEl.style.background = customBg ? customBg : "--tabs-wrapper-bg";
 
     this.wrapper = document.createElement("div");
     this.wrapper.className = "tabs-layout-wrapper scrollbar-container";
@@ -38,8 +40,7 @@ export class TabsLayout extends ElementCore {
 
     if (Array.isArray(this.props) && this.props.length > 0) {
       this.extraButtonsContainer = document.createElement("div");
-      this.extraButtonsContainer.className =
-        "tabs-layout-extra-buttons scrollbar-container";
+      this.extraButtonsContainer.className = "tabs-layout-extra-buttons";
       this.extraButtonsContainer.style.display = "flex";
       this.extraButtonsContainer.style.alignItems = "center";
 

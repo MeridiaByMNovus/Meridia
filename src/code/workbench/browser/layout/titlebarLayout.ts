@@ -1,44 +1,6 @@
 import { commands } from "../../common/classInstances/commandsInstance.js";
-import { update_panel_state } from "../../common/store/mainSlice.js";
-import { select, watch } from "../../common/store/selectors.js";
-import { dispatch } from "../../common/store/store.js";
 import { TitleBarController } from "./common/controller/TitlebarController.js";
 import { ElementCore } from "./elementCore.js";
-
-const panelLeftOnSvg = `
-<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32" fill="none">
-  <rect x="2" y="4" width="12" height="24" fill="var(--icon-color)" />
-  <rect x="2" y="4" width="28" height="24" stroke="var(--icon-color)" stroke-width="2" />
-</svg>
-`;
-
-const panelLeftOffSvg = `
-<svg fill="var(--icon-color)" viewBox="0 0 32 32" id="icon" xmlns="http://www.w3.org/2000/svg" transform="rotate(0)"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><defs><style>.cls-1{fill:none;}</style></defs><title>open-panel--left</title><path d="M28,4H4A2,2,0,0,0,2,6V26a2,2,0,0,0,2,2H28a2,2,0,0,0,2-2V6A2,2,0,0,0,28,4ZM4,6h6V26H4ZM28,26H12V6H28Z"></path><rect id="_Transparent_Rectangle_" data-name="&lt;Transparent Rectangle&gt;" class="cls-1" width="32" height="32"></rect></g></svg>
-`;
-
-const panelBottomOnSvg = `
-<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32" fill="none">
-  <rect x="4" y="16" width="24" height="12" fill="var(--icon-color)" />
-  <rect x="4" y="4" width="24" height="24" stroke="var(--icon-color)" stroke-width="2" />
-</svg>
-`;
-
-const panelBottomOffSvg = `
-<svg fill="var(--icon-color)" viewBox="0 0 32 32" id="icon" xmlns="http://www.w3.org/2000/svg" transform="rotate(270)"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><defs><style>.cls-1{fill:none;}</style></defs><title>open-panel--left</title><path d="M28,4H4A2,2,0,0,0,2,6V26a2,2,0,0,0,2,2H28a2,2,0,0,0,2-2V6A2,2,0,0,0,28,4ZM4,6h6V26H4ZM28,26H12V6H28Z"></path><rect id="_Transparent_Rectangle_" data-name="&lt;Transparent Rectangle&gt;" class="cls-1" width="32" height="32"></rect></g></svg>
-`;
-
-const panelRightOnSvg = `
-<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32" fill="none">
-  <g transform="translate(32, 0) scale(-1, 1)">
-    <rect x="2" y="4" width="12" height="24" fill="var(--icon-color)" />
-    <rect x="2" y="4" width="28" height="24" stroke="var(--icon-color)" stroke-width="2" />
-  </g>
-</svg>
-`;
-
-const panelRightOffSvg = `
-<svg fill="var(--icon-color)" viewBox="0 0 32 32" id="icon" xmlns="http://www.w3.org/2000/svg" transform="rotate(180)"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><defs><style>.cls-1{fill:none;}</style></defs><title>open-panel--left</title><path d="M28,4H4A2,2,0,0,0,2,6V26a2,2,0,0,0,2,2H28a2,2,0,0,0,2-2V6A2,2,0,0,0,28,4ZM4,6h6V26H4ZM28,26H12V6H28Z"></path><rect id="_Transparent_Rectangle_" data-name="&lt;Transparent Rectangle&gt;" class="cls-1" width="32" height="32"></rect></g></svg>
-`;
 
 export class TitleBarLayout extends ElementCore {
   constructor() {
@@ -95,8 +57,9 @@ export class TitleBarLayout extends ElementCore {
     partLeft.appendChild(logoDiv);
     partLeft.appendChild(menuDiv);
 
-    const partRight = document.createElement("div");
-    partRight.className = "part";
+    const partMiddle = document.createElement("div");
+    partMiddle.className = "part";
+    partMiddle.style.marginLeft = "460px";
 
     const commandsDiv = document.createElement("div");
     commandsDiv.className = "commands";
@@ -109,65 +72,10 @@ export class TitleBarLayout extends ElementCore {
 
     commandsDiv.appendChild(runButton);
 
-    const panelControlsDiv = document.createElement("div");
-    panelControlsDiv.className = "panel-controls";
+    partMiddle.appendChild(commandsDiv);
 
-    const getState = () => select((s) => s.main.panel_state);
-    const btnPanelLeft = document.createElement("button");
-    const btnPanelBottom = document.createElement("button");
-    const btnPanelRight = document.createElement("button");
-
-    const updateBtn = () => {
-      const { left, right, bottom } = getState();
-      btnPanelLeft.innerHTML = left === "on" ? panelLeftOnSvg : panelLeftOffSvg;
-      btnPanelBottom.innerHTML =
-        bottom === "on" ? panelBottomOnSvg : panelBottomOffSvg;
-      btnPanelRight.innerHTML =
-        right === "on" ? panelRightOnSvg : panelRightOffSvg;
-    };
-    updateBtn();
-
-    watch((s) => s.main.panel_state, updateBtn);
-
-    btnPanelLeft.onclick = () => {
-      const { left, right, bottom } = getState();
-      dispatch(
-        update_panel_state({
-          left: left === "on" ? "off" : "on",
-          right,
-          bottom,
-        })
-      );
-    };
-
-    btnPanelBottom.onclick = () => {
-      const { left, right, bottom } = getState();
-      dispatch(
-        update_panel_state({
-          left,
-          right,
-          bottom: bottom === "on" ? "off" : "on",
-        })
-      );
-    };
-
-    btnPanelRight.onclick = () => {
-      const { left, right, bottom } = getState();
-      dispatch(
-        update_panel_state({
-          left,
-          right: right === "on" ? "off" : "on",
-          bottom,
-        })
-      );
-    };
-
-    panelControlsDiv.appendChild(btnPanelLeft);
-    panelControlsDiv.appendChild(btnPanelBottom);
-    panelControlsDiv.appendChild(btnPanelRight);
-
-    const optionsDiv = document.createElement("div");
-    optionsDiv.className = "options";
+    const partRight = document.createElement("div");
+    partRight.className = "part";
 
     const windowControlsDiv = document.createElement("div");
     windowControlsDiv.className = "window-controls";
@@ -208,11 +116,10 @@ export class TitleBarLayout extends ElementCore {
     windowControlsDiv.appendChild(btnRestore);
     windowControlsDiv.appendChild(btnClose);
 
-    partRight.appendChild(commandsDiv);
-    partRight.appendChild(panelControlsDiv);
     partRight.appendChild(windowControlsDiv);
 
     titlebar.appendChild(partLeft);
+    titlebar.appendChild(partMiddle);
     titlebar.appendChild(partRight);
 
     (document.querySelector(".main-wrapper") as HTMLDivElement).appendChild(

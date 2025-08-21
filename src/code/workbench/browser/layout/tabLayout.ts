@@ -71,10 +71,8 @@ export class TabLayout {
     icon.className = "tab-icon";
 
     if (this.customIcon) {
-      // Use custom icon HTML
       icon.innerHTML = this.customIcon;
     } else {
-      // Use file icon image
       const img = document.createElement("img");
       img.alt = this.fileIcon ? this.fileIcon : "file.py";
       img.src = `./code/resources/assets/fileIcons/${getIconForFile(

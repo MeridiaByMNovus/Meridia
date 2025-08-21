@@ -59,13 +59,14 @@ export class SpawnTerminal {
     this.terminal = new Terminal({
       theme,
       fontFamily: FONT_STACK,
-      fontSize: 16,
+      fontSize: 18,
       lineHeight: 1.25,
       letterSpacing: 0,
       cols: size.cols,
       rows: size.rows,
       scrollback: 10000,
       allowProposedApi: true,
+      cursorBlink: true,
     });
 
     this.terminal.loadAddon(this.fitAddon);

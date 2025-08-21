@@ -80,14 +80,13 @@
 
 .ps__thumb-y {
   background-color: var(--scrollbar-color) !important;
-  border-radius: 6px;
   transition:
     background-color 0.2s linear,
     width 0.2s ease-in-out;
   -webkit-transition:
     background-color 0.2s linear,
     width 0.2s ease-in-out;
-  width: 8px !important;
+  width: 11px !important;
   right: 2px;
   position: absolute;
   z-index: 10 !important;
