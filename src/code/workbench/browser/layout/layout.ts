@@ -195,7 +195,7 @@ export class Layout {
 
     const updateHeight = () => {
       const availableHeight = this.terminalInstanceWrapper.offsetHeight;
-      const calculatedHeight = Math.max(availableHeight - 42, 200);
+      const calculatedHeight = Math.max(availableHeight - 42);
       terminalContainer.style.height = calculatedHeight + "px";
     };
 
@@ -469,7 +469,7 @@ export class Layout {
         if (!this.editorService.getEditor()) editorTabs.show();
       }
 
-      this.editorService.mount(editorContentWrapper, "dark");
+      // this.editorService.mount(editorContentWrapper);
 
       editorTabs.removeAllTabs();
       tabs.forEach((tab) => {

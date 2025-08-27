@@ -3,7 +3,7 @@ import debounce from "lodash.debounce";
 import { themeService } from "../../workbench/common/classInstances/themeInstance.js";
 import { dispatch, store } from "../../workbench/common/store/store.js";
 import { update_editor_tabs } from "../../workbench/common/store/mainSlice.js";
-import { PyrightProvider } from "../../platform/extension/pyright-api.js";
+import { MeridiaPy } from "meridia-py";
 
 export type OpenTab = {
   uri?: string;
@@ -13,8 +13,6 @@ export type OpenTab = {
 
 type Theme = "dark" | "light";
 
-let globalPyrightProvider: PyrightProvider | null = null;
-
 function toFileUri(path: string) {
   return monaco.Uri.file(path);
 }
@@ -22,7 +20,7 @@ function toFileUri(path: string) {
 export class EditorCore {
   private static i: EditorCore;
   public editor: monaco.editor.IStandaloneCodeEditor | null = null;
-  private models = new Map<string, monaco.editor.ITextModel>();
+  private meridiaPy: MeridiaPy | null = null;
   private viewStates = new Map<
     string,
     monaco.editor.ICodeEditorViewState | null
@@ -79,15 +77,12 @@ export class EditorCore {
 
   private initializePyrightProvider(): void {
     if (!this.editor) return;
-
-    if (!globalPyrightProvider) {
-      globalPyrightProvider = new PyrightProvider(this.editor);
-      globalPyrightProvider.init();
-    }
   }
 
   async mount(container: HTMLElement, _theme: Theme = "dark") {
-    if (this.editor) return;
+    if (this.editor && this.meridiaPy) return;
+
+    console.log(document.getElementById("editor"));
 
     this.editorContainer = container;
     this.setupPathDisplay(container);
@@ -103,6 +98,7 @@ export class EditorCore {
           themeService.getColor("editor.foreground") ?? (null as any),
       },
     });
+
     monaco.editor.setTheme("theme");
 
     this.editorDiv = document.createElement("div");
@@ -114,11 +110,19 @@ export class EditorCore {
     container.appendChild(this.fileViewerDiv);
 
     const editorOptions = this.getEditorOptions();
-    this.editor = monaco.editor.create(this.editorDiv, editorOptions);
+
+    const folder_structure = await window.electron.get_folder();
+
+    this.meridiaPy = new MeridiaPy(
+      this.editorDiv,
+      `file://${folder_structure.root}`
+    );
+
+    this.editor = await this.meridiaPy.createEditor();
+
+    this.editor.updateOptions(editorOptions);
 
     this.setupSettingsWatchers();
-
-    this.initializePyrightProvider();
   }
 
   getEditorOptions(): monaco.editor.IStandaloneEditorConstructionOptions {
@@ -127,6 +131,7 @@ export class EditorCore {
       largeFileOptimizations: true,
       minimap: { enabled: false },
       fontSize: 18,
+      glyphMargin: true,
       lineNumbers: "on",
     };
 
@@ -467,7 +472,7 @@ export class EditorCore {
     this.fileViewerDiv.appendChild(container);
   }
 
-  open(tab: OpenTab, preserveViewState = true) {
+  async open(tab: OpenTab, preserveViewState = true) {
     if (!this.editor) return;
 
     const filePath = tab.uri as string;
@@ -494,19 +499,18 @@ export class EditorCore {
     const uri = toFileUri(filePath);
     const key = uri.toString();
 
-    let model = this.models.get(key) ?? monaco.editor.getModel(uri);
+    let model = this.meridiaPy?.models.get(key);
     if (!model) {
-      model = monaco.editor.createModel(
-        tab.editorContent ?? "",
-        tab.language,
-        uri
+      model = await this.meridiaPy!.createModel(
+        filePath,
+        tab.editorContent ?? ""
       );
-      this.models.set(key, model);
-    } else if (!this.models.has(key)) {
-      this.models.set(key, model);
+      this.meridiaPy!.models.set(key, model);
+    } else if (!this.meridiaPy!.models.has(key)) {
+      this.meridiaPy!.models.set(key, model);
     }
 
-    this.editor.setModel(model);
+    this.meridiaPy!.setModel(model);
     this.updateEditorFilePath(filePath);
 
     if (preserveViewState) {
@@ -604,7 +608,7 @@ export class EditorCore {
     if (!this.editor) return;
     const uri = toFileUri(uriString);
     const key = uri.toString();
-    const model = this.models.get(key);
+    const model = this.meridiaPy!.models.get(key);
     if (!model) return;
     if (this.editor.getModel() === model)
       this.viewStates.set(key, this.editor.saveViewState());
@@ -613,24 +617,24 @@ export class EditorCore {
   disposeModel(uriString: string) {
     const uri = toFileUri(uriString);
     const key = uri.toString();
-    const m = this.models.get(key);
+    const m = this.meridiaPy!.models.get(key);
     if (!m) return;
-    if (this.editor?.getModel() === m) this.editor.setModel(null);
+    if (this.editor?.getModel() === m) this.editor!.setModel(null);
     m.dispose();
-    this.models.delete(key);
+    this.meridiaPy!.models.delete(key);
     this.viewStates.delete(key);
   }
 
   hasModel(uriString: string) {
     const uri = toFileUri(uriString);
     const key = uri.toString();
-    return this.models.has(key) || !!monaco.editor.getModel(uri);
+    return this.meridiaPy!.models.has(key);
   }
 
   getModel(uriString: string) {
     const uri = toFileUri(uriString);
     const key = uri.toString();
-    return this.models.get(key) ?? monaco.editor.getModel(uri) ?? null;
+    return this.meridiaPy!.models.get(key);
   }
 
   getEditor() {
@@ -645,19 +649,17 @@ export class EditorCore {
       this.editor.dispose();
       this.editor = null;
     }
-    this.models.forEach((model) => model.dispose());
-    this.models.clear();
+
+    if (this.meridiaPy) {
+      this.meridiaPy.dispose();
+    }
     this.viewStates.clear();
-    monaco.editor.getModels().forEach((m) => !m.isDisposed() && m.dispose());
     this.editorContainer?.replaceChildren();
     this.editorContainer = null;
     this.pathDisplayEl = null;
     this.editorDiv = null;
     this.fileViewerDiv = null;
-
-    if (globalPyrightProvider) {
-      globalPyrightProvider = null;
-    }
+    this.meridiaPy = null;
   }
 
   hide() {
@@ -711,7 +713,6 @@ export class EditorCore {
             themeService.getColor("editor.foreground") ?? (null as any),
         },
       });
-      monaco.editor.setTheme("theme");
 
       this.editorDiv = document.createElement("div");
       this.editorDiv.className = "editor-div";
@@ -722,7 +723,9 @@ export class EditorCore {
       container.appendChild(this.fileViewerDiv);
 
       const editorOptions = this.getEditorOptions();
-      this.editor = monaco.editor.create(this.editorDiv, editorOptions);
+      this.editor = await this.meridiaPy!.createEditor();
+
+      this.editor.updateOptions(editorOptions);
 
       this.setupSettingsWatchers();
 

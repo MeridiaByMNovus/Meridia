@@ -41,6 +41,7 @@ const common = {
   outdir: "out",
   plugins: [importMetaUrlPlugin],
   logLevel: "error",
+  external: ["meridia-py"],
 };
 
 async function buildAll() {

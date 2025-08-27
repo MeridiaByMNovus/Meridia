@@ -157,7 +157,10 @@ app.whenReady().then(async () => {
   });
 
   ptyServer = new SpawnPty(ipcMain, {
-    shell: process.platform === "win32" ? "powershell.exe" : "/bin/zsh",
+    shell:
+      process.platform === "win32"
+        ? "powershell.exe"
+        : process.env.SHELL || "/bin/bash",
     cwd: cwd,
     defaultCols: 120,
     defaultRows: 40,
