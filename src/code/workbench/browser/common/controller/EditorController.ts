@@ -138,9 +138,7 @@ export class EditorController {
 
         let editorContent = "";
         try {
-          if (window.electron?.get_file_content) {
-            editorContent = await window.electron.get_file_content(filePath);
-          }
+          editorContent = await window.filesystem.get_file_content(filePath);
         } catch (error) {}
 
         const newTab = {

@@ -9,11 +9,16 @@ import {
 import { handleOpenSettingsTab, randomUUID } from "../common/functions.js";
 import { ShortcutsManager } from "./common/manager/shortcutsManager.js";
 import { ITab } from "../../../typings/types.js";
-import { StatusBarController } from "./common/controller/StatusBarController.js";
 import { Core } from "../../platform/extension/core.js";
 import { LayoutService } from "./common/services/LayoutService.js";
+import { EditorService } from "../../editor/common/EditorService.js";
+import { RegisterCoreRequestManager } from "./common/manager/coreRequestManager.js";
 
-export function init(core: Core, layoutService: LayoutService) {
+export function init(
+  core: Core,
+  layoutService: LayoutService,
+  editorService: EditorService
+) {
   const SettingsEl = new SettingsLayout();
   TabContentManager.addContent(
     "elements://settings",
@@ -23,7 +28,7 @@ export function init(core: Core, layoutService: LayoutService) {
   ShortcutsManager.attachIpcRendererListner(
     "new-file-tab",
     debounce(async () => {
-      const { path, name } = await window.electron.createTempPythonFile();
+      const { path, name } = await window.python.createTempPythonFile();
 
       const tabs = store.getState().main.editor_tabs || [];
       const existingTab = tabs.find((t) => t.uri === path);
@@ -89,61 +94,5 @@ export function init(core: Core, layoutService: LayoutService) {
     })
   );
 
-  core.on("workbench.tab.registerContent", (uri, content) => {
-    TabContentManager.addContent(uri, content);
-  });
-
-  core.on("workbench.titlebar.registerAction", (innerHtml, id, action) => {
-    const wrapper = document.querySelector(".titlebar") as HTMLDivElement;
-    const commandsSection = wrapper.querySelector(
-      ".commands"
-    ) as HTMLDivElement;
-    const actionButton = document.createElement("button");
-    actionButton.id = id;
-    actionButton.innerHTML = innerHtml;
-    actionButton.onclick = action;
-    commandsSection.appendChild(actionButton);
-  });
-
-  core.on("workbench.file.openTab", async (tab: ITab) => {
-    const tabs = store.getState().main.editor_tabs || [];
-    const existingTab = tabs.find((t) => t.uri === tab.id);
-
-    if (existingTab) {
-      const updatedTabs = tabs.map((tab) => ({
-        ...tab,
-        active: tab.id === existingTab.id,
-      }));
-
-      dispatch(update_editor_tabs(updatedTabs));
-    } else {
-      const deactivatedTabs = tabs.map((t) => ({ ...t, active: false }));
-
-      const updatedTabs = [...deactivatedTabs, tab];
-
-      dispatch(update_editor_tabs(updatedTabs));
-    }
-  });
-
-  core.on(
-    "workbench.activityBar.registerItem",
-    (id, icon, position, content, onClickHook?) => {
-      layoutService.RegisterActivityBarItem(
-        layoutService.getActivityBar("left")!,
-        content,
-        layoutService
-          .getActivityBarContent("leftActivityBarContent")!
-          .getDomElement() as HTMLDivElement,
-        icon,
-        id,
-        position,
-        false,
-        onClickHook
-      );
-    }
-  );
-
-  core.on("workbench.statusBar.registerItem", (item: HTMLSpanElement) => {
-    StatusBarController.getInstance().addItemToGlobal(item);
-  });
+  RegisterCoreRequestManager(core, editorService, layoutService);
 }

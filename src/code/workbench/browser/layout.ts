@@ -93,7 +93,7 @@ export class Layout {
   private async initialize() {
     await this.loadData();
     this.buildLayout();
-    init(this.core, this.layoutService);
+    init(this.core, this.layoutService, this.editorService);
   }
 
   public dispose() {

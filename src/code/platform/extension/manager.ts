@@ -76,6 +76,10 @@ export class ExtensionManager {
   }
 
   async loadExtensions() {
+    if (!window.filesystem.existsSync(this.extensionsPath)) {
+      return;
+    }
+
     const folders = window.filesystem
       .readdirSync(this.extensionsPath)
       .filter((name: string) => {
@@ -108,8 +112,6 @@ export class ExtensionManager {
   async runExtension(name: string) {
     const ext = this.extensions.get(name);
     if (!ext) return false;
-
-    console.log("running extension", ext);
 
     if (!ext.module) {
       const folder = window.path.join(this.extensionsPath, name);

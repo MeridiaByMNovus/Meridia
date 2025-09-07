@@ -1526,24 +1526,11 @@ export class SettingsController {
     try {
       const settings = this.exportSettings();
 
-      if (window.electron && window.ipc) {
-        await window.ipc.invoke("save-settings-file", {
-          filename,
-          data: settings,
-        });
-        console.log(`Settings exported to ${filename}`);
-      } else {
-        const blob = new Blob([settings], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        console.log(`Settings downloaded as ${filename}`);
-      }
+      await window.ipc.invoke("save-settings-file", {
+        filename,
+        data: settings,
+      });
+      console.log(`Settings exported to ${filename}`);
     } catch (error) {
       console.error("Failed to export settings to file:", error);
       throw error;
@@ -1556,24 +1543,10 @@ export class SettingsController {
     try {
       const settings = this.exportConsoleSettings();
 
-      if (window.electron && window.ipc) {
-        await window.ipc.invoke("save-settings-file", {
-          filename,
-          data: settings,
-        });
-        console.log(`Console settings exported to ${filename}`);
-      } else {
-        const blob = new Blob([settings], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        console.log(`Console settings downloaded as ${filename}`);
-      }
+      await window.ipc.invoke("save-settings-file", {
+        filename,
+        data: settings,
+      });
     } catch (error) {
       console.error("Failed to export console settings to file:", error);
       throw error;
@@ -1586,24 +1559,10 @@ export class SettingsController {
     try {
       const config = this.exportSettingsConfig();
 
-      if (window.electron && window.ipc) {
-        await window.ipc.invoke("save-settings-file", {
-          filename,
-          data: config,
-        });
-        console.log(`Settings configuration exported to ${filename}`);
-      } else {
-        const blob = new Blob([config], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        console.log(`Settings configuration downloaded as ${filename}`);
-      }
+      await window.ipc.invoke("save-settings-file", {
+        filename,
+        data: config,
+      });
     } catch (error) {
       console.error("Failed to export settings configuration to file:", error);
       throw error;

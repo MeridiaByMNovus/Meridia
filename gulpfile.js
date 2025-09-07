@@ -1,6 +1,7 @@
 const { src, dest, watch, series, parallel } = require("gulp");
-const merge = require("merge-stream");
 const rename = require("gulp-rename");
+const fs = require("fs");
+const path = require("path");
 
 const SOURCE_GLOBS = [
   "src/**/*.{html,css,json,svg,png,ico,zip,py,ttf,otf}",
@@ -27,7 +28,17 @@ function copyExtensionFiles() {
 function copyExtensions() {
   return src("extensions/dist/**/*", {
     allowEmpty: true,
+    nodir: true,
   }).pipe(dest("out/extensions"));
+}
+
+function copyExtensionsConditionally(done) {
+  const distDir = path.join(__dirname, "extensions", "dist");
+  if (fs.existsSync(distDir)) {
+    return copyExtensions();
+  } else {
+    done();
+  }
 }
 
 function copyPythonWorker() {
@@ -48,18 +59,18 @@ function copyCodicons() {
   ).pipe(dest("out/base/browser/ui/codicons/codicon"));
 }
 
+const build = series(
+  parallel(copyFiles, copyPythonWorker, copyCodicons, copyExtensionFiles),
+  copyExtensionsConditionally
+);
+
 function watchFiles() {
   return watch(
     SOURCE_GLOBS,
     { ignoreInitial: false },
-    series(copyFiles, copyExtensions, copyExtensionFiles)
+    series(copyFiles, copyExtensionFiles, copyExtensionsConditionally)
   );
 }
-
-const build = series(
-  parallel(copyFiles, copyPythonWorker, copyCodicons, copyExtensionFiles),
-  copyExtensions
-);
 
 module.exports = {
   copy: build,
