@@ -5,11 +5,9 @@ export default defineConfig({
   server: {
     port: 3123,
     open: false,
-    watch: {
-      ignored: ["out/config/**"],
-    },
   },
   build: {
     emptyOutDir: false,
   },
+  logLevel: "info",
 });

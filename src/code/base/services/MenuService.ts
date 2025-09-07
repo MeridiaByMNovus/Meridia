@@ -15,6 +15,7 @@ import {
 } from "../common/functions.js";
 
 import { shortcuts } from "../../resources/data/shortcut.js";
+import { mainWindow } from "../../../main.js";
 
 export class MenuService {
   constructor() {

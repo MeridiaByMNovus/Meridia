@@ -1,68 +1,26 @@
 import * as monaco from "monaco-editor";
-import {
-  LanguageServerConfig,
-  LanguageServerProvider,
-} from "./LanguageServerProvider";
 import { MonacoPyrightProvider } from "monaco-pyright-lsp";
 
-export class PyrightProvider extends LanguageServerProvider {
+export class PyrightProvider {
   private provider: any;
 
-  constructor(editor: monaco.editor.IStandaloneCodeEditor) {
-    const config: LanguageServerConfig = {
-      name: "Python Language Server (Pyright)",
-      language: "python",
-      workerPath: "./workers/python.worker.js",
-      fileExtensions: [".py", ".pyw"],
+  constructor(private editor: monaco.editor.IStandaloneCodeEditor) {}
+
+  async init() {
+    this.provider = new MonacoPyrightProvider("./workers/python.worker.js", {
       features: {
-        diagnostics: true,
-        completion: true,
         hover: true,
         signatureHelp: true,
+        rename: true,
+        completion: true,
+        diagnostic: true,
+        findDefinition: true,
       },
-    };
-    super(editor, config);
-  }
+    });
 
-  async init(): Promise<void> {
-    if (this.initialized) return;
+    await this.provider.init(monaco);
+    await this.provider.setupDiagnostics(this.editor);
 
-    try {
-      this.provider = new MonacoPyrightProvider(`${this.config.workerPath}`, {
-        features: {
-          hover: true,
-          signatureHelp: true,
-          rename: true,
-          completion: true,
-          diagnostic: true,
-          findDefinition: true,
-        },
-      });
-
-      await this.provider.init(monaco);
-      this.initialized = true;
-    } catch (error) {
-      console.error("Failed to initialize Pyright provider:", error);
-      throw error;
-    }
-  }
-
-  async setupDiagnostics(): Promise<void> {
-    if (!this.initialized || !this.provider) {
-      throw new Error("Provider not initialized");
-    }
-
-    try {
-      await this.provider.setupDiagnostics(this.editor);
-    } catch (error) {
-      console.error("Failed to setup diagnostics:", error);
-    }
-  }
-
-  dispose(): void {
-    if (this.provider && typeof this.provider.dispose === "function") {
-      this.provider.dispose();
-    }
-    this.initialized = false;
+    return this.provider;
   }
 }

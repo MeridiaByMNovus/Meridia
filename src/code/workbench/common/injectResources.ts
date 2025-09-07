@@ -3,17 +3,13 @@ import xtermCss from "@xterm/xterm/css/xterm.css";
 import GoogleSansCode from "../../resources/fonts/GoogleSansCode.ttf";
 import MozillaText from "../../resources/fonts/MozillaText.ttf";
 import Poppins from "../../resources/fonts/PoppinsRegular.ttf";
-import Codicon from "../../resources/fonts/Codicon.ttf";
 
 export function InjectResources() {
-  const codiconFontFace = `
-  @font-face {
-    font-family: "codicon";
-    src: url("${Codicon}") format("truetype");
-    font-weight: normal;
-    font-style: normal;
-  }
-  `;
+  const injectStyle = (cssText: string) => {
+    const style = document.createElement("style");
+    style.innerHTML = cssText;
+    document.head.appendChild(style);
+  };
 
   const googleSansCodeFontFace = `
   @font-face {
@@ -42,13 +38,10 @@ export function InjectResources() {
   }
   `;
 
-  const style = document.createElement("style");
-  style.textContent =
-    codiconFontFace +
-    googleSansCodeFontFace +
-    mozillaTextFontFace +
-    poppinsFontFace +
-    monacoCss +
-    xtermCss +
-    document.head.appendChild(style);
+  injectStyle(googleSansCodeFontFace);
+  injectStyle(mozillaTextFontFace);
+  injectStyle(poppinsFontFace);
+
+  injectStyle(monacoCss);
+  injectStyle(xtermCss);
 }

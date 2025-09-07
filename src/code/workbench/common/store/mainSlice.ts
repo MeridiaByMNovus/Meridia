@@ -13,9 +13,19 @@ const initialState: IMainState = {
   editor_active_tab: {} as ITab,
   terminal_tabs: [] as ITab[],
   terminal_active_tab: {} as ITab,
+  console_tabs: [] as ITab[],
+  console_active_tab: {} as ITab,
+  run_tabs: [] as ITab[],
+  run_active_tab: {} as ITab,
   active_activityBaritem: {
-    left: "",
-    right: "",
+    left: {
+      bottom: "",
+      top: "",
+    },
+    right: {
+      bottom: "",
+      top: "",
+    },
   },
   panel_state: {
     left: "on",
@@ -43,11 +53,29 @@ export const mainSlice = createSlice({
     update_terminal_active_tab: (state, action: PayloadAction<ITab>) => {
       state.terminal_active_tab = action.payload;
     },
+    update_console_tabs: (state, action: PayloadAction<ITab[]>) => {
+      state.console_tabs = action.payload;
+    },
+    update_console_active_tab: (state, action: PayloadAction<ITab>) => {
+      state.console_active_tab = action.payload;
+    },
+    update_run_tabs: (state, action: PayloadAction<ITab[]>) => {
+      state.run_tabs = action.payload;
+    },
+    update_run_active_tab: (state, action: PayloadAction<ITab>) => {
+      state.run_active_tab = action.payload;
+    },
     update_active_activitybar_item: (
       state,
-      action: PayloadAction<{ bar: "left" | "right"; id: string }>
+      action: PayloadAction<{
+        bar: "left" | "right";
+        position: "top" | "bottom";
+        id: string;
+      }>
     ) => {
-      state.active_activityBaritem[action.payload.bar] = action.payload.id;
+      state.active_activityBaritem[action.payload.bar][
+        action.payload.position
+      ] = action.payload.id;
     },
     update_panel_state: (state, action: PayloadAction<PanelState>) => {
       state.panel_state = action.payload;
@@ -61,6 +89,10 @@ export const {
   update_editor_active_tab,
   update_terminal_active_tab,
   update_terminal_tabs,
+  update_console_tabs,
+  update_console_active_tab,
+  update_run_tabs,
+  update_run_active_tab,
   update_active_activitybar_item,
   update_panel_state,
 } = mainSlice.actions;

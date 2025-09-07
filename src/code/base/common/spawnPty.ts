@@ -11,7 +11,7 @@ export interface ShellOptions {
   defaultRows?: number;
 }
 
-type SpawnPayload = { id: number };
+type SpawnPayload = { id: number; shell: string };
 type KeystrokePayload = { id: number; data: string };
 type ResizePayload = { id: number; cols: number; rows: number };
 
@@ -49,14 +49,18 @@ export class SpawnPty {
     this.listeners.push(() => this.ipcMain.off(channel, bound));
   }
 
-  private onSpawn(event: IpcMainEvent, payload: SpawnPayload | number) {
+  private onSpawn(event: IpcMainEvent, payload: SpawnPayload) {
     const id = typeof payload === "number" ? payload : payload?.id;
     if (!Number.isInteger(id)) return;
-    const shell = this.options.shell ?? this.getDefaultShell();
+    const shell = payload.shell
+      ? payload.shell
+      : (this.options.shell ?? this.getDefaultShell());
     const cwd = this.options.cwd ?? process.cwd();
     const cols = this.options.defaultCols ?? 80;
     const rows = this.options.defaultRows ?? 30;
     const env = { ...process.env, ...(this.options.env ?? {}) };
+    console.log("spawing", payload, shell);
+
     try {
       const term = pty.spawn(shell, this.options.args ?? [], {
         name: "xterm-color",

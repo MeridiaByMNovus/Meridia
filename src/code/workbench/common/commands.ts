@@ -88,7 +88,7 @@ export class Commands {
 
   private showError(message: string): void {
     if (typeof window !== "undefined" && window.electron?.ipcRenderer) {
-      window.electron.ipcRenderer.invoke("show-error-message-box", {
+      window.ipc.invoke("show-error-message-box", {
         title: "Command Error",
         content: message,
       });

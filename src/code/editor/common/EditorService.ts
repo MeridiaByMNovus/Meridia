@@ -3,7 +3,15 @@ import debounce from "lodash.debounce";
 import { themeService } from "../../workbench/common/classInstances/themeInstance.js";
 import { dispatch, store } from "../../workbench/common/store/store.js";
 import { update_editor_tabs } from "../../workbench/common/store/mainSlice.js";
-import { MeridiaPy } from "meridia-py";
+import { PyrightProvider } from "../../platform/extension/pyright-api.js";
+import { SettingsController } from "../../workbench/browser/common/controller/SettingsController.js";
+import {
+  goToLineIcon,
+  quickOutlineIcon,
+  searchIcon,
+  triggerSuggestIcon,
+} from "../../workbench/common/svgIcons.js";
+import { StructureController } from "../../workbench/browser/common/controller/StructureController.js";
 
 export type OpenTab = {
   uri?: string;
@@ -13,6 +21,8 @@ export type OpenTab = {
 
 type Theme = "dark" | "light";
 
+let globalPyrightProvider: PyrightProvider | null = null;
+
 function toFileUri(path: string) {
   return monaco.Uri.file(path);
 }
@@ -20,7 +30,7 @@ function toFileUri(path: string) {
 export class EditorCore {
   private static i: EditorCore;
   public editor: monaco.editor.IStandaloneCodeEditor | null = null;
-  private meridiaPy: MeridiaPy | null = null;
+  private models = new Map<string, monaco.editor.ITextModel>();
   private viewStates = new Map<
     string,
     monaco.editor.ICodeEditorViewState | null
@@ -32,6 +42,12 @@ export class EditorCore {
   public editorContainer: HTMLElement | null = null;
   public pathDisplayEl: HTMLDivElement | null = null;
   private settingsWatchers: (() => void)[] = [];
+  private parseTimeout: NodeJS.Timeout | null = null;
+  private isParsingStructure = false;
+  private lastParsedContent = "";
+  private lastContentHash = "";
+  private isSaving = false;
+  private saveTimeout: NodeJS.Timeout | null = null;
 
   private readonly imageExtensions = new Set([
     ".png",
@@ -51,11 +67,79 @@ export class EditorCore {
     ...this.svgExtensions,
   ]);
 
-  constructor() {}
+  constructor(private structureController: StructureController) {}
 
-  static get() {
-    if (!this.i) this.i = new EditorCore();
+  static get(structureController: StructureController) {
+    if (!this.i) this.i = new EditorCore(structureController);
     return this.i;
+  }
+
+  private generateContentHash(content: string): string {
+    let hash = 0;
+    if (content.length === 0) return hash.toString();
+    for (let i = 0; i < content.length; i++) {
+      const char = content.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash = hash & hash;
+    }
+    return hash.toString();
+  }
+
+  private async parseStructureForPython(content: string): Promise<void> {
+    if (this.isParsingStructure) return;
+
+    const contentHash = this.generateContentHash(content);
+    if (contentHash === this.lastContentHash) return;
+
+    this.isParsingStructure = true;
+
+    try {
+      const path = window.path;
+
+      const result = await window.python.executeScript(
+        path.join(
+          path.__dirname(),
+          "..",
+          "..",
+          "python",
+          "pythonStructureParser.py"
+        ),
+        [content]
+      );
+
+      if (result && Array.isArray(result) && result.length > 0) {
+        try {
+          const jsonString = result.join("\n");
+          const structureData = JSON.parse(jsonString);
+
+          if (structureData.success) {
+            this.structureController.updateStructure(structureData);
+            this.lastParsedContent = content;
+            this.lastContentHash = contentHash;
+          }
+        } catch (parseError) {}
+      }
+    } catch (error) {
+    } finally {
+      this.isParsingStructure = false;
+    }
+  }
+
+  private scheduleStructureParsing(content: string, language?: string): void {
+    if (language !== "python") return;
+
+    const contentHash = this.generateContentHash(content);
+    if (contentHash === this.lastContentHash) return;
+
+    if (this.isSaving) return;
+
+    if (this.parseTimeout) {
+      clearTimeout(this.parseTimeout);
+    }
+
+    this.parseTimeout = setTimeout(() => {
+      this.parseStructureForPython(content);
+    }, 500);
   }
 
   private getFileExtension(path: string): string {
@@ -75,14 +159,17 @@ export class EditorCore {
     return this.nonCodeExtensions.has(this.getFileExtension(path));
   }
 
-  private initializePyrightProvider(): void {
+  private async initializePyrightProvider() {
     if (!this.editor) return;
+
+    if (!globalPyrightProvider) {
+      globalPyrightProvider = new PyrightProvider(this.editor);
+      const provider = globalPyrightProvider.init();
+    }
   }
 
   async mount(container: HTMLElement, _theme: Theme = "dark") {
-    if (this.editor && this.meridiaPy) return;
-
-    console.log(document.getElementById("editor"));
+    if (this.editor) return;
 
     this.editorContainer = container;
     this.setupPathDisplay(container);
@@ -98,7 +185,6 @@ export class EditorCore {
           themeService.getColor("editor.foreground") ?? (null as any),
       },
     });
-
     monaco.editor.setTheme("theme");
 
     this.editorDiv = document.createElement("div");
@@ -110,19 +196,15 @@ export class EditorCore {
     container.appendChild(this.fileViewerDiv);
 
     const editorOptions = this.getEditorOptions();
-
-    const folder_structure = await window.electron.get_folder();
-
-    this.meridiaPy = new MeridiaPy(
-      this.editorDiv,
-      `file://${folder_structure.root}`
-    );
-
-    this.editor = await this.meridiaPy.createEditor();
+    this.editor = monaco.editor.create(this.editorDiv, {
+      automaticLayout: true,
+    });
 
     this.editor.updateOptions(editorOptions);
 
     this.setupSettingsWatchers();
+
+    this.initializePyrightProvider();
   }
 
   getEditorOptions(): monaco.editor.IStandaloneEditorConstructionOptions {
@@ -130,15 +212,20 @@ export class EditorCore {
       automaticLayout: true,
       largeFileOptimizations: true,
       minimap: { enabled: false },
-      fontSize: 18,
-      glyphMargin: true,
+      fontSize: 14,
       lineNumbers: "on",
     };
 
     try {
-      const {
-        SettingsRegistryManager,
-      } = require("../../workbench/common/registrey/SettingsRegistery.js");
+      const SettingsRegistryManager = SettingsController.getInstance();
+
+      const rulersStr = SettingsRegistryManager.get("editor.rulers") ?? "";
+      const rulers = rulersStr
+        ? rulersStr
+            .split(",")
+            .map((n: any) => parseInt(n.trim()))
+            .filter((n: any) => !isNaN(n))
+        : [];
 
       return {
         ...defaultOptions,
@@ -148,15 +235,188 @@ export class EditorCore {
         fontFamily:
           SettingsRegistryManager.get("editor.fontFamily") ??
           "'Consolas', 'Courier New', monospace",
+        fontWeight:
+          SettingsRegistryManager.get("editor.fontWeight") ?? "normal",
+        lineHeight: parseFloat(
+          SettingsRegistryManager.get("editor.lineHeight") ?? "0"
+        ),
+        letterSpacing: parseFloat(
+          SettingsRegistryManager.get("editor.letterSpacing") ?? "0"
+        ),
         tabSize: parseInt(SettingsRegistryManager.get("editor.tabSize") ?? "4"),
         insertSpaces:
           SettingsRegistryManager.get("editor.insertSpaces") === "true",
+        detectIndentation:
+          SettingsRegistryManager.get("editor.detectIndentation") !== "false",
+        trimAutoWhitespace:
+          SettingsRegistryManager.get("editor.trimAutoWhitespace") !== "false",
         wordWrap: SettingsRegistryManager.get("editor.wordWrap") ?? "off",
+        wordWrapColumn: parseInt(
+          SettingsRegistryManager.get("editor.wordWrapColumn") ?? "80"
+        ),
+        wrappingIndent:
+          SettingsRegistryManager.get("editor.wrappingIndent") ?? "same",
+        wrappingStrategy:
+          SettingsRegistryManager.get("editor.wrappingStrategy") ?? "simple",
         minimap: {
           enabled:
             SettingsRegistryManager.get("editor.minimap.enabled") !== "false",
+          side: SettingsRegistryManager.get("editor.minimap.side") ?? "right",
+          size:
+            SettingsRegistryManager.get("editor.minimap.size") ??
+            "proportional",
+          showSlider:
+            SettingsRegistryManager.get("editor.minimap.showSlider") ??
+            "mouseover",
         },
-        glyphMargin: true,
+        lineNumbers: SettingsRegistryManager.get("editor.lineNumbers") ?? "on",
+        lineNumbersMinChars: parseInt(
+          SettingsRegistryManager.get("editor.lineNumbersMinChars") ?? "5"
+        ),
+        glyphMargin:
+          SettingsRegistryManager.get("editor.glyphMargin") !== "false",
+        folding: SettingsRegistryManager.get("editor.folding") !== "false",
+        foldingStrategy:
+          SettingsRegistryManager.get("editor.foldingStrategy") ?? "auto",
+        foldingHighlight:
+          SettingsRegistryManager.get("editor.foldingHighlight") !== "false",
+        unfoldOnClickAfterEndOfLine:
+          SettingsRegistryManager.get("editor.unfoldOnClickAfterEndOfLine") ===
+          "true",
+        showFoldingControls:
+          SettingsRegistryManager.get("editor.showFoldingControls") ??
+          "mouseover",
+        cursorStyle:
+          SettingsRegistryManager.get("editor.cursorStyle") ?? "line",
+        cursorBlinking:
+          SettingsRegistryManager.get("editor.cursorBlinking") ?? "blink",
+        cursorSmoothCaretAnimation:
+          SettingsRegistryManager.get("editor.cursorSmoothCaretAnimation") ??
+          "off",
+        cursorWidth: parseInt(
+          SettingsRegistryManager.get("editor.cursorWidth") ?? "0"
+        ),
+        multiCursorModifier:
+          SettingsRegistryManager.get("editor.multiCursorModifier") ?? "alt",
+        multiCursorMergeOverlapping:
+          SettingsRegistryManager.get("editor.multiCursorMergeOverlapping") !==
+          "false",
+        multiCursorPaste:
+          SettingsRegistryManager.get("editor.multiCursorPaste") ?? "spread",
+        accessibilitySupport:
+          SettingsRegistryManager.get("editor.accessibilitySupport") ?? "auto",
+        accessibilityPageSize: parseInt(
+          SettingsRegistryManager.get("editor.accessibilityPageSize") ?? "10"
+        ),
+        quickSuggestions:
+          SettingsRegistryManager.get("editor.quickSuggestions") !== "false",
+        quickSuggestionsDelay: parseInt(
+          SettingsRegistryManager.get("editor.quickSuggestionsDelay") ?? "10"
+        ),
+        parameterHints: {
+          enabled:
+            SettingsRegistryManager.get("editor.parameterHints.enabled") !==
+            "false",
+          cycle:
+            SettingsRegistryManager.get("editor.parameterHints.cycle") ===
+            "true",
+        },
+        autoClosingBrackets:
+          SettingsRegistryManager.get("editor.autoClosingBrackets") ??
+          "languageDefined",
+        autoClosingQuotes:
+          SettingsRegistryManager.get("editor.autoClosingQuotes") ??
+          "languageDefined",
+        autoClosingComments:
+          SettingsRegistryManager.get("editor.autoClosingComments") ??
+          "languageDefined",
+        autoClosingOvertype:
+          SettingsRegistryManager.get("editor.autoClosingOvertype") ?? "auto",
+        autoClosingDelete:
+          SettingsRegistryManager.get("editor.autoClosingDelete") ?? "auto",
+        autoSurround:
+          SettingsRegistryManager.get("editor.autoSurround") ??
+          "languageDefined",
+        autoIndent: SettingsRegistryManager.get("editor.autoIndent") ?? "full",
+        formatOnType:
+          SettingsRegistryManager.get("editor.formatOnType") === "true",
+        formatOnPaste:
+          SettingsRegistryManager.get("editor.formatOnPaste") === "true",
+        renderWhitespace:
+          SettingsRegistryManager.get("editor.renderWhitespace") ?? "none",
+        renderControlCharacters:
+          SettingsRegistryManager.get("editor.renderControlCharacters") ===
+          "true",
+        renderFinalNewline:
+          SettingsRegistryManager.get("editor.renderFinalNewline") ?? "on",
+        renderLineHighlight:
+          SettingsRegistryManager.get("editor.renderLineHighlight") ?? "line",
+        renderLineHighlightOnlyWhenFocus:
+          SettingsRegistryManager.get(
+            "editor.renderLineHighlightOnlyWhenFocus"
+          ) === "true",
+        rulers,
+        codeLens: SettingsRegistryManager.get("editor.codeLens") !== "false",
+        codeLensFontFamily:
+          SettingsRegistryManager.get("editor.codeLensFontFamily") || undefined,
+        codeLensFontSize:
+          parseInt(
+            SettingsRegistryManager.get("editor.codeLensFontSize") ?? "0"
+          ) || undefined,
+        contextmenu:
+          SettingsRegistryManager.get("editor.contextmenu") !== "false",
+        mouseWheelZoom:
+          SettingsRegistryManager.get("editor.mouseWheelZoom") === "true",
+        mouseWheelScrollSensitivity: parseFloat(
+          SettingsRegistryManager.get("editor.mouseWheelScrollSensitivity") ??
+            "1"
+        ),
+        fastScrollSensitivity: parseInt(
+          SettingsRegistryManager.get("editor.fastScrollSensitivity") ?? "5"
+        ),
+        scrollBeyondLastLine:
+          SettingsRegistryManager.get("editor.scrollBeyondLastLine") !==
+          "false",
+        scrollBeyondLastColumn: parseInt(
+          SettingsRegistryManager.get("editor.scrollBeyondLastColumn") ?? "5"
+        ),
+        smoothScrolling:
+          SettingsRegistryManager.get("editor.smoothScrolling") === "true",
+        cursorSurroundingLines: parseInt(
+          SettingsRegistryManager.get("editor.cursorSurroundingLines") ?? "0"
+        ),
+        cursorSurroundingLinesStyle:
+          SettingsRegistryManager.get("editor.cursorSurroundingLinesStyle") ??
+          "default",
+        hideCursorInOverviewRuler:
+          SettingsRegistryManager.get("editor.hideCursorInOverviewRuler") ===
+          "true",
+        overviewRulerLanes: parseInt(
+          SettingsRegistryManager.get("editor.overviewRulerLanes") ?? "3"
+        ),
+        overviewRulerBorder:
+          SettingsRegistryManager.get("editor.overviewRulerBorder") !== "false",
+        links: SettingsRegistryManager.get("editor.links") !== "false",
+        colorDecorators:
+          SettingsRegistryManager.get("editor.colorDecorators") !== "false",
+        columnSelection:
+          SettingsRegistryManager.get("editor.columnSelection") === "true",
+        dragAndDrop:
+          SettingsRegistryManager.get("editor.dragAndDrop") !== "false",
+        copyWithSyntaxHighlighting:
+          SettingsRegistryManager.get("editor.copyWithSyntaxHighlighting") !==
+          "false",
+        emptySelectionClipboard:
+          SettingsRegistryManager.get("editor.emptySelectionClipboard") !==
+          "false",
+        useTabStops:
+          SettingsRegistryManager.get("editor.useTabStops") !== "false",
+        wordSeparators:
+          SettingsRegistryManager.get("editor.wordSeparators") ??
+          "`~!@#$%^&*()-=+[{]}\\|;:'\",.<>/?",
+        largeFileOptimizations:
+          SettingsRegistryManager.get("editor.largeFileOptimizations") !==
+          "false",
       };
     } catch (error) {
       return defaultOptions;
@@ -166,17 +426,89 @@ export class EditorCore {
   async setupSettingsWatchers(): Promise<void> {
     try {
       const { SettingsController } = await import(
-        "../../workbench/browser/layout/common/controller/SettingsController.js"
+        "../../workbench/browser/common/controller/SettingsController.js"
       );
       const settingsController = SettingsController.getInstance();
 
       const editorSettings = [
         "editor.fontSize",
         "editor.fontFamily",
+        "editor.fontWeight",
+        "editor.lineHeight",
+        "editor.letterSpacing",
         "editor.tabSize",
         "editor.insertSpaces",
+        "editor.detectIndentation",
+        "editor.trimAutoWhitespace",
         "editor.wordWrap",
+        "editor.wordWrapColumn",
+        "editor.wrappingIndent",
+        "editor.wrappingStrategy",
         "editor.minimap.enabled",
+        "editor.minimap.side",
+        "editor.minimap.size",
+        "editor.minimap.showSlider",
+        "editor.lineNumbers",
+        "editor.lineNumbersMinChars",
+        "editor.glyphMargin",
+        "editor.folding",
+        "editor.foldingStrategy",
+        "editor.foldingHighlight",
+        "editor.unfoldOnClickAfterEndOfLine",
+        "editor.showFoldingControls",
+        "editor.cursorStyle",
+        "editor.cursorBlinking",
+        "editor.cursorSmoothCaretAnimation",
+        "editor.cursorWidth",
+        "editor.multiCursorModifier",
+        "editor.multiCursorMergeOverlapping",
+        "editor.multiCursorPaste",
+        "editor.accessibilitySupport",
+        "editor.accessibilityPageSize",
+        "editor.quickSuggestions",
+        "editor.quickSuggestionsDelay",
+        "editor.parameterHints.enabled",
+        "editor.parameterHints.cycle",
+        "editor.autoClosingBrackets",
+        "editor.autoClosingQuotes",
+        "editor.autoClosingComments",
+        "editor.autoClosingOvertype",
+        "editor.autoClosingDelete",
+        "editor.autoSurround",
+        "editor.autoIndent",
+        "editor.formatOnType",
+        "editor.formatOnPaste",
+        "editor.renderWhitespace",
+        "editor.renderControlCharacters",
+        "editor.renderFinalNewline",
+        "editor.renderLineHighlight",
+        "editor.renderLineHighlightOnlyWhenFocus",
+        "editor.rulers",
+        "editor.codeLens",
+        "editor.codeLensFontFamily",
+        "editor.codeLensFontSize",
+        "editor.lightbulb.enabled",
+        "editor.contextmenu",
+        "editor.mouseWheelZoom",
+        "editor.mouseWheelScrollSensitivity",
+        "editor.fastScrollSensitivity",
+        "editor.scrollBeyondLastLine",
+        "editor.scrollBeyondLastColumn",
+        "editor.smoothScrolling",
+        "editor.cursorSurroundingLines",
+        "editor.cursorSurroundingLinesStyle",
+        "editor.hideCursorInOverviewRuler",
+        "editor.overviewRulerLanes",
+        "editor.overviewRulerBorder",
+        "editor.links",
+        "editor.colorDecorators",
+        "editor.columnSelection",
+        "editor.dragAndDrop",
+        "editor.copyWithSyntaxHighlighting",
+        "editor.emptySelectionClipboard",
+        "editor.useTabStops",
+        "editor.wordSeparators",
+        "editor.largeFileOptimizations",
         "workbench.colorTheme",
       ];
 
@@ -209,35 +541,304 @@ export class EditorCore {
   private updateEditorOption(settingKey: string, newValue: any): void {
     if (!this.editor) return;
 
+    const updateOptions: any = {};
+    const model = this.editor.getModel();
+
     switch (settingKey) {
       case "editor.fontSize":
-        this.editor.updateOptions({ fontSize: parseInt(newValue) || 14 });
+        updateOptions.fontSize = parseInt(newValue) || 14;
         break;
       case "editor.fontFamily":
-        this.editor.updateOptions({
-          fontFamily: newValue || "'Consolas', 'Courier New', monospace",
-        });
+        updateOptions.fontFamily =
+          newValue || "'Consolas', 'Courier New', monospace";
         break;
-      case "editor.wordWrap":
-        this.editor.updateOptions({ wordWrap: newValue || "off" });
+      case "editor.fontWeight":
+        updateOptions.fontWeight = newValue || "normal";
         break;
-      case "editor.minimap.enabled":
-        this.editor.updateOptions({
-          minimap: { enabled: newValue === true || newValue === "true" },
-        });
+      case "editor.lineHeight":
+        updateOptions.lineHeight = parseFloat(newValue) || 0;
+        break;
+      case "editor.letterSpacing":
+        updateOptions.letterSpacing = parseFloat(newValue) || 0;
         break;
       case "editor.tabSize":
         const tabSize = parseInt(newValue) || 4;
-        this.editor.getModel()?.updateOptions({ tabSize });
+        model?.updateOptions({ tabSize });
         break;
       case "editor.insertSpaces":
         const insertSpaces = newValue === true || newValue === "true";
-        this.editor.getModel()?.updateOptions({ insertSpaces });
+        model?.updateOptions({ insertSpaces });
+        break;
+      case "editor.detectIndentation":
+        updateOptions.detectIndentation =
+          newValue === true || newValue === "true";
+        break;
+      case "editor.trimAutoWhitespace":
+        updateOptions.trimAutoWhitespace =
+          newValue !== false && newValue !== "false";
+        break;
+      case "editor.wordWrap":
+        updateOptions.wordWrap = newValue || "off";
+        break;
+      case "editor.wordWrapColumn":
+        updateOptions.wordWrapColumn = parseInt(newValue) || 80;
+        break;
+      case "editor.wrappingIndent":
+        updateOptions.wrappingIndent = newValue || "same";
+        break;
+      case "editor.wrappingStrategy":
+        updateOptions.wrappingStrategy = newValue || "simple";
+        break;
+      case "editor.minimap.enabled":
+        updateOptions.minimap = {
+          ...this.editor.getOptions().get(monaco.editor.EditorOption.minimap),
+          enabled: newValue === true || newValue === "true",
+        };
+        break;
+      case "editor.minimap.side":
+        updateOptions.minimap = {
+          ...this.editor.getOptions().get(monaco.editor.EditorOption.minimap),
+          side: newValue || "right",
+        };
+        break;
+      case "editor.minimap.size":
+        updateOptions.minimap = {
+          ...this.editor.getOptions().get(monaco.editor.EditorOption.minimap),
+          size: newValue || "proportional",
+        };
+        break;
+      case "editor.minimap.showSlider":
+        updateOptions.minimap = {
+          ...this.editor.getOptions().get(monaco.editor.EditorOption.minimap),
+          showSlider: newValue || "mouseover",
+        };
+        break;
+      case "editor.lineNumbers":
+        updateOptions.lineNumbers = newValue || "on";
+        break;
+      case "editor.lineNumbersMinChars":
+        updateOptions.lineNumbersMinChars = parseInt(newValue) || 5;
+        break;
+      case "editor.glyphMargin":
+        updateOptions.glyphMargin = newValue !== false && newValue !== "false";
+        break;
+      case "editor.folding":
+        updateOptions.folding = newValue !== false && newValue !== "false";
+        break;
+      case "editor.foldingStrategy":
+        updateOptions.foldingStrategy = newValue || "auto";
+        break;
+      case "editor.foldingHighlight":
+        updateOptions.foldingHighlight =
+          newValue !== false && newValue !== "false";
+        break;
+      case "editor.unfoldOnClickAfterEndOfLine":
+        updateOptions.unfoldOnClickAfterEndOfLine =
+          newValue === true || newValue === "true";
+        break;
+      case "editor.showFoldingControls":
+        updateOptions.showFoldingControls = newValue || "mouseover";
+        break;
+      case "editor.cursorStyle":
+        updateOptions.cursorStyle = newValue || "line";
+        break;
+      case "editor.cursorBlinking":
+        updateOptions.cursorBlinking = newValue || "blink";
+        break;
+      case "editor.cursorSmoothCaretAnimation":
+        updateOptions.cursorSmoothCaretAnimation = newValue || "off";
+        break;
+      case "editor.cursorWidth":
+        updateOptions.cursorWidth = parseInt(newValue) || 0;
+        break;
+      case "editor.multiCursorModifier":
+        updateOptions.multiCursorModifier = newValue || "alt";
+        break;
+      case "editor.multiCursorMergeOverlapping":
+        updateOptions.multiCursorMergeOverlapping =
+          newValue !== false && newValue !== "false";
+        break;
+      case "editor.multiCursorPaste":
+        updateOptions.multiCursorPaste = newValue || "spread";
+        break;
+      case "editor.accessibilitySupport":
+        updateOptions.accessibilitySupport = newValue || "auto";
+        break;
+      case "editor.accessibilityPageSize":
+        updateOptions.accessibilityPageSize = parseInt(newValue) || 10;
+        break;
+      case "editor.quickSuggestions":
+        updateOptions.quickSuggestions =
+          newValue !== false && newValue !== "false";
+        break;
+      case "editor.quickSuggestionsDelay":
+        updateOptions.quickSuggestionsDelay = parseInt(newValue) || 10;
+        break;
+      case "editor.parameterHints.enabled":
+        updateOptions.parameterHints = {
+          ...this.editor
+            .getOptions()
+            .get(monaco.editor.EditorOption.parameterHints),
+          enabled: newValue !== false && newValue !== "false",
+        };
+        break;
+      case "editor.parameterHints.cycle":
+        updateOptions.parameterHints = {
+          ...this.editor
+            .getOptions()
+            .get(monaco.editor.EditorOption.parameterHints),
+          cycle: newValue === true || newValue === "true",
+        };
+        break;
+      case "editor.autoClosingBrackets":
+        updateOptions.autoClosingBrackets = newValue || "languageDefined";
+        break;
+      case "editor.autoClosingQuotes":
+        updateOptions.autoClosingQuotes = newValue || "languageDefined";
+        break;
+      case "editor.autoClosingComments":
+        updateOptions.autoClosingComments = newValue || "languageDefined";
+        break;
+      case "editor.autoClosingOvertype":
+        updateOptions.autoClosingOvertype = newValue || "auto";
+        break;
+      case "editor.autoClosingDelete":
+        updateOptions.autoClosingDelete = newValue || "auto";
+        break;
+      case "editor.autoSurround":
+        updateOptions.autoSurround = newValue || "languageDefined";
+        break;
+      case "editor.autoIndent":
+        updateOptions.autoIndent = newValue || "full";
+        break;
+      case "editor.formatOnType":
+        updateOptions.formatOnType = newValue === true || newValue === "true";
+        break;
+      case "editor.formatOnPaste":
+        updateOptions.formatOnPaste = newValue === true || newValue === "true";
+        break;
+      case "editor.renderWhitespace":
+        updateOptions.renderWhitespace = newValue || "none";
+        break;
+      case "editor.renderControlCharacters":
+        updateOptions.renderControlCharacters =
+          newValue === true || newValue === "true";
+        break;
+      case "editor.renderFinalNewline":
+        updateOptions.renderFinalNewline = newValue || "on";
+        break;
+      case "editor.renderLineHighlight":
+        updateOptions.renderLineHighlight = newValue || "line";
+        break;
+      case "editor.renderLineHighlightOnlyWhenFocus":
+        updateOptions.renderLineHighlightOnlyWhenFocus =
+          newValue === true || newValue === "true";
+        break;
+      case "editor.rulers":
+        const rulersStr = newValue || "";
+        const rulers = rulersStr
+          ? rulersStr
+              .split(",")
+              .map((n: string) => parseInt(n.trim()))
+              .filter((n: number) => !isNaN(n))
+          : [];
+        updateOptions.rulers = rulers;
+        break;
+      case "editor.codeLens":
+        updateOptions.codeLens = newValue !== false && newValue !== "false";
+        break;
+      case "editor.codeLensFontFamily":
+        updateOptions.codeLensFontFamily = newValue || undefined;
+        break;
+      case "editor.codeLensFontSize":
+        updateOptions.codeLensFontSize = parseInt(newValue) || undefined;
+        break;
+      case "editor.lightbulb.enabled":
+        updateOptions.lightbulb = {
+          enabled: newValue !== false && newValue !== "false",
+        };
+        break;
+      case "editor.contextmenu":
+        updateOptions.contextmenu = newValue !== false && newValue !== "false";
+        break;
+      case "editor.mouseWheelZoom":
+        updateOptions.mouseWheelZoom = newValue === true || newValue === "true";
+        break;
+      case "editor.mouseWheelScrollSensitivity":
+        updateOptions.mouseWheelScrollSensitivity = parseFloat(newValue) || 1;
+        break;
+      case "editor.fastScrollSensitivity":
+        updateOptions.fastScrollSensitivity = parseInt(newValue) || 5;
+        break;
+      case "editor.scrollBeyondLastLine":
+        updateOptions.scrollBeyondLastLine =
+          newValue !== false && newValue !== "false";
+        break;
+      case "editor.scrollBeyondLastColumn":
+        updateOptions.scrollBeyondLastColumn = parseInt(newValue) || 5;
+        break;
+      case "editor.smoothScrolling":
+        updateOptions.smoothScrolling =
+          newValue === true || newValue === "true";
+        break;
+      case "editor.cursorSurroundingLines":
+        updateOptions.cursorSurroundingLines = parseInt(newValue) || 0;
+        break;
+      case "editor.cursorSurroundingLinesStyle":
+        updateOptions.cursorSurroundingLinesStyle = newValue || "default";
+        break;
+      case "editor.hideCursorInOverviewRuler":
+        updateOptions.hideCursorInOverviewRuler =
+          newValue === true || newValue === "true";
+        break;
+      case "editor.overviewRulerLanes":
+        updateOptions.overviewRulerLanes = parseInt(newValue) || 3;
+        break;
+      case "editor.overviewRulerBorder":
+        updateOptions.overviewRulerBorder =
+          newValue !== false && newValue !== "false";
+        break;
+      case "editor.links":
+        updateOptions.links = newValue !== false && newValue !== "false";
+        break;
+      case "editor.colorDecorators":
+        updateOptions.colorDecorators =
+          newValue !== false && newValue !== "false";
+        break;
+      case "editor.columnSelection":
+        updateOptions.columnSelection =
+          newValue === true || newValue === "true";
+        break;
+      case "editor.dragAndDrop":
+        updateOptions.dragAndDrop = newValue !== false && newValue !== "false";
+        break;
+      case "editor.copyWithSyntaxHighlighting":
+        updateOptions.copyWithSyntaxHighlighting =
+          newValue !== false && newValue !== "false";
+        break;
+      case "editor.emptySelectionClipboard":
+        updateOptions.emptySelectionClipboard =
+          newValue !== false && newValue !== "false";
+        break;
+      case "editor.useTabStops":
+        updateOptions.useTabStops = newValue !== false && newValue !== "false";
+        break;
+      case "editor.wordSeparators":
+        updateOptions.wordSeparators =
+          newValue || "`~!@#$%^&*()-=+[{]}\\|;:'\",.<>/?";
+        break;
+      case "editor.largeFileOptimizations":
+        updateOptions.largeFileOptimizations =
+          newValue !== false && newValue !== "false";
         break;
       case "workbench.colorTheme":
         this.updateEditorTheme();
         this.updateFileViewerTheme();
         break;
+    }
+
+    if (Object.keys(updateOptions).length > 0) {
+      this.editor.updateOptions(updateOptions);
     }
   }
 
@@ -255,34 +856,22 @@ export class EditorCore {
       {
         title: "Find",
         command: "actions.find",
-        svg: `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--icon-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="11" cy="11" r="8"></circle>
-      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-    </svg>`,
+        svg: searchIcon,
       },
       {
         title: "Go to Symbol",
         command: "editor.action.quickOutline",
-        svg: `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--icon-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <polyline points="16 18 22 12 16 6"></polyline>
-      <polyline points="8 6 2 12 8 18"></polyline>
-    </svg>`,
+        svg: quickOutlineIcon,
       },
       {
         title: "Go to Line",
         command: "editor.action.gotoLine",
-        svg: `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--icon-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <line x1="4" y1="17" x2="20" y2="17"></line>
-      <line x1="4" y1="12" x2="20" y2="12"></line>
-      <line x1="4" y1="7" x2="20" y2="7"></line>
-    </svg>`,
+        svg: goToLineIcon,
       },
       {
         title: "Trigger Suggest",
         command: "editor.action.triggerSuggest",
-        svg: `<svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
-      <text x="3" y="16" font-size="12" font-family="monospace" fill="var(--icon-color)">abc</text>
-    </svg>`,
+        svg: triggerSuggestIcon,
       },
     ];
 
@@ -355,6 +944,9 @@ export class EditorCore {
     if (this.fileViewerDiv) {
       this.fileViewerDiv.style.display = "none";
     }
+    if (this.pathDisplayEl) {
+      this.pathDisplayEl.style.display = "flex";
+    }
   }
 
   private showFileViewer(): void {
@@ -363,6 +955,9 @@ export class EditorCore {
     }
     if (this.fileViewerDiv) {
       this.fileViewerDiv.style.display = "block";
+    }
+    if (this.pathDisplayEl) {
+      this.pathDisplayEl.style.display = "flex";
     }
   }
 
@@ -407,24 +1002,18 @@ export class EditorCore {
     img.addEventListener("error", handleImageError, { once: true });
 
     try {
-      if (window.electron?.readFile) {
-        const imageData = await window.electron.readFile(path);
-        if (imageData) {
-          const base64 = btoa(
-            String.fromCharCode(...new Uint8Array(imageData as any))
-          );
-          const extension = this.getFileExtension(path).substring(1);
-          const mimeType = this.getMimeType(extension);
-          img.src = `data:${mimeType};base64,${base64}`;
-        } else {
-          throw new Error("Could not read file");
-        }
+      const imageData = await window.filesystem.readFileSync(path, "utf-8");
+      if (imageData) {
+        const base64 = btoa(
+          String.fromCharCode(...new Uint8Array(imageData as any))
+        );
+        const extension = this.getFileExtension(path).substring(1);
+        const mimeType = this.getMimeType(extension);
+        img.src = `data:${mimeType};base64,${base64}`;
       } else {
-        const normalizedPath = path.replace(/\\/g, "/");
-        img.src = `safe-file:///${normalizedPath}`;
+        throw new Error("Could not read file");
       }
     } catch (error) {
-      console.log(error);
       handleImageError();
       this.fileViewerDiv.appendChild(container);
       return;
@@ -472,10 +1061,16 @@ export class EditorCore {
     this.fileViewerDiv.appendChild(container);
   }
 
-  async open(tab: OpenTab, preserveViewState = true) {
+  open(tab: OpenTab, preserveViewState = true) {
     if (!this.editor) return;
 
     const filePath = tab.uri as string;
+
+    const watcher = window.watch.watchFile(filePath);
+
+    window.ipc.on(`fileChanged-${filePath}`, () => {
+      console.log("content changed");
+    });
 
     if (this.isNonCodeFile(filePath)) {
       this.showFileViewer();
@@ -499,23 +1094,31 @@ export class EditorCore {
     const uri = toFileUri(filePath);
     const key = uri.toString();
 
-    let model = this.meridiaPy?.models.get(key);
+    let model = this.models.get(key) ?? monaco.editor.getModel(uri);
     if (!model) {
-      model = await this.meridiaPy!.createModel(
-        filePath,
-        tab.editorContent ?? ""
+      model = monaco.editor.createModel(
+        tab.editorContent ?? "",
+        tab.language,
+        uri
       );
-      this.meridiaPy!.models.set(key, model);
-    } else if (!this.meridiaPy!.models.has(key)) {
-      this.meridiaPy!.models.set(key, model);
+      this.models.set(key, model);
+    } else if (!this.models.has(key)) {
+      this.models.set(key, model);
     }
 
-    this.meridiaPy!.setModel(model);
+    this.editor.setModel(model);
     this.updateEditorFilePath(filePath);
 
     if (preserveViewState) {
       const vs = this.viewStates.get(key);
       if (vs) this.editor.restoreViewState(vs);
+    }
+
+    if (tab.language === "python") {
+      this.structureController.reset();
+      this.lastParsedContent = "";
+      this.lastContentHash = "";
+      this.scheduleStructureParsing(tab.editorContent ?? "", tab.language);
     }
 
     const markFileTouched = debounce(() => {
@@ -537,8 +1140,20 @@ export class EditorCore {
       }
     }, 100);
 
-    this.editor.onDidChangeModelContent(() => {
+    const debouncedContentChange = debounce((content: string) => {
+      if (!this.isSaving) {
+        this.scheduleStructureParsing(content, tab.language);
+      }
+    }, 100);
+
+    this.editor.onDidChangeModelContent((e) => {
       markFileTouched();
+
+      const currentModel = this.editor?.getModel();
+      if (currentModel && tab.language === "python") {
+        const currentContent = currentModel.getValue();
+        debouncedContentChange(currentContent);
+      }
     });
 
     this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
@@ -552,11 +1167,42 @@ export class EditorCore {
     this.editor.focus();
   }
 
+  destroy() {
+    if (this.parseTimeout) {
+      clearTimeout(this.parseTimeout);
+      this.parseTimeout = null;
+    }
+
+    if (this.saveTimeout) {
+      clearTimeout(this.saveTimeout);
+      this.saveTimeout = null;
+    }
+
+    this.settingsWatchers.forEach((unwatch) => unwatch());
+    this.settingsWatchers = [];
+
+    if (this.editor) {
+      this.editor.dispose();
+      this.editor = null;
+    }
+    this.models.forEach((model) => model.dispose());
+    this.models.clear();
+    this.viewStates.clear();
+    monaco.editor.getModels().forEach((m) => !m.isDisposed() && m.dispose());
+    this.editorContainer?.replaceChildren();
+    this.editorContainer = null;
+    this.pathDisplayEl = null;
+    this.editorDiv = null;
+    this.fileViewerDiv = null;
+
+    if (globalPyrightProvider) {
+      globalPyrightProvider = null;
+    }
+  }
+
   private applyModelSettings(model: monaco.editor.ITextModel): void {
     try {
-      import(
-        "../../workbench/browser/layout/common/controller/SettingsController.js"
-      )
+      import("../../workbench/browser/common/controller/SettingsController.js")
         .then(({ SettingsController }) => {
           const settingsController = SettingsController.getInstance();
           const tabSize = settingsController.get("editor.tabSize") ?? 4;
@@ -585,30 +1231,39 @@ export class EditorCore {
   }
 
   handle_save_file(data: { path: string; content: string }) {
+    this.isSaving = true;
+
     const newDataPath = this.normalizePath(data.path);
-    window.electron.save_file({ path: newDataPath, content: data.content });
+    window.filesystem.save_file({ path: newDataPath, content: data.content });
 
     const state = store.getState();
     const model_editing_index = state.main.editor_tabs.findIndex(
       (file) => this.normalizePath(file.uri as string) === newDataPath
     );
 
-    if (model_editing_index === -1) return;
+    if (model_editing_index !== -1) {
+      const updated_files = [...state.main.editor_tabs];
+      updated_files[model_editing_index] = {
+        ...updated_files[model_editing_index],
+        is_touched: false,
+      };
+      dispatch(update_editor_tabs(updated_files));
+    }
 
-    const updated_files = [...state.main.editor_tabs];
-    updated_files[model_editing_index] = {
-      ...updated_files[model_editing_index],
-      is_touched: false,
-    };
+    if (this.saveTimeout) {
+      clearTimeout(this.saveTimeout);
+    }
 
-    dispatch(update_editor_tabs(updated_files));
+    this.saveTimeout = setTimeout(() => {
+      this.isSaving = false;
+    }, 500);
   }
 
   close(uriString: string) {
     if (!this.editor) return;
     const uri = toFileUri(uriString);
     const key = uri.toString();
-    const model = this.meridiaPy!.models.get(key);
+    const model = this.models.get(key);
     if (!model) return;
     if (this.editor.getModel() === model)
       this.viewStates.set(key, this.editor.saveViewState());
@@ -617,49 +1272,28 @@ export class EditorCore {
   disposeModel(uriString: string) {
     const uri = toFileUri(uriString);
     const key = uri.toString();
-    const m = this.meridiaPy!.models.get(key);
+    const m = this.models.get(key);
     if (!m) return;
-    if (this.editor?.getModel() === m) this.editor!.setModel(null);
+    if (this.editor?.getModel() === m) this.editor.setModel(null);
     m.dispose();
-    this.meridiaPy!.models.delete(key);
+    this.models.delete(key);
     this.viewStates.delete(key);
   }
 
   hasModel(uriString: string) {
     const uri = toFileUri(uriString);
     const key = uri.toString();
-    return this.meridiaPy!.models.has(key);
+    return this.models.has(key) || !!monaco.editor.getModel(uri);
   }
 
   getModel(uriString: string) {
     const uri = toFileUri(uriString);
     const key = uri.toString();
-    return this.meridiaPy!.models.get(key);
+    return this.models.get(key) ?? monaco.editor.getModel(uri) ?? null;
   }
 
   getEditor() {
     return this.editor;
-  }
-
-  destroy() {
-    this.settingsWatchers.forEach((unwatch) => unwatch());
-    this.settingsWatchers = [];
-
-    if (this.editor) {
-      this.editor.dispose();
-      this.editor = null;
-    }
-
-    if (this.meridiaPy) {
-      this.meridiaPy.dispose();
-    }
-    this.viewStates.clear();
-    this.editorContainer?.replaceChildren();
-    this.editorContainer = null;
-    this.pathDisplayEl = null;
-    this.editorDiv = null;
-    this.fileViewerDiv = null;
-    this.meridiaPy = null;
   }
 
   hide() {
@@ -713,6 +1347,7 @@ export class EditorCore {
             themeService.getColor("editor.foreground") ?? (null as any),
         },
       });
+      monaco.editor.setTheme("theme");
 
       this.editorDiv = document.createElement("div");
       this.editorDiv.className = "editor-div";
@@ -723,7 +1358,9 @@ export class EditorCore {
       container.appendChild(this.fileViewerDiv);
 
       const editorOptions = this.getEditorOptions();
-      this.editor = await this.meridiaPy!.createEditor();
+      this.editor = monaco.editor.create(this.editorDiv, {
+        automaticLayout: true,
+      });
 
       this.editor.updateOptions(editorOptions);
 
@@ -754,7 +1391,6 @@ export class EditorCore {
 
   public getSelectedText(): string {
     if (!this.editor) {
-      console.warn("Editor not initialized");
       return "";
     }
 
@@ -763,7 +1399,6 @@ export class EditorCore {
       const model = this.editor.getModel();
 
       if (!selection || !model) {
-        console.warn("No selection or model available");
         return "";
       }
 
@@ -779,7 +1414,6 @@ export class EditorCore {
 
       return selectedText.trim();
     } catch (error) {
-      console.error("Error getting selected text:", error);
       return "";
     }
   }
@@ -791,7 +1425,6 @@ export class EditorCore {
       const selection = this.editor.getSelection();
       return selection ? !selection.isEmpty() : false;
     } catch (error) {
-      console.error("Error checking selection:", error);
       return false;
     }
   }
@@ -829,7 +1462,6 @@ export class EditorCore {
           : undefined,
       };
     } catch (error) {
-      console.error("Error getting selection info:", error);
       return { hasSelection: false, text: "" };
     }
   }

@@ -1,19 +1,38 @@
 import {
-  ERenderer,
-  fsBridge,
+  dialogBridge,
+  folderBridge,
+  filesystem,
+  ipcBridge,
+  menuBridge,
   pathBridge,
+  pythonBridge,
+  systemBridge,
+  utilsBridge,
+  watchBridge,
+  geminiBridge,
+  windowManagerBridge,
 } from "../code/base/window/preload/preload.js";
 import { ExtensionManager } from "../code/platform/extension/manager.js";
 
 declare global {
   interface Window {
-    electron: typeof ERenderer;
-    fsBridge: typeof fsBridge;
-    pathBridge: typeof pathBridge;
+    filesystem: typeof filesystem;
+    path: typeof pathBridge;
+    folder: typeof folderBridge;
+    windowmanager: typeof windowManagerBridge;
+    menu: typeof menuBridge;
+    dialog: typeof dialogBridge;
+    python: typeof pythonBridge;
+    watch: typeof watchBridge;
+    ipc: typeof ipcBridge;
+    system: typeof systemBridge;
+    utils: typeof utilsBridge;
+    gemini: typeof geminiBridge;
     store_path: string;
     set_folder_data: Function;
     target_window: string;
-    __gutter_cleanup_bound__?: boolean;
     extensionManager: ExtensionManager;
+
+    __gutter_cleanup_bound__?: boolean;
   }
 }

@@ -12,8 +12,8 @@ window.onload = async () => {
 
   window.extensionManager = new ExtensionManager(
     extensionCore,
-    window.pathBridge.join(
-      window.pathBridge.__dirname(),
+    window.path.join(
+      window.path.__dirname(),
       "..",
       "..",
       "..",
@@ -30,7 +30,7 @@ window.onload = async () => {
     window.extensionManager.runAllExtensions();
   }, 500);
 
-  window.electron.ipcRenderer.on("window-reset", async () => {
+  window.ipc.on("window-reset", async () => {
     window.location.reload();
   });
 };

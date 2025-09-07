@@ -1,0 +1,20 @@
+version: "3.8"
+
+services:
+  meridia-builder:
+    build: .
+    container_name: meridia-builder
+    volumes:
+      - ./dist:/app/dist
+      - ./.env:/app/.env:ro
+      - electron-cache:/root/.cache/electron
+      - electron-builder-cache:/root/.cache/electron-builder
+    environment:
+      - NODE_ENV=production
+      - ELECTRON_CACHE=/root/.cache/electron
+      - ELECTRON_BUILDER_CACHE=/root/.cache/electron-builder
+    command: npm run build:all-platforms
+
+volumes:
+  electron-cache:
+  electron-builder-cache:

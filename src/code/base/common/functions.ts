@@ -238,3 +238,28 @@ ipcMain.handle("read-file", (event, filePath) => {
     throw error;
   }
 });
+
+export function log(
+  level: "info" | "warn" | "error" | "debug",
+  message: string,
+  data?: any
+) {
+  const timestamp = new Date().toISOString();
+  const prefix = `[${timestamp}] [${level.toUpperCase()}] [MAIN]`;
+
+  const colors = {
+    info: "\x1b[34m",
+    warn: "\x1b[33m",
+    error: "\x1b[31m",
+    debug: "\x1b[32m",
+    reset: "\x1b[0m",
+  };
+
+  const coloredPrefix = `${colors[level]}${prefix}${colors.reset}`;
+
+  if (data) {
+    console.log(`${coloredPrefix} ${message}`, data);
+  } else {
+    console.log(`${coloredPrefix} ${message}`);
+  }
+}

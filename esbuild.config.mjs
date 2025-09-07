@@ -46,8 +46,9 @@ const common = {
 
 async function buildAll() {
   const rendererEntries = await fg([
-    "src/code/workbench/**/renderer.ts",
+    "src/code/workbench/**/*.ts",
     "src/code/platform/**/*.ts",
+    "src/code/editor/**/*.ts",
   ]);
 
   const workerEntries = {

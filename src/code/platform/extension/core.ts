@@ -1,11 +1,6 @@
 import * as monaco from "monaco-editor";
 import { EventEmitter } from "events";
 import { ITab } from "../../../typings/types.js";
-import {
-  LanguageServerConfig,
-  LanguageServerProvider,
-} from "./LanguageServerProvider.js";
-import { LanguageServerRegistry } from "./LanguageServerRegistry.js";
 import { PyrightProvider } from "./pyright-api.js";
 
 export type RPCRequest = { id: number; method: string; args: any[] };
@@ -17,7 +12,7 @@ class Core extends EventEmitter {
 
   public workbench = {
     file: {
-      openTab: (tab: any) => {
+      openTab: (tab: ITab) => {
         this.emit("workbench.file.openTab", tab);
         return tab;
       },
@@ -57,46 +52,6 @@ class Core extends EventEmitter {
     },
   };
 
-  public languageServer = {
-    registerProvider: (
-      providerClass: typeof LanguageServerProvider,
-      config: LanguageServerConfig
-    ) => {
-      LanguageServerRegistry.getInstance().registerProvider(
-        providerClass,
-        config
-      );
-    },
-
-    getProviderForFile: async (
-      filePath: string
-    ): Promise<LanguageServerProvider | null> => {
-      if (!this.currentEditor) return null;
-      return await LanguageServerRegistry.getInstance().getProviderForFile(
-        this.currentEditor,
-        filePath
-      );
-    },
-
-    getProviderForLanguage: (
-      language: string
-    ): LanguageServerProvider | null => {
-      if (!this.currentEditor) return null;
-      return LanguageServerRegistry.getInstance().getProviderForLanguage(
-        this.currentEditor,
-        language
-      );
-    },
-
-    disposeProvider: (language: string) => {
-      LanguageServerRegistry.getInstance().disposeProvider(language);
-    },
-
-    getRegisteredLanguages: (): string[] => {
-      return LanguageServerRegistry.getInstance().getRegisteredLanguages();
-    },
-  };
-
   registerCommand(name: string, fn: (...args: any[]) => any) {
     this.commandRegistry.set(name, fn);
   }
@@ -119,10 +74,4 @@ class Core extends EventEmitter {
   }
 }
 
-export {
-  ITab,
-  Core,
-  LanguageServerProvider,
-  LanguageServerRegistry,
-  PyrightProvider,
-};
+export { Core, PyrightProvider };

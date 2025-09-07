@@ -1,4 +1,4 @@
-import { Layout } from "./browser/layout/layout.js";
+import { Layout } from "./browser/layout.js";
 import { MeridiaDark, MeridiaLight } from "../resources/theme/themes.js";
 import { themeService } from "./common/classInstances/themeInstance.js";
 import {
@@ -28,7 +28,7 @@ export class Workbench {
   }
 
   private registerDefaultSettings(): void {
-    import("./browser/layout/common/controller/SettingsController.js")
+    import("./browser/common/controller/SettingsController.js")
       .then(({ SettingsController }) => {
         const settingsController = SettingsController.getInstance();
 
@@ -60,7 +60,7 @@ export class Workbench {
   }
 
   private setupSettingsWatchers(): void {
-    import("./browser/layout/common/controller/SettingsController.js")
+    import("./browser/common/controller/SettingsController.js")
       .then(({ SettingsController }) => {
         const settingsController = SettingsController.getInstance();
 

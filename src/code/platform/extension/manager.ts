@@ -1,7 +1,7 @@
 import { Core } from "./core.js";
 import { store, dispatch } from "../../workbench/common/store/store.js";
 import { update_editor_tabs } from "../../workbench/common/store/mainSlice.js";
-import { ExtensionPageLayout } from "../../workbench/browser/layout/extensionPageLayout.js";
+import { ExtensionPageLayout } from "../../workbench/browser/extensionPageLayout.js";
 
 export type ExtensionManifest = {
   name: string;
@@ -76,30 +76,30 @@ export class ExtensionManager {
   }
 
   async loadExtensions() {
-    const folders = window.fsBridge
+    const folders = window.filesystem
       .readdirSync(this.extensionsPath)
       .filter((name: string) => {
-        const fullPath = window.pathBridge.join(this.extensionsPath, name);
-        return window.fsBridge.isDirectory(fullPath);
+        const fullPath = window.path.join(this.extensionsPath, name);
+        return window.filesystem.isDirectory(fullPath);
       });
 
     for (const folder of folders) {
-      const manifestPath = window.pathBridge.join(
+      const manifestPath = window.path.join(
         this.extensionsPath,
         folder,
         "manifest.json"
       );
 
-      if (!window.fsBridge.existsSync(manifestPath)) continue;
+      if (!window.filesystem.existsSync(manifestPath)) continue;
 
       const manifest: ExtensionManifest = JSON.parse(
-        window.fsBridge.readFileSync(manifestPath, "utf-8")
+        window.filesystem.readFileSync(manifestPath, "utf-8")
       );
 
       this.extensions.set(manifest.name, {
         manifest,
         module: await import(
-          window.pathBridge.join(this.extensionsPath, folder, manifest.main)
+          window.path.join(this.extensionsPath, folder, manifest.main)
         ),
       });
     }
@@ -112,10 +112,10 @@ export class ExtensionManager {
     console.log("running extension", ext);
 
     if (!ext.module) {
-      const folder = window.pathBridge.join(this.extensionsPath, name);
-      const mainPath = window.pathBridge.join(folder, ext.manifest.main);
+      const folder = window.path.join(this.extensionsPath, name);
+      const mainPath = window.path.join(folder, ext.manifest.main);
 
-      if (!window.fsBridge.existsSync(mainPath)) return false;
+      if (!window.filesystem.existsSync(mainPath)) return false;
 
       const extensionModule = await import(mainPath);
       ext.module = extensionModule;
@@ -154,8 +154,8 @@ export class ExtensionManager {
     if (!ext) return false;
     if (ext.module?.deactivate) ext.module.deactivate(this.core);
 
-    const folder = window.pathBridge.join(this.extensionsPath, name);
-    const mainPath = window.pathBridge.join(folder, ext.manifest.main);
+    const folder = window.path.join(this.extensionsPath, name);
+    const mainPath = window.path.join(folder, ext.manifest.main);
 
     const extensionModule = await import(mainPath);
     ext.module = extensionModule;

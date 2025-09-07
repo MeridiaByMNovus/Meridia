@@ -5,16 +5,18 @@ import { SearchAddon, ISearchOptions } from "@xterm/addon-search";
 import PerfectScrollbar from "perfect-scrollbar";
 import { themeService } from "./classInstances/themeInstance.js";
 import { KnownColorKey } from "../../../typings/types.js";
+import { SettingsController } from "../browser/common/controller/SettingsController.js";
+import {
+  chevronDownIcon,
+  chevronUpIcon,
+  closeIcon,
+  searchIcon,
+} from "./svgIcons.js";
 
 const FONT_STACK =
   'Monaco, Menlo, Consolas, "Droid Sans Mono", "Inconsolata", "Courier New", monospace';
 
 export type TerminalSize = { cols: number; rows: number };
-
-const SearchSVG = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>`;
-const ChevronUpSVG = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>`;
-const ChevronDownSVG = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
-const CloseSVG = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
 
 export class SpawnTerminal {
   terminal: Terminal;
@@ -36,6 +38,7 @@ export class SpawnTerminal {
   private resizeObserver?: ResizeObserver;
   private isDisposed = false;
   private commandExecuting = false;
+  private settingsWatchers: (() => void)[] = [];
 
   constructor(
     container: HTMLDivElement,
@@ -46,6 +49,8 @@ export class SpawnTerminal {
     const terminalWrapper = document.createElement("div");
     terminalWrapper.className = "terminal-root";
     container.appendChild(terminalWrapper);
+
+    const settingsController = SettingsController.getInstance();
 
     const theme: ITheme = {
       background: themeService.getVar("terminal.background"),
@@ -58,19 +63,59 @@ export class SpawnTerminal {
 
     this.terminal = new Terminal({
       theme,
-      fontFamily: FONT_STACK,
-      fontSize: 18,
-      lineHeight: 1.25,
-      letterSpacing: 0,
+      fontFamily:
+        settingsController.get("terminal.integrated.fontFamily") || FONT_STACK,
+      fontSize: settingsController.get("terminal.integrated.fontSize") || 14,
+      lineHeight:
+        settingsController.get("terminal.integrated.lineHeight") || 1.25,
+      letterSpacing:
+        settingsController.get("terminal.integrated.letterSpacing") || 0,
       cols: size.cols,
       rows: size.rows,
-      scrollback: 10000,
+      scrollback:
+        settingsController.get("terminal.integrated.scrollback") || 10000,
       allowProposedApi: true,
-      cursorBlink: true,
+      cursorBlink: settingsController.get("terminal.cursorBlink") ?? true,
+      cursorStyle: settingsController.get("terminal.cursorStyle") || "block",
+      cursorWidth: settingsController.get("terminal.cursorWidth") || 1,
+      smoothScrollDuration: settingsController.get(
+        "terminal.integrated.smoothScrolling"
+      )
+        ? 120
+        : 0,
+      fastScrollSensitivity:
+        settingsController.get("terminal.integrated.fastScrollSensitivity") ||
+        5,
+      scrollSensitivity:
+        settingsController.get(
+          "terminal.integrated.mouseWheelScrollSensitivity"
+        ) || 1,
+
+      macOptionIsMeta:
+        settingsController.get("terminal.integrated.macOptionIsMeta") ?? false,
+      rightClickSelectsWord:
+        settingsController.get("terminal.integrated.rightClickBehavior") ===
+        "selectWord",
+
+      drawBoldTextInBrightColors:
+        settingsController.get(
+          "terminal.integrated.drawBoldTextInBrightColors"
+        ) ?? true,
+      allowTransparency:
+        settingsController.get("terminal.integrated.allowTransparency") ??
+        false,
+      minimumContrastRatio:
+        settingsController.get("terminal.integrated.minimumContrastRatio") || 1,
+      tabStopWidth:
+        settingsController.get("terminal.integrated.tabStopWidth") || 8,
     });
 
     this.terminal.loadAddon(this.fitAddon);
     this.terminal.loadAddon(this.searchAddon);
+
+    // Setup all settings watchers
+    this.setupSettingsWatchers();
+
     try {
       const webgl = new WebglAddon();
       this.terminal.loadAddon(webgl);
@@ -83,7 +128,10 @@ export class SpawnTerminal {
     ) as HTMLElement | null;
     if (viewport) {
       this.scrollbar = new PerfectScrollbar(viewport, {
-        wheelSpeed: 1,
+        wheelSpeed:
+          settingsController.get(
+            "terminal.integrated.mouseWheelScrollSensitivity"
+          ) || 1,
         suppressScrollX: true,
       });
     }
@@ -116,14 +164,14 @@ export class SpawnTerminal {
 
     this.terminal.onData((data) => {
       if (!this.isDisposed) {
-        window.electron.ipcRenderer.send("ptyInstance.keystroke", {
+        window.ipc.send("ptyInstance.keystroke", {
           id: this.ptyId,
           data,
         });
       }
     });
 
-    window.electron.ipcRenderer.on(
+    window.ipc.on(
       `ptyInstance.incomingData.${this.ptyId}`,
       (_e: unknown, data: string) => {
         if (!this.isDisposed) {
@@ -144,6 +192,163 @@ export class SpawnTerminal {
     );
 
     this.addWindowResizeListener();
+    this.setupSettingsWatchers();
+  }
+
+  private setupSettingsWatchers() {
+    const settingsController = SettingsController.getInstance();
+
+    // Font settings
+    const watcherFontSize = settingsController.onChange(
+      "terminal.integrated.fontSize",
+      (size: number) => {
+        this.terminal.options.fontSize = size;
+        this.fitToContainer();
+      }
+    );
+
+    const watcherFontFamily = settingsController.onChange(
+      "terminal.integrated.fontFamily",
+      (family: string) => {
+        this.terminal.options.fontFamily = family;
+        this.fitToContainer();
+      }
+    );
+
+    const watcherLineHeight = settingsController.onChange(
+      "terminal.integrated.lineHeight",
+      (lineHeight: number) => {
+        this.terminal.options.lineHeight = lineHeight;
+        this.fitToContainer();
+      }
+    );
+
+    const watcherLetterSpacing = settingsController.onChange(
+      "terminal.integrated.letterSpacing",
+      (letterSpacing: number) => {
+        this.terminal.options.letterSpacing = letterSpacing;
+        this.fitToContainer();
+      }
+    );
+
+    // Cursor settings
+    const watcherCursorBlink = settingsController.onChange(
+      "terminal.cursorBlink",
+      (blink: boolean) => {
+        this.terminal.options.cursorBlink = blink;
+      }
+    );
+
+    const watcherCursorStyle = settingsController.onChange(
+      "terminal.cursorStyle",
+      (style: string) => {
+        this.terminal.options.cursorStyle = style as any;
+      }
+    );
+
+    const watcherCursorWidth = settingsController.onChange(
+      "terminal.cursorWidth",
+      (width: number) => {
+        this.terminal.options.cursorWidth = width;
+      }
+    );
+
+    // Scrolling settings
+    const watcherScrollback = settingsController.onChange(
+      "terminal.integrated.scrollback",
+      (scrollback: number) => {
+        this.terminal.options.scrollback = scrollback;
+      }
+    );
+
+    const watcherSmoothScrolling = settingsController.onChange(
+      "terminal.integrated.smoothScrolling",
+      (smooth: boolean) => {
+        this.terminal.options.smoothScrollDuration = smooth ? 120 : 0;
+      }
+    );
+
+    const watcherFastScrollSensitivity = settingsController.onChange(
+      "terminal.integrated.fastScrollSensitivity",
+      (sensitivity: number) => {
+        this.terminal.options.fastScrollSensitivity = sensitivity;
+      }
+    );
+
+    const watcherMouseWheelScrollSensitivity = settingsController.onChange(
+      "terminal.integrated.mouseWheelScrollSensitivity",
+      (sensitivity: number) => {
+        this.terminal.options.scrollSensitivity = sensitivity;
+        if (this.scrollbar) {
+          this.scrollbar.settings.wheelSpeed = sensitivity;
+          this.scrollbar.update();
+        }
+      }
+    );
+
+    const watcherMacOptionIsMeta = settingsController.onChange(
+      "terminal.integrated.macOptionIsMeta",
+      (isMeta: boolean) => {
+        this.terminal.options.macOptionIsMeta = isMeta;
+      }
+    );
+
+    const watcherRightClickBehavior = settingsController.onChange(
+      "terminal.integrated.rightClickBehavior",
+      (behavior: string) => {
+        this.terminal.options.rightClickSelectsWord = behavior === "selectWord";
+      }
+    );
+
+    // Display settings
+    const watcherDrawBoldTextInBrightColors = settingsController.onChange(
+      "terminal.integrated.drawBoldTextInBrightColors",
+      (draw: boolean) => {
+        this.terminal.options.drawBoldTextInBrightColors = draw;
+      }
+    );
+
+    const watcherAllowTransparency = settingsController.onChange(
+      "terminal.integrated.allowTransparency",
+      (allow: boolean) => {
+        this.terminal.options.allowTransparency = allow;
+      }
+    );
+
+    const watcherMinimumContrastRatio = settingsController.onChange(
+      "terminal.integrated.minimumContrastRatio",
+      (ratio: number) => {
+        this.terminal.options.minimumContrastRatio = ratio;
+      }
+    );
+
+    const watcherTabStopWidth = settingsController.onChange(
+      "terminal.integrated.tabStopWidth",
+      (width: number) => {
+        this.terminal.options.tabStopWidth = width;
+      }
+    );
+
+    // Store all watchers for cleanup
+    this.settingsWatchers.push(
+      watcherFontSize,
+      watcherFontFamily,
+      watcherLineHeight,
+      watcherLetterSpacing,
+      watcherCursorBlink,
+      watcherCursorStyle,
+      watcherCursorWidth,
+      watcherScrollback,
+      watcherSmoothScrolling,
+      watcherFastScrollSensitivity,
+      watcherMouseWheelScrollSensitivity,
+      watcherMacOptionIsMeta,
+      watcherRightClickBehavior,
+      watcherDrawBoldTextInBrightColors,
+      watcherAllowTransparency,
+      watcherMinimumContrastRatio,
+      watcherTabStopWidth
+    );
   }
 
   private addWindowResizeListener() {
@@ -200,8 +405,8 @@ export class SpawnTerminal {
     const dims = this.fitAddon.proposeDimensions();
     if (!dims) return;
 
-    const cols = Math.floor(dims.cols);
-    const rows = Math.floor(dims.rows);
+    const cols = dims.cols;
+    const rows = dims.rows;
 
     if (cols < 10 || rows < 5) {
       return;
@@ -224,7 +429,7 @@ export class SpawnTerminal {
 
   private sendResize() {
     if (!this.isDisposed) {
-      window.electron.ipcRenderer.send("ptyInstance.resize", {
+      window.ipc.send("ptyInstance.resize", {
         id: this.ptyId,
         cols: this.terminal.cols,
         rows: this.terminal.rows,
@@ -251,13 +456,11 @@ export class SpawnTerminal {
       this.resizeObserver.disconnect();
     }
 
-    window.electron.ipcRenderer.removeAllListeners(
-      `ptyInstance.incomingData.${this.ptyId}`
-    );
+    window.ipc.removeAllListeners(`ptyInstance.incomingData.${this.ptyId}`);
 
     this.scrollbar?.destroy();
 
-    window.electron.ipcRenderer.send("ptyInstance.kill", this.ptyId);
+    window.ipc.send("ptyInstance.kill", this.ptyId);
 
     this.terminal.dispose();
   }
@@ -277,7 +480,7 @@ export class SpawnTerminal {
 
     const icon = document.createElement("span");
     icon.className = "terminal-search-icon";
-    icon.innerHTML = SearchSVG;
+    icon.innerHTML = searchIcon;
 
     const input = document.createElement("input");
     input.type = "text";
@@ -286,17 +489,17 @@ export class SpawnTerminal {
 
     const btnPrev = document.createElement("button");
     btnPrev.className = "terminal-search-btn";
-    btnPrev.innerHTML = ChevronUpSVG;
+    btnPrev.innerHTML = chevronUpIcon;
     btnPrev.onclick = () => this.findPrev();
 
     const btnNext = document.createElement("button");
     btnNext.className = "terminal-search-btn";
-    btnNext.innerHTML = ChevronDownSVG;
+    btnNext.innerHTML = chevronDownIcon;
     btnNext.onclick = () => this.findNext();
 
     const btnClose = document.createElement("button");
     btnClose.className = "terminal-search-btn close";
-    btnClose.innerHTML = CloseSVG;
+    btnClose.innerHTML = closeIcon;
     btnClose.onclick = () => this.closeSearch();
 
     bar.append(icon, input, btnPrev, btnNext, btnClose);
@@ -379,7 +582,7 @@ export class SpawnTerminal {
     if (!this.isDisposed) {
       this.commandExecuting = true;
 
-      window.electron.ipcRenderer.send("ptyInstance.keystroke", {
+      window.ipc.send("ptyInstance.keystroke", {
         id: this.ptyId,
         data: command + "\r",
       });

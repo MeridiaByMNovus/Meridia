@@ -4,10 +4,21 @@ export interface IMainState {
   editor_active_tab: ITab;
   terminal_tabs: ITab[];
   terminal_active_tab: ITab;
+  console_tabs: ITab[];
+  console_active_tab: ITab;
+  run_tabs: ITab[];
+  run_active_tab: ITab;
   active_activityBaritem: {
-    left: string;
-    right: string;
+    left: {
+      top: string;
+      bottom: string;
+    };
+    right: {
+      top: string;
+      bottom: string;
+    };
   };
+
   panel_state: PanelState;
 }
 

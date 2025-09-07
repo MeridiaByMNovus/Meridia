@@ -1,17 +1,17 @@
 import debounce from "lodash.debounce";
-import { TabContentManager } from "./layout/common/manager/tabContentManager.js";
-import { SettingsLayout } from "./layout/settingsLayout.js";
+import { TabContentManager } from "./common/manager/tabContentManager.js";
+import { SettingsLayout } from "./settingsLayout.js";
 import { dispatch, store } from "../common/store/store.js";
 import {
   update_editor_tabs,
   update_panel_state,
 } from "../common/store/mainSlice.js";
 import { handleOpenSettingsTab, randomUUID } from "../common/functions.js";
-import { ShortcutsManager } from "./layout/common/manager/shortcutsManager.js";
+import { ShortcutsManager } from "./common/manager/shortcutsManager.js";
 import { ITab } from "../../../typings/types.js";
-import { StatusBarController } from "./layout/common/controller/StatusBarController.js";
+import { StatusBarController } from "./common/controller/StatusBarController.js";
 import { Core } from "../../platform/extension/core.js";
-import { LayoutService } from "./layout/common/services/LayoutService.js";
+import { LayoutService } from "./common/services/LayoutService.js";
 
 export function init(core: Core, layoutService: LayoutService) {
   const SettingsEl = new SettingsLayout();

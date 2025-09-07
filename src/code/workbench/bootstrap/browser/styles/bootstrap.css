@@ -1,0 +1,238 @@
+@import url("../../../browser/styles/tailwind.css");
+
+* {
+  user-select: none;
+  box-sizing: border-box;
+}
+
+body {
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    "Open Sans",
+    "Helvetica Neue",
+    sans-serif;
+  margin: 0;
+  padding: 0;
+  font-size: 16px;
+  background: var(--main-bg);
+  color: var(--text-color);
+}
+
+.bootstrap {
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+.bootstrap::before {
+  content: "";
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--border-color);
+  border-top: 4px solid var(--text-color);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  animation:
+    circleLoader 1s linear infinite,
+    fadeOutLoader 0.5s ease-out 2s forwards;
+  z-index: 1000;
+}
+
+.bootstrap::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--main-bg);
+  opacity: 0.95;
+  animation: fadeOutOverlay 0.5s ease-out 2s forwards;
+  z-index: 999;
+}
+
+.bootstrap-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  min-height: 100%;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: contentFadeIn 1s ease-out 2.5s forwards;
+  padding: 40px;
+}
+
+.bootstrap-wrapper .heading {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 24px 0;
+  opacity: 0;
+  color: var(--text-color);
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.07);
+  transition: color 0.3s ease;
+  animation: slideInFromTop 0.8s ease-out 3s forwards;
+  text-align: center;
+}
+
+.bootstrap-wrapper .heading.success {
+  color: var(--green-color);
+}
+
+.bootstrap-wrapper .heading.error {
+  color: var(--red-color);
+}
+
+.bootstrap-wrapper .heading.active {
+  color: var(--blue-color);
+}
+
+.bootstrap-wrapper .content-wrapper {
+  opacity: 0;
+  transform: translateY(30px);
+  animation: fadeInUp 0.8s ease-out 3.3s forwards;
+}
+
+.bootstrap-wrapper .content-wrapper .welcome-button {
+  border: 1px solid var(--border-color);
+  padding: 12px 68px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 20px;
+  transition: all 0.3s ease;
+  transform: scale(0.9);
+  opacity: 0;
+  animation: buttonBounceIn 0.6s ease-out 3.8s forwards;
+  background: transparent;
+  color: var(--text-color);
+}
+
+.bootstrap-wrapper .content-wrapper .welcome-button:hover {
+  background: var(--hover-bg);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+@keyframes progressShimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.3);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes slideInFromBottom {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInFromRight {
+  0% {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes circleLoader {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+@keyframes fadeOutLoader {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@keyframes fadeOutOverlay {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@keyframes contentFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInFromTop {
+  0% {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes buttonBounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
