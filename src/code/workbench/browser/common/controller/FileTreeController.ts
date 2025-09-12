@@ -123,7 +123,11 @@ export class FileTreeController {
   }
 
   private initializeParents() {
-    if (this.fileTree.children) {
+    if (
+      this.fileTree &&
+      this.fileTree.children &&
+      this.fileTree.children.length > 0
+    ) {
       const assignParents = (
         nodes: TreeNode[],
         parent: TreeNode | null = null
@@ -678,7 +682,7 @@ export class FileTreeController {
     const fragment = document.createElement("div");
     fragment.id = "filetree-root";
 
-    if (this.fileTree.children) {
+    if (this.fileTree.children.length > 0) {
       const fullPath = this.fileTree.name.replace(/\/$/, "").replace(/\\$/, "");
 
       const parts = fullPath.split(/[/\\]/);

@@ -23,4 +23,6 @@ export class PyrightProvider {
 
     return this.provider;
   }
+
+  dispose() {}
 }

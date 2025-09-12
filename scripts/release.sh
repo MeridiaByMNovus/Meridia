@@ -88,24 +88,24 @@ print_status "Build completed. Found artifacts:"
 ls -la dist/
 
 # Create release notes with dynamic content
-RELEASE_NOTES="## 🚀 What's New in v$VERSION
+RELEASE_NOTES="## What's New in v$VERSION
 
-### ✨ Features
+### Features
 - Cross-platform builds for Windows, and Linux
 - Enhanced Python development environment
 - Advanced Studio data analytics tools
 - Performance improvements and bug fixes
 
-### 📦 Downloads
+### Downloads
 - **Windows**: Download the .exe installer or portable version
 - **Linux**: Download the .AppImage or .deb package
 
-### 🔧 Installation
+### Installation
 1. Download the appropriate file for your operating system
 2. Run the installer or extract the portable version
 3. Launch Meridia and start coding!
 
-### 📊 Build Information
+### Build Information
 - Built on: $(date)
 - Commit: $(git rev-parse --short HEAD)
 - Node.js: $(node --version)
@@ -141,10 +141,9 @@ gh release create "v$VERSION" \
     --notes "$RELEASE_NOTES" \
     "${ASSETS[@]}"
 
-print_status "✅ Release v$VERSION created successfully!"
-print_info "🌐 View release: https://github.com/$REPO/releases/tag/v$VERSION"
+print_status "Release v$VERSION created successfully!"
+print_info "View release: https://github.com/$REPO/releases/tag/v$VERSION"
 
-# Optional: Open release in browser
 read -p "Open release in browser? (y/n): " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then

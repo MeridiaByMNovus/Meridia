@@ -1,5 +1,6 @@
-import { EditorService } from "../../../../editor/common/EditorService.js";
+import { EditorCore } from "../../../../editor/common/EditorService.js";
 import { dispatch } from "../../../common/store/store.js";
+import { closeIcon } from "../../../common/svgIcons.js";
 import { getIconForFile } from "../../../service/IconService/IconService.js";
 
 export interface TabData {
@@ -84,6 +85,9 @@ export class TabController {
       const iconName = this.config.fileIcon || "file.py";
       img.alt = iconName;
       img.src = `./code/resources/assets/fileIcons/${getIconForFile(iconName)}`;
+      img.onerror = () => {
+        img.src = "./code/resources/assets/fileIcons/default_file.svg";
+      };
       icon.appendChild(img);
     }
 
@@ -99,21 +103,12 @@ export class TabController {
 
     const close = document.createElement("span");
     close.className = "close-icon";
-    close.innerHTML = this.getCloseIconSvg();
+    close.innerHTML = closeIcon;
 
     iconWrapper.appendChild(dot);
     iconWrapper.appendChild(close);
 
     return iconWrapper;
-  }
-
-  private getCloseIconSvg(): string {
-    return `
-      <svg xmlns="http://www.w3.org/2000/svg" width="800px" height="800px" viewBox="-0.5 0 25 25" fill="none">
-        <path d="M3 21.32L21 3.32001" stroke="#ccc" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M3 3.32001L21 21.32" stroke="#ccc" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    `;
   }
 
   private attachEventListeners(
@@ -140,19 +135,16 @@ export class TabController {
   private findTabInStore(): TabData | null {
     const tabs = this.getStoreTabs();
 
-    // Search by ID first
     if (this.tabId) {
       const tabById = tabs.find((t) => t.id === this.tabId);
       if (tabById) return tabById;
     }
 
-    // Search by URI
     if (this.config.tabData?.uri) {
       const tabByUri = tabs.find((t) => t.uri === this.config.tabData?.uri);
       if (tabByUri) return tabByUri;
     }
 
-    // Search by content
     if (this.config.tabData?.content) {
       const tabByContent = tabs.find(
         (t) => t.content === this.config.tabData?.content
@@ -160,7 +152,6 @@ export class TabController {
       if (tabByContent) return tabByContent;
     }
 
-    // Fallback: search by name and type
     return (
       tabs.find((t) => {
         const nameMatches = t.name === this.config.name;
@@ -209,7 +200,6 @@ export class TabController {
 
   private closeEditorIfNeeded(tab: TabData) {
     if (this.config.isEditor && !this.config.tabData?.content && tab.uri) {
-      EditorService.get().close(tab.uri);
     }
   }
 

@@ -126,7 +126,7 @@ export class StructureController {
 
   private notifyUIUpdate() {
     window.dispatchEvent(
-      new CustomEvent("python-structure-updated", {
+      new CustomEvent("file-structure-updated", {
         detail: {
           variables: Array.from(this.variables.entries()),
           functions: Array.from(this.functions.entries()),

@@ -9,8 +9,9 @@
 .gm-tabs {
   display: flex;
   align-items: center;
-  min-height: 42px;
-  max-height: 42px;
+  min-height: 50px;
+  max-height: 50px;
+  background: var(--activity-bar-bg);
   padding-left: 12px;
   border-bottom: 1px solid var(--gm-border);
 }
@@ -106,25 +107,7 @@
   flex: 1 1 0;
   min-height: 0;
   padding: 20px;
-  overflow-y: auto;
-  scroll-behavior: smooth;
 }
-
-.gm-chat-messages::-webkit-scrollbar {
-  width: 8px;
-}
-.gm-chat-messages::-webkit-scrollbar-track {
-  background: var(--scrollbar-color);
-  border-radius: 4px;
-}
-.gm-chat-messages::-webkit-scrollbar-thumb {
-  background: var(--hover-scrollbar-color);
-  border-radius: 4px;
-}
-.gm-chat-messages::-webkit-scrollbar-thumb:hover {
-  background: var(--active-scrollbar-color);
-}
-
 .gm-message {
   display: flex;
   gap: 12px;
@@ -299,19 +282,6 @@
 
 .gm-chatbox:focus-within {
   outline: 1px solid var(--focus-color);
-}
-
-.gm-chatbox-input::-webkit-scrollbar {
-  width: 6px;
-}
-
-.gm-chatbox-input::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.gm-chatbox-input::-webkit-scrollbar-thumb {
-  background: var(--hover-scrollbar-color);
-  border-radius: 3px;
 }
 
 .gm-chatbox-options {

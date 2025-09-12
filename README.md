@@ -17,8 +17,7 @@ Studio makes Meridia an excellent choice for data scientists, analysts, and engi
 
 - **Python-first Workflow**: Optimized for Python development, data science, and scripting.
 - **Studio Data Center**: Advanced analytics, simulation, and data management tools.
-- **Multi-language Support**: Easily work with various programming languages, including TypeScript, JavaScript, Python, and more.
-- **File Explorer**: Navigate and manage your project files and folders with an intuitive sidebar.
+- **Explorer**: Navigate and manage your project files and folders with an intuitive sidebar.
 - **Integrated Terminal**: Access a powerful terminal emulator directly within the IDE for running commands and scripts.
 - **Customizable Themes**: Personalize your coding environment with built-in themes or create your own.
 - **Command Palette**: Quickly access commands and features using a searchable command palette.
@@ -26,7 +25,6 @@ Studio makes Meridia an excellent choice for data scientists, analysts, and engi
 - **Plugin Architecture**: Extend Meridia’s functionality with plugins and custom integrations (planned).
 - **Welcome Wizard**: Onboarding experience to help new users get started quickly.
 - **Python Environment Detection**: Automatically detects available Python environments for seamless Python development.
-- **Modern UI**: Built with Tailwind CSS for a clean and responsive interface.
 
 ## Getting Started
 
@@ -64,36 +62,19 @@ Studio makes Meridia an excellent choice for data scientists, analysts, and engi
 4. **Run the development server:**
 
    ```sh
-   npm run dev
+   npm run watch
    ```
 
 5. **Build for production:**
 
    ```sh
-   npm run pack
+   npm run package
    ```
-
-## Project Structure
-
-```text
-├── src/
-│   ├── code/           # Core IDE logic and services
-│   ├── editor/         # Editor components and services
-│   ├── platform/       # Platform-specific code
-│   ├── resources/      # Assets, themes, icons, and data
-│   └── workbench/      # Workbench UI and services
-├── typings/            # TypeScript type definitions
-├── package.json        # Project metadata and scripts
-├── vite.config.ts      # Vite configuration
-├── electron-builder.json # Electron build configuration
-└── ...
-```
 
 ## Scripts
 
 - `npm run dev` — Start the development server
-- `npm run pack` — Build the project for production
-- `npm run start` — Start the Electron app
+- `npm run package` — Build the project for production
 - `npm run lint` — Lint the codebase
 
 ## Contributing
@@ -108,8 +89,6 @@ Contributions are welcome! Please open issues or pull requests for bug fixes, ne
 - **Debugging Tools**: Integrated debugging for multiple languages.
 - **Collaboration**: Real-time collaboration features for pair programming.
 - **Enhanced Language Support**: LSP integration for more languages and better code intelligence.
-- **Settings Sync**: Sync settings and extensions across devices.
-- **Accessibility Improvements**: Enhanced support for accessibility tools and keyboard navigation.
 
 ## License
 

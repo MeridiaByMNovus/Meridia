@@ -21,7 +21,7 @@ import {
   update_panel_state,
 } from "../common/store/mainSlice.js";
 import { IFolderStructure, ITab } from "../../../typings/types.js";
-import { EditorService } from "../../editor/common/EditorService.js";
+import { EditorCore } from "../../editor/common/EditorService.js";
 import { StatusBarController } from "./common/controller/StatusBarController.js";
 import {
   get_file_types,
@@ -57,7 +57,7 @@ export class Layout {
   private geminiLayout!: GeminiLayout;
   private structureLayout!: StructureLayout;
   private tabContentEl!: HTMLDivElement;
-  private editorService: EditorService;
+  private editorService: EditorCore;
   private settingsWatchers: (() => void)[] = [];
   cursorListener: monaco.IDisposable | null = null;
 
@@ -76,7 +76,7 @@ export class Layout {
 
     const structureController = new StructureController();
 
-    this.editorService = EditorService.get(structureController);
+    this.editorService = EditorCore.get(structureController);
 
     this.structureLayout = new StructureLayout(
       this.editorService,
@@ -182,7 +182,14 @@ export class Layout {
   private async loadData() {
     const folder = await window.folder.get_folder();
     if (folder) this.fileTree = folder;
-    else this.fileTree = null;
+    else
+      this.fileTree = {
+        id: Date.now(),
+        root: "",
+        name: "",
+        type: "folder",
+        children: [],
+      };
   }
 
   private async buildLayout() {

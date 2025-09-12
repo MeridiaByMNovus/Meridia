@@ -10,7 +10,6 @@ import { TerminalLayoutWrapper } from "../../terminalLayoutWrapper.js";
 import { SplitterLayout } from "../../splitterLayout.js";
 import { TabData } from "../controller/TabController.js";
 import { ConsoleLayoutWrapper } from "../../consoleLayoutWrapper.js";
-import { RunLayoutWrapper } from "../../runLayoutWrapper.js";
 
 interface StyleProperty {
   attribute: string;

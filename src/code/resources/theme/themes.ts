@@ -23,6 +23,7 @@ export const MeridiaLight: Theme = {
     "quickInput.background": "#f5faf7",
     "tab.containerBackground": "#f5faf7",
     "tab.activeBorder": "#2d8659",
+    "editor.fileTouched.icon.foreground": "#2d8659",
     "tab.activeForeground": "#1a2e1f",
     "tab.inactiveForeground": "#6b7b6f",
     "button.foreground": "#ffffff",

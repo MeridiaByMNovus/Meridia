@@ -63,6 +63,7 @@ export const tokensToCssVariables: Record<KnownColorKey, string> = {
   "tab.activeForeground": "--tab-active-text-color",
   "tab.inactiveForeground": "--tab-text-color",
   "button.foreground": "--active-icon-color",
+  "editor.fileTouched.icon.foreground": "--file-touched-color",
   "settings.editor.background": "--settings-bg",
   "settings.activityBar.background": "--settings-activityBar-bg",
   "terminal.background": "--terminal-bg",

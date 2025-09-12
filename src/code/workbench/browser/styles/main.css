@@ -28,6 +28,36 @@ body {
   color: var(--text-color);
 }
 
+.monaco-editor .tab-level-before {
+  display: inline-block;
+  width: 3px;
+  height: 1em;
+  margin-left: -3px;
+  position: relative;
+  top: 0.1em;
+  pointer-events: none;
+}
+
+.tab-level-background.tab-level-1 {
+  background-color: rgba(255, 111, 97, 0.2);
+  border-left: 2px solid rgba(128, 128, 128, 0.3);
+}
+
+.tab-level-background.tab-level-2 {
+  background-color: rgba(107, 91, 149, 0.2);
+  border-left: 2px solid rgba(128, 128, 128, 0.3);
+}
+
+.tab-level-background.tab-level-3 {
+  background-color: rgba(136, 176, 75, 0.2);
+  border-left: 2px solid rgba(128, 128, 128, 0.3);
+}
+
+.tab-level-background.tab-level-4 {
+  background-color: rgba(255, 165, 0, 0.2);
+  border-left: 2px solid rgba(128, 128, 128, 0.3);
+}
+
 .dragging {
   opacity: 0.5;
 }
@@ -391,7 +421,7 @@ body {
 .tab-layout-wrapper .touch-dot {
   width: 10px;
   height: 10px;
-  background-color: var(--active-icon-color);
+  background-color: var(--file-touched-color);
   border-radius: 50%;
   visibility: hidden;
   z-index: 1;
@@ -514,12 +544,15 @@ body {
 }
 
 .filetree-default-content {
-  height: 100%;
-  width: 100%;
+  position: absolute;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 100%;
+  width: 100%;
 }
 
 .filetree-title {
@@ -539,7 +572,7 @@ body {
 }
 
 .filetree-select-folder-text {
-  font-size: 18px;
+  font-size: 16px;
   margin-bottom: 12px;
 }
 
@@ -1329,33 +1362,12 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 4px 8px;
+  min-height: 50px;
+  max-height: 50px;
+  padding: 0 8px;
   background: var(--activity-bar-bg);
   border-bottom: 1px solid var(--border-color);
   font-weight: 500;
-}
-
-.structure-wrapper .structure-header h3 {
-  margin: 0;
-  font-weight: 500;
-}
-
-.structure-wrapper .structure-header .structure-controls {
-  display: flex;
-  gap: 2px;
-}
-
-.structure-wrapper .structure-header .structure-controls button {
-  background: transparent;
-  border: none;
-  color: var(--second-text-color);
-  padding: 2px 4px;
-  cursor: pointer;
-}
-
-.structure-wrapper .structure-header .structure-controls button:hover {
-  background: var(--hover-bg);
-  color: var(--active-text-color);
 }
 
 .structure-wrapper .structure-content {
@@ -1402,8 +1414,15 @@ body {
   display: flex;
   align-items: center;
   padding: 4px;
-  padding-left: 24px;
   cursor: pointer;
+}
+
+.structure-wrapper .variable-item {
+  padding-left: 26px;
+}
+
+.structure-wrapper .function-item {
+  padding-left: 26px;
 }
 
 .structure-wrapper .structure-item:hover {
@@ -1424,7 +1443,7 @@ body {
 }
 
 .structure-wrapper .method-item {
-  padding-left: 48px;
+  padding-left: 32px;
 }
 
 .structure-wrapper .item-icon {

@@ -1,7 +1,8 @@
+import PerfectScrollbar from "perfect-scrollbar";
+import MarkdownIt from "markdown-it";
 import { ElementCore } from "../../../workbench/browser/elementCore.js";
 import { sendIcon } from "../../../workbench/common/svgIcons.js";
 import { GeminiConnection } from "../common/connection.js";
-import MarkdownIt from "markdown-it";
 
 interface ChatMessage {
   content: string;
@@ -158,6 +159,10 @@ export class GeminiLayout extends ElementCore {
 
     this.agentEl.appendChild(contentPart);
     this.agentEl.appendChild(chatboxPart);
+
+    new PerfectScrollbar(this.chatMessagesEl, {
+      suppressScrollX: true,
+    });
   }
 
   private async sendMessage(content: string) {

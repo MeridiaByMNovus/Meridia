@@ -10,8 +10,9 @@ export class FileInitService {
 
   public readonly PUBLIC_FOLDER_PATH = path.join(
     this.appDataPath,
-    "MeridiaLocalStorage",
-    "config"
+    "Meridia",
+    "User",
+    "Storage"
   );
 
   public readonly SETTINGS_JSON_PATH = path.join(

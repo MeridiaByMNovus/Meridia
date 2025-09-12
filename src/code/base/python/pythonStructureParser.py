@@ -118,35 +118,6 @@ class PythonStructureParser(ast.NodeVisitor):
                         'line': node.lineno
                     })
                     self.visited_names.add(scope_key)
-    
-    def visit_Import(self, node: ast.Import) -> None:
-
-        for alias in node.names:
-            name = alias.asname if alias.asname else alias.name
-            if not self._should_skip_name(name):
-                scope_key = self._get_scope_key(name)
-                if scope_key not in self.visited_names:
-                    self.variables.append({
-                        'name': name,
-                        'line': node.lineno
-                    })
-                    self.visited_names.add(scope_key)
-    
-    def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
-
-        for alias in node.names:
-            if alias.name == '*':
-                continue
-            name = alias.asname if alias.asname else alias.name
-            if not self._should_skip_name(name):
-                scope_key = self._get_scope_key(name)
-                if scope_key not in self.visited_names:
-                    self.variables.append({
-                        'name': name,
-                        'line': node.lineno
-                    })
-                    self.visited_names.add(scope_key)
-
 
 def generate_content_hash(code_content: str) -> str:
     """Generate a hash of the code content for change detection"""

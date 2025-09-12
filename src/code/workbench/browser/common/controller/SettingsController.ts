@@ -113,7 +113,6 @@ export class SettingsController {
     ];
 
     this.settingsConfig = [
-      // ===== Complete Editor Settings =====
       {
         id: "editor.fontSize",
         title: "Font Size",
@@ -989,7 +988,6 @@ export class SettingsController {
         defaultValue: false,
       },
 
-      // ===== Workbench Settings =====
       {
         id: "workbench.iconTheme",
         title: "File Icon Theme",
@@ -1053,7 +1051,6 @@ export class SettingsController {
         defaultValue: true,
       },
 
-      // ===== Terminal Settings =====
       {
         id: "terminal.integrated.fontSize",
         title: "Font Size",
@@ -1264,14 +1261,13 @@ export class SettingsController {
         step: 1,
       },
 
-      // ===== Theme Settings =====
       {
         id: "workbench.colorTheme",
         title: "Color Theme",
         description: "Specifies the color theme used in the workbench",
         type: "select",
         category: "theme",
-        defaultValue: "Warm Sunset",
+        defaultValue: "Meridia Dark",
         options: themeService.getRegisteredThemes().map((themeName) => ({
           label: themeName
             .replace(/-/g, " ")
@@ -1280,7 +1276,6 @@ export class SettingsController {
         })),
       },
 
-      // ===== Files Settings =====
       {
         id: "files.autoSave",
         title: "Auto Save",
@@ -1306,11 +1301,8 @@ export class SettingsController {
         step: 100,
       },
     ];
-
-    console.log("Settings loaded from inline configuration");
   }
 
-  // Core Methods
   get<T = any>(key: string): T {
     return SettingsRegistryManager.get(key);
   }
@@ -1371,7 +1363,6 @@ export class SettingsController {
     );
   }
 
-  // Configuration Methods
   getSettingsConfig(): Setting[] {
     return this.settingsConfig;
   }
@@ -1386,7 +1377,6 @@ export class SettingsController {
     );
   }
 
-  // Reset Methods
   resetToDefault(key: string): void {
     const setting = this.settingsConfig.find((s) => s.id === key);
     if (setting) {
@@ -1407,7 +1397,6 @@ export class SettingsController {
     });
   }
 
-  // Export Methods
   exportSettings(): string {
     return JSON.stringify(SettingsRegistryManager.getAll(), null, 2);
   }
@@ -1447,7 +1436,6 @@ export class SettingsController {
     return JSON.stringify(settingsData, null, 2);
   }
 
-  // Import Methods
   importSettings(jsonString: string): boolean {
     try {
       const imported = JSON.parse(jsonString);
@@ -1491,7 +1479,6 @@ export class SettingsController {
     }
   }
 
-  // File Operations
   async loadSettingsFromFile(file: File): Promise<boolean> {
     try {
       const text = await file.text();
@@ -1569,7 +1556,6 @@ export class SettingsController {
     }
   }
 
-  // Storage Methods
   saveAllSettings(): void {
     SettingsRegistryManager.saveToStorage();
     console.log("All settings saved to storage");
@@ -1580,7 +1566,6 @@ export class SettingsController {
     console.log("Settings reloaded from storage");
   }
 
-  // Utility Methods
   getRegistry(): typeof SettingsRegistryManager {
     return SettingsRegistryManager;
   }
@@ -1622,7 +1607,6 @@ export class SettingsController {
     }
   }
 
-  // Batch Operations
   setMultiple(settings: Record<string, any>): void {
     Object.entries(settings).forEach(([key, value]) => {
       if (this.validateSetting(key, value)) {
@@ -1643,7 +1627,6 @@ export class SettingsController {
     );
   }
 
-  // Search and Filter
   searchSettings(query: string): Setting[] {
     const lowercaseQuery = query.toLowerCase();
     return this.settingsConfig.filter(
@@ -1665,7 +1648,6 @@ export class SettingsController {
     return modified;
   }
 
-  // Event Management
   removeAllListeners(): void {
     this.listeners.clear();
   }
@@ -1680,7 +1662,6 @@ export class SettingsController {
     );
   }
 
-  // Debug and Development
   debugInfo(): void {
     console.group("Settings Controller Debug Info");
     console.log("Categories:", this.categories.length);

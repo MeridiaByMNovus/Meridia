@@ -75,6 +75,7 @@ export const knownColorKeys = [
   "editor.foreground",
   "editor.lineHighlightBackground",
   "editor.tab.containerBackground",
+  "editor.fileTouched.icon.foreground",
   "cursor.foreground",
   "activityBar.background",
   "activityBar.foreground",

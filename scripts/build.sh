@@ -3,7 +3,7 @@
 # Build script for Meridia IDE
 set -e
 
-echo "🚀 Building Meridia IDE with Docker..."
+echo "Building Meridia IDE with Docker..."
 
 # Colors for output
 RED='\033[0;31m'
