@@ -1,6 +1,6 @@
 import * as monaco from "monaco-editor";
 import { ITab } from "../../../../../typings/types";
-import { EditorService } from "../../../../editor/common/EditorService.js";
+import { EditorCore } from "../../../../editor/common/editorCore.js";
 import { Core } from "../../../../platform/extension/core.js";
 import { update_editor_tabs } from "../../../common/store/mainSlice";
 import { select } from "../../../common/store/selectors.js";
@@ -11,7 +11,7 @@ import { TabContentManager } from "./tabContentManager";
 
 export function RegisterCoreRequestManager(
   core: Core,
-  editorService: EditorService,
+  editorService: EditorCore,
   layoutService: LayoutService
 ) {
   core.on("workbench.tab.registerContent", (uri, content) => {
@@ -330,4 +330,32 @@ export function RegisterCoreRequestManager(
     if (!editor) return;
     editor.onDidChangeModelContent((e) => callback(e));
   });
+
+  core.on("filesystem.createFile", (filePath: string, content: string) => {
+    const response = window.filesystem.writeFileSync(filePath, content);
+    return response;
+  });
+
+  core.on("filesystem.deleteFile", (filePath: string) => {
+    const response = window.filesystem.rmSync(filePath);
+    return response;
+  });
+
+  core.on("filesystem.renameFile", (filePath: string, newName: string) => {
+    const response = window.filesystem.rename({
+      newName: newName,
+      path: filePath,
+      rootPath: window.path.dirname(filePath),
+      containingFolder: window.path.dirname(filePath),
+    });
+    return response;
+  });
+
+  core.on(
+    "filesystem.changeFileContent",
+    (filePath: string, content: string) => {
+      const response = window.filesystem.writeFileSync(filePath, content);
+      return response;
+    }
+  );
 }

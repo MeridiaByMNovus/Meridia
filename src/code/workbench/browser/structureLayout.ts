@@ -1,4 +1,4 @@
-import { EditorCore } from "../../editor/common/EditorService.js";
+import { EditorCore } from "../../editor/common/editorCore.js";
 import {
   chevronDownIcon,
   chevronRightIcon,

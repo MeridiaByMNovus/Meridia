@@ -11,10 +11,7 @@ const SOURCE_GLOBS = [
 const EXTENSION_SOURCE = ["extensions/packages/**/*.{css,json,js}"];
 
 function copyFiles() {
-  return src(SOURCE_GLOBS, {
-    base: "src",
-    allowEmpty: true,
-  }).pipe(dest("out"));
+  return src(SOURCE_GLOBS, { base: "src", allowEmpty: true }).pipe(dest("out"));
 }
 
 function copyExtensionFiles() {
@@ -26,10 +23,9 @@ function copyExtensionFiles() {
 }
 
 function copyExtensions() {
-  return src("extensions/dist/**/*", {
-    allowEmpty: true,
-    nodir: true,
-  }).pipe(dest("out/extensions"));
+  return src("extensions/dist/**/*", { allowEmpty: true, nodir: true }).pipe(
+    dest("out/extensions")
+  );
 }
 
 function copyExtensionsConditionally(done) {
@@ -64,16 +60,32 @@ const build = series(
   copyExtensionsConditionally
 );
 
-function watchFiles() {
+function watchSourceFiles() {
+  return watch(SOURCE_GLOBS, { ignoreInitial: false }, copyFiles);
+}
+
+function watchExtensionPackageFiles() {
+  return watch(EXTENSION_SOURCE, { ignoreInitial: false }, copyExtensionFiles);
+}
+
+function watchExtensionsDistFiles() {
   return watch(
-    SOURCE_GLOBS,
+    "extensions/dist/**/*",
     { ignoreInitial: false },
-    series(copyFiles, copyExtensionFiles, copyExtensionsConditionally)
+    copyExtensionsConditionally
+  );
+}
+
+function watchAll() {
+  return parallel(
+    watchSourceFiles,
+    watchExtensionPackageFiles,
+    watchExtensionsDistFiles
   );
 }
 
 module.exports = {
   copy: build,
-  watch: series(build, watchFiles),
-  default: series(build, watchFiles),
+  watch: series(build, watchAll()),
+  default: series(build, watchAll()),
 };

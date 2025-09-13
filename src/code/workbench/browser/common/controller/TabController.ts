@@ -1,4 +1,4 @@
-import { EditorCore } from "../../../../editor/common/EditorService.js";
+import { EditorCore } from "../../../../editor/common/editorCore.js";
 import { dispatch } from "../../../common/store/store.js";
 import { closeIcon } from "../../../common/svgIcons.js";
 import { getIconForFile } from "../../../service/IconService/IconService.js";

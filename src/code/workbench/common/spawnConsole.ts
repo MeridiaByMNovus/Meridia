@@ -113,7 +113,6 @@ export class SpawnConsole {
     this.terminal.loadAddon(this.fitAddon);
     this.terminal.loadAddon(this.searchAddon);
 
-    // Setup all settings watchers
     this.setupSettingsWatchers();
 
     try {
@@ -193,12 +192,48 @@ export class SpawnConsole {
 
     this.addWindowResizeListener();
     this.setupSettingsWatchers();
+    this.bindKeyboardShortcuts();
+  }
+
+  private bindKeyboardShortcuts() {
+    const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
+
+    this.terminal.attachCustomKeyEventHandler((e) => {
+      const ctrlKey = isMac ? e.metaKey : e.ctrlKey;
+      if (!ctrlKey) return true;
+
+      switch (e.key.toLowerCase()) {
+        case "c":
+          if (this.terminal.hasSelection()) {
+            return true;
+          }
+
+          this.terminal.write("\x03");
+          return false;
+
+        case "v":
+          navigator.clipboard.readText().then((text) => {
+            this.terminal.paste(text);
+          });
+          return false;
+
+        case "a":
+          this.terminal.selectAll();
+          return false;
+
+        case "k":
+          this.terminal.clear();
+          return false;
+
+        default:
+          return true;
+      }
+    });
   }
 
   private setupSettingsWatchers() {
     const settingsController = SettingsController.getInstance();
 
-    // Font settings
     const watcherFontSize = settingsController.onChange(
       "terminal.integrated.fontSize",
       (size: number) => {
@@ -231,7 +266,6 @@ export class SpawnConsole {
       }
     );
 
-    // Cursor settings
     const watcherCursorBlink = settingsController.onChange(
       "terminal.cursorBlink",
       (blink: boolean) => {
@@ -253,7 +287,6 @@ export class SpawnConsole {
       }
     );
 
-    // Scrolling settings
     const watcherScrollback = settingsController.onChange(
       "terminal.integrated.scrollback",
       (scrollback: number) => {
@@ -300,7 +333,6 @@ export class SpawnConsole {
       }
     );
 
-    // Display settings
     const watcherDrawBoldTextInBrightColors = settingsController.onChange(
       "terminal.integrated.drawBoldTextInBrightColors",
       (draw: boolean) => {
@@ -329,7 +361,6 @@ export class SpawnConsole {
       }
     );
 
-    // Store all watchers for cleanup
     this.settingsWatchers.push(
       watcherFontSize,
       watcherFontFamily,

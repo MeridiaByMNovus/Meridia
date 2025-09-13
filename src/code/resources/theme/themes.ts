@@ -169,6 +169,7 @@ export const MeridiaDark: Theme = {
     focusBorder: "#3574f0",
     foreground: "#e6edf3",
     descriptionForeground: "#7d8590",
+    "editor.fileTouched.icon.foreground": "#e6edf3",
     "workbench.icon.foreground": "#e6edf3",
     "workbench.hoverBackground": "#43454A",
     "menu.background": "#2B2D30",

@@ -1,0 +1,7 @@
+{
+  "name": "python-support",
+  "ext": [".py"],
+  "worker": "/worker/python.worker.js",
+  "type": "browser",
+  "main": "python.js"
+}

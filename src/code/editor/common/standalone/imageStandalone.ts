@@ -1,8 +1,12 @@
-export class ImageViewer {
+import { StandaloneProvider } from "../../../platform/editor/standalone/provider.js";
+
+export class ImageStandalone extends StandaloneProvider {
   private container: HTMLElement;
 
   constructor(container: HTMLElement) {
+    super();
     this.container = container;
+    this.standalone = container;
   }
 
   private getFileExtension(path: string): string {

@@ -21,7 +21,7 @@ import {
   update_panel_state,
 } from "../common/store/mainSlice.js";
 import { IFolderStructure, ITab } from "../../../typings/types.js";
-import { EditorCore } from "../../editor/common/EditorService.js";
+import { EditorCore } from "../../editor/common/editorCore.js";
 import { StatusBarController } from "./common/controller/StatusBarController.js";
 import {
   get_file_types,

@@ -11,13 +11,13 @@ import { ShortcutsManager } from "./common/manager/shortcutsManager.js";
 import { ITab } from "../../../typings/types.js";
 import { Core } from "../../platform/extension/core.js";
 import { LayoutService } from "./common/services/LayoutService.js";
-import { EditorService } from "../../editor/common/EditorService.js";
+import { EditorCore } from "../../editor/common/editorCore.js";
 import { RegisterCoreRequestManager } from "./common/manager/coreRequestManager.js";
 
 export function init(
   core: Core,
   layoutService: LayoutService,
-  editorService: EditorService
+  editorService: EditorCore
 ) {
   const SettingsEl = new SettingsLayout();
   TabContentManager.addContent(

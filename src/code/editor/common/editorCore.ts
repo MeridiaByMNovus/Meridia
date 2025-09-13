@@ -5,13 +5,11 @@ import { dispatch, store } from "../../workbench/common/store/store.js";
 import { update_editor_tabs } from "../../workbench/common/store/mainSlice.js";
 import { SettingsController } from "../../workbench/browser/common/controller/SettingsController.js";
 import { StructureController } from "../../workbench/browser/common/controller/StructureController.js";
-import { EditorSettings } from "./EditorSettings.js";
-import { EditorDecorations } from "./EditorDecorations.js";
-import { ImageViewer } from "./ImageViewer.js";
-import {
-  initializePyrightProvider,
-  disposePyrightProvider,
-} from "./PyrightProviderInit.js";
+import { EditorSettings } from "./editorSettings.js";
+import { EditorDecorations } from "./editorDecorations.js";
+import { ImageStandalone } from "./standalone/imageStandalone.js";
+import { JupyterStandalone } from "./standalone/jupyterStandalone.js";
+import { LanguageSupport } from "./languages/language.js";
 import {
   goToLineIcon,
   quickOutlineIcon,
@@ -41,6 +39,7 @@ export class EditorCore {
   >();
   public editorDiv: HTMLDivElement | null = null;
   public fileViewerDiv: HTMLDivElement | null = null;
+  public jupyterDiv: HTMLDivElement | null = null;
   private normalizePath = (path: string | undefined | null) =>
     (path ?? "").replace(/\\/g, "/").replace(/^\/?([a-zA-Z]):\//, "$1:/");
   public editorContainer: HTMLElement | null = null;
@@ -53,8 +52,10 @@ export class EditorCore {
   private saveTimeout: NodeJS.Timeout | null = null;
 
   private settingsHandler: EditorSettings | null = null;
+  private languageHandler: LanguageSupport | null = null;
   private decorationsHandler: EditorDecorations | null = null;
-  private imageViewer: ImageViewer | null = null;
+  private imageViewer: ImageStandalone | null = null;
+  private jupyterViewer: JupyterStandalone | null = null;
 
   private readonly imageExtensions = new Set([
     ".png",
@@ -69,9 +70,11 @@ export class EditorCore {
     ".avif",
   ]);
   private readonly svgExtensions = new Set([".svg"]);
+  private readonly jupyterExtensions = new Set([".ipynb"]);
   private readonly nonCodeExtensions = new Set([
     ...this.imageExtensions,
     ...this.svgExtensions,
+    ...this.jupyterExtensions,
   ]);
 
   constructor(private structureController: StructureController) {}
@@ -163,6 +166,10 @@ export class EditorCore {
     return this.svgExtensions.has(this.getFileExtension(path));
   }
 
+  private isJupyterile(path: string): boolean {
+    return this.jupyterExtensions.has(this.getFileExtension(path));
+  }
+
   private isNonCodeFile(path: string): boolean {
     return this.nonCodeExtensions.has(this.getFileExtension(path));
   }
@@ -194,6 +201,10 @@ export class EditorCore {
     this.fileViewerDiv.className = "file-viewer-div";
     container.appendChild(this.fileViewerDiv);
 
+    this.jupyterDiv = document.createElement("div");
+    this.jupyterDiv.className = "jupyter-div";
+    container.appendChild(this.jupyterDiv);
+
     this.editor = monaco.editor.create(this.editorDiv, {
       automaticLayout: true,
     });
@@ -203,9 +214,11 @@ export class EditorCore {
 
     this.decorationsHandler = new EditorDecorations(this.editor);
 
-    this.imageViewer = new ImageViewer(this.fileViewerDiv);
+    this.imageViewer = new ImageStandalone(this.fileViewerDiv);
 
-    await initializePyrightProvider(this.editor);
+    this.jupyterViewer = new JupyterStandalone(this.jupyterDiv);
+
+    this.languageHandler = new LanguageSupport(this.editor);
   }
 
   open(tab: OpenTab, preserveViewState = true) {
@@ -214,13 +227,17 @@ export class EditorCore {
     const filePath = tab.uri as string;
 
     if (this.isNonCodeFile(filePath)) {
-      this.showFileViewer();
       this.updateEditorFilePath(filePath);
 
       if (this.isSvgFile(filePath)) {
+        this.showFileViewer();
         this.imageViewer?.displaySvgFile(filePath, tab.editorContent ?? "");
       } else if (this.isImageFile(filePath)) {
+        this.showFileViewer();
         this.imageViewer?.displayImageFile(filePath);
+      } else if (this.isJupyterile(filePath)) {
+        this.showJupyterViewer();
+        this.jupyterViewer?.render(filePath);
       }
 
       return;
@@ -453,12 +470,21 @@ export class EditorCore {
     if (this.editorDiv) this.editorDiv.style.display = "block";
     if (this.fileViewerDiv) this.fileViewerDiv.style.display = "none";
     if (this.pathDisplayEl) this.pathDisplayEl.style.display = "flex";
+    if (this.jupyterDiv) this.jupyterDiv.style.display = "none";
   }
 
   private showFileViewer() {
     if (this.editorDiv) this.editorDiv.style.display = "none";
     if (this.fileViewerDiv) this.fileViewerDiv.style.display = "block";
     if (this.pathDisplayEl) this.pathDisplayEl.style.display = "flex";
+    if (this.jupyterDiv) this.jupyterDiv.style.display = "none";
+  }
+
+  private showJupyterViewer() {
+    if (this.editorDiv) this.editorDiv.style.display = "none";
+    if (this.fileViewerDiv) this.fileViewerDiv.style.display = "none";
+    if (this.pathDisplayEl) this.pathDisplayEl.style.display = "flex";
+    if (this.jupyterDiv) this.jupyterDiv.style.display = "block";
   }
 
   destroy() {
@@ -466,7 +492,7 @@ export class EditorCore {
     if (this.saveTimeout) clearTimeout(this.saveTimeout);
 
     this.settingsHandler?.dispose();
-    disposePyrightProvider();
+    this.languageHandler?.dispose();
 
     if (this.editor) {
       this.editor.dispose();
