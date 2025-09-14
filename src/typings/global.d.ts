@@ -11,6 +11,7 @@ import {
   watchBridge,
   geminiBridge,
   windowManagerBridge,
+  assistBridge,
 } from "../code/base/window/preload/preload.js";
 import { ExtensionManager } from "../code/platform/extension/manager.js";
 
@@ -28,6 +29,7 @@ declare global {
     system: typeof systemBridge;
     utils: typeof utilsBridge;
     gemini: typeof geminiBridge;
+    assist: typeof assistBridge;
     store_path: string;
     set_folder_data: Function;
     target_window: string;

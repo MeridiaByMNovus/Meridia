@@ -2,7 +2,6 @@ import { app, BrowserWindow, ipcMain } from "electron";
 import path from "path";
 import fs from "fs";
 import dotenv from "dotenv";
-import { runServer } from "./server.js";
 import { StorageService } from "./code/base/services/StorageService.js";
 import { MenuService } from "./code/base/services/MenuService.js";
 import { FileTreeService } from "./code/base/services/FileTreeService.js";
@@ -416,9 +415,6 @@ export function showBothWindows(): void {
 
 app.whenReady().then(async () => {
   log("info", "App is ready, initializing...");
-
-  log("info", "Starting server...");
-  runServer();
 
   try {
     const fileTreeData = StorageService.get("fileTree");

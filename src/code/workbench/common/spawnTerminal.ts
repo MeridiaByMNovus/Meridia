@@ -192,43 +192,6 @@ export class SpawnTerminal {
 
     this.addWindowResizeListener();
     this.setupSettingsWatchers();
-    this.bindKeyboardShortcuts();
-  }
-
-  private bindKeyboardShortcuts() {
-    const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
-
-    this.terminal.attachCustomKeyEventHandler((e) => {
-      const ctrlKey = isMac ? e.metaKey : e.ctrlKey;
-      if (!ctrlKey) return true;
-
-      switch (e.key.toLowerCase()) {
-        case "c":
-          if (this.terminal.hasSelection()) {
-            return true;
-          }
-
-          this.terminal.write("\x03");
-          return false;
-
-        case "v":
-          navigator.clipboard.readText().then((text) => {
-            this.terminal.paste(text);
-          });
-          return false;
-
-        case "a":
-          this.terminal.selectAll();
-          return false;
-
-        case "k":
-          this.terminal.clear();
-          return false;
-
-        default:
-          return false;
-      }
-    });
   }
 
   private setupSettingsWatchers() {

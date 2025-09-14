@@ -3,8 +3,10 @@ import fs from "fs";
 import chokidar from "chokidar";
 import dotenv from "dotenv";
 import { contextBridge, ipcRenderer } from "electron";
-import { IFolderStructure } from "../../../../typings/types.js";
 import { PythonShell } from "python-shell";
+import { IFolderStructure } from "../../../../typings/types.js";
+import { FetchCompletionItemParams } from "../../../platform/MeridiaAssist/types/internal.js";
+import { assist } from "../../common/assist.js";
 
 dotenv.config();
 
@@ -261,6 +263,18 @@ export const geminiBridge = {
   },
 };
 
+export const assistBridge = {
+  invokeCompletionRequest: async (params: FetchCompletionItemParams) => {
+    const body = params.body;
+
+    const completion = await assist.complete({
+      body,
+    });
+
+    return completion;
+  },
+};
+
 ipcRenderer.on("command-update-folder-structure", (event, data) => {
   event.sender.send("folder-updated", data.updatedData);
 });
@@ -277,3 +291,4 @@ contextBridge.exposeInMainWorld("ipc", ipcBridge);
 contextBridge.exposeInMainWorld("system", systemBridge);
 contextBridge.exposeInMainWorld("utils", utilsBridge);
 contextBridge.exposeInMainWorld("gemini", geminiBridge);
+contextBridge.exposeInMainWorld("assist", assistBridge);

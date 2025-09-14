@@ -105,6 +105,7 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "@mistralai/mistralai": "^1.10.0",
     "@reduxjs/toolkit": "^2.8.2",
     "@xterm/addon-fit": "^0.10.0",
     "@xterm/addon-search": "^0.15.0",
@@ -129,7 +130,6 @@
     "monaco-editor": "^0.52.2",
     "monaco-prettier": "1.0.0",
     "monaco-pyright-lsp": "^0.1.7",
-    "monacopilot": "^1.2.7",
     "node-pty": "^1.0.0",
     "perfect-scrollbar": "^1.5.6",
     "python-shell": "^5.0.0",
