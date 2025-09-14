@@ -1,5 +1,6 @@
 import * as monaco from "monaco-editor";
 import debounce from "lodash.debounce";
+import { CompletionRegistration, registerCompletion } from "monacopilot";
 import { themeService } from "../../workbench/common/classInstances/themeInstance.js";
 import { dispatch, store } from "../../workbench/common/store/store.js";
 import { update_editor_tabs } from "../../workbench/common/store/mainSlice.js";
@@ -56,6 +57,8 @@ export class EditorCore {
   private decorationsHandler: EditorDecorations | null = null;
   private imageViewer: ImageStandalone | null = null;
   private jupyterViewer: JupyterStandalone | null = null;
+
+  private completionRef: CompletionRegistration | null = null;
 
   private readonly imageExtensions = new Set([
     ".png",
@@ -282,6 +285,12 @@ export class EditorCore {
       this.lastContentHash = "";
       this.structureController.reset();
     }
+
+    this.completionRef = registerCompletion(monaco, this.editor, {
+      endpoint: "http://localhost:56942/completions",
+      language: tab.language!,
+      filename: window.path.basename(tab.uri!),
+    });
 
     this.applyModelSettings(model);
 
