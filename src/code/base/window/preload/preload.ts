@@ -5,7 +5,7 @@ import dotenv from "dotenv";
 import { contextBridge, ipcRenderer } from "electron";
 import { PythonShell } from "python-shell";
 import { IFolderStructure } from "../../../../typings/types.js";
-import { FetchCompletionItemParams } from "../../../platform/MeridiaAssist/types/internal.js";
+import { FetchCompletionItemParams } from "../../../platform/assist/types/internal.js";
 import { assist } from "../../common/assist.js";
 
 dotenv.config();

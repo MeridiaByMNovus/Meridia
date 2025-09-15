@@ -1,7 +1,7 @@
 import { PROVIDERS, PROVIDER_MODEL_MAP } from "./llm/base.js";
 import type { AssistOptions, CustomAssistModel } from "../types/assist.js";
 import type { Model, Provider } from "../types/llm.js";
-import { joinWithAnd } from "./utils/text.js";
+import { joinWithAnd } from "./common/utils/text.js";
 
 const _validateParams = (
   apiKey: string | undefined,

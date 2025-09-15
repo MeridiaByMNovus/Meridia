@@ -1,7 +1,7 @@
-import type { PromptData } from "../core";
+import type { PromptData } from "./core";
 
-import type { CompletionMetadata } from "../types/core";
-import { joinWithAnd } from "./utils/text";
+import type { CompletionMetadata } from "./types/core";
+import { joinWithAnd } from "./common/utils/text";
 
 const CURSOR_PLACEHOLDER = "<|developer_cursor_is_here|>";
 

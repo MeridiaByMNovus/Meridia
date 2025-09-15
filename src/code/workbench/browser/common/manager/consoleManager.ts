@@ -18,39 +18,34 @@ export class ConsoleManager {
 
   constructor(layoutService: LayoutService) {
     this.layoutService = layoutService;
-    this.consoleTabManager = new TabManager(update_console_tabs); // Different action
+    this.consoleTabManager = new TabManager(update_console_tabs);
     this.setupConsoleUI();
     this.setupWatchers();
 
-    // Create initial tab immediately
     setTimeout(() => {
       this.createInitialConsoleTab();
     }, 0);
   }
 
   private setupConsoleUI() {
-    // Create console content wrapper
     this.consoleContentWrapper = document.createElement("div");
     this.consoleContentWrapper.className = "console-content-wrapper";
     this.consoleContentWrapper.style.width = "100%";
     this.consoleContentWrapper.style.height = "100%";
     this.consoleContentWrapper.style.position = "relative";
 
-    // Create console instance wrapper
     this.consoleInstanceWrapper = document.createElement("div");
     this.consoleInstanceWrapper.className = "console-instance-wrapper";
     this.consoleInstanceWrapper.style.width = "100%";
     this.consoleInstanceWrapper.style.height = "100%";
     this.consoleInstanceWrapper.style.position = "relative";
 
-    // Create add console tab button
     const addConsoleTabButton = document.createElement("button");
     addConsoleTabButton.innerHTML = addIcon;
     addConsoleTabButton.onclick = async () => {
       await this.createNewConsoleTab();
     };
 
-    // Setup console tabs layout
     this.consoleTabs = this.layoutService.RegisterTabsLayout(
       this.consoleContentWrapper,
       [addConsoleTabButton]
@@ -61,7 +56,7 @@ export class ConsoleManager {
 
   private setupWatchers() {
     watch(
-      (s) => s.main.console_tabs, // Different state
+      (s) => s.main.console_tabs,
       (next) => {
         const previous = select((s) => s.main.console_tabs);
 
@@ -159,16 +154,29 @@ export class ConsoleManager {
     if (ptyId === 0) ptyId = 1;
 
     const console = new SpawnConsole(consoleContainer, ptyId + 10000, {
-      // Different ptyId range
       rows: 30,
       cols: 80,
     });
 
     this.consoles.set(consoleId, console);
 
+    const ipython_path = JSON.parse(
+      JSON.stringify(
+        await window.python.executeScript(
+          window.path.join(
+            window.path.__dirname(),
+            "..",
+            "..",
+            "python",
+            "getIPythonScriptPath.py"
+          )
+        )
+      )
+    )["IPython__file__"];
+
     await window.ipc.send("ptyInstance.spawn", {
       id: ptyId + 10000,
-      shell: "/home/timeuser/.local/bin/ipython",
+      shell: ipython_path,
     });
 
     return console;

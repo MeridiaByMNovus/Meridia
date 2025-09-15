@@ -1,13 +1,13 @@
-import type { RegisterCompletionOptions } from "../types/core";
+import type { RegisterCompletionOptions } from "./types/core";
 import type {
   CompletionKeyEventHandlerParams,
   EditorCompletionState,
-} from "../types/internal";
+} from "./types/internal";
 import type {
   EditorKeyboardEvent,
   Monaco,
   StandaloneCodeEditor,
-} from "../types/monaco";
+} from "./types/monaco";
 
 const ACCEPTANCE_KEYS = {
   TAB: (monaco: Monaco, event: EditorKeyboardEvent) =>

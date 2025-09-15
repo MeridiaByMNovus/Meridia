@@ -1,6 +1,6 @@
-import { logger } from "../core";
+import { logger } from "./core";
 
-import { createInlineCompletionsProvider } from "./completions-provider";
+import { createInlineCompletionsProvider } from "./completionsProvider";
 import { createKeyDownListener } from "./key-events";
 import { completionCache } from "./processor";
 import {
@@ -13,8 +13,8 @@ import {
 import type {
   CompletionRegistration,
   RegisterCompletionOptions,
-} from "../types/core";
-import type { Disposable, Monaco, StandaloneCodeEditor } from "../types/monaco";
+} from "./types/core";
+import type { Disposable, Monaco, StandaloneCodeEditor } from "./types/monaco";
 
 export const registerCompletion = (
   monaco: Monaco,

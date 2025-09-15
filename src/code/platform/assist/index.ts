@@ -1,4 +1,4 @@
-import { CompletionAssist } from "./completion-assist";
+import { CompletionAssist } from "./completionAssist";
 import { registerCompletion } from "./register";
 
 export { registerCompletion, CompletionAssist };

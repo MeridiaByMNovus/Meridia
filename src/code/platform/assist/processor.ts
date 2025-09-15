@@ -1,8 +1,8 @@
-import { logger } from "../core";
+import { logger } from "./core";
 
-import { CompletionCache } from "./classes/cache";
-import { CompletionFormatter } from "./classes/formatter";
-import { CompletionRange } from "./classes/range";
+import { CompletionCache } from "./common/classes/cache";
+import { CompletionFormatter } from "./common/classes/formatter";
+import { CompletionRange } from "./common/classes/range";
 import {
   DEFAULT_ALLOW_FOLLOW_UP_COMPLETIONS,
   DEFAULT_ENABLE_CACHING,
@@ -14,21 +14,21 @@ import {
 import {
   buildCompletionMetadata,
   requestCompletionItem,
-} from "./request-completion";
+} from "./requestCompletion";
 import {
   type CompletionMetadata,
   type InlineCompletionProcessorParams,
   TriggerEnum,
-} from "../types/core";
+} from "./types/core";
 import type {
   FetchCompletionItemParams,
   FetchCompletionItemReturn,
-} from "../types/internal";
-import type { EditorInlineCompletionsResult } from "../types/monaco";
-import { asyncDebounce } from "./utils/async-debounce";
-import { getTextBeforeCursor } from "./utils/editor";
-import { isCancellationError } from "./utils/error";
-import { createInlineCompletionResult } from "./utils/result";
+} from "./types/internal";
+import type { EditorInlineCompletionsResult } from "./types/monaco";
+import { asyncDebounce } from "./common/utils/async-debounce";
+import { getTextBeforeCursor } from "./common/utils/editor";
+import { isCancellationError } from "./common/utils/error";
+import { createInlineCompletionResult } from "./common/utils/result";
 
 export const completionCache = new CompletionCache();
 

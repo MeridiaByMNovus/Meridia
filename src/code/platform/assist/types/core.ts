@@ -1,8 +1,8 @@
-import type { AIRequestHandler, CustomPrompt } from "../types/assist";
+import type { AIRequestHandler, CustomPrompt } from "./assist";
 
-import type { Filename, RelatedFile, Technologies } from "../types/metadata";
+import type { Filename, RelatedFile, Technologies } from "./metadata";
 
-import type { BaseAssistMetadata } from "../types/metadata";
+import type { BaseAssistMetadata } from "./metadata";
 
 import type {
   FetchCompletionItemHandler,

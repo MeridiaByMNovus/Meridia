@@ -1,18 +1,18 @@
-import type { Endpoint, RelatedFile } from "../core";
+import type { Endpoint, RelatedFile } from "./core";
 
 import { DEFAULT_MAX_CONTEXT_LINES } from "./defaults";
-import type { CompletionMetadata, CompletionResponse } from "../types/core";
+import type { CompletionMetadata, CompletionResponse } from "./types/core";
 import type {
   ConstructCompletionMetadataParams,
   FetchCompletionItemParams,
   FetchCompletionItemReturn,
-} from "../types/internal";
-import type { CursorPosition, EditorModel } from "../types/monaco";
-import { getTextAfterCursor, getTextBeforeCursor } from "./utils/editor";
+} from "./types/internal";
+import type { CursorPosition, EditorModel } from "./types/monaco";
+import { getTextAfterCursor, getTextBeforeCursor } from "./common/utils/editor";
 import {
   type TruncateTextToMaxLinesOptions,
   truncateTextToMaxLines,
-} from "./utils/text";
+} from "./common/utils/text";
 
 type RequestCompletionItemParams = FetchCompletionItemParams & {
   endpoint: Endpoint;

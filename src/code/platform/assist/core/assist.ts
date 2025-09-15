@@ -20,7 +20,7 @@ import type {
   Provider,
 } from "../types/llm.js";
 import type { BaseAssistMetadata } from "../types/metadata.js";
-import { fetchWithTimeout } from "./utils/fetch-with-timeout.js";
+import { fetchWithTimeout } from "./common/utils/fetch-with-timeout.js";
 import validate from "./validator.js";
 
 export abstract class Assist<Metadata> {

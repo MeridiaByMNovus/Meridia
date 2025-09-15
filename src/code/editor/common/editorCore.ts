@@ -1,6 +1,6 @@
 import * as monaco from "monaco-editor";
 import debounce from "lodash.debounce";
-import { registerCompletion } from "../../platform/MeridiaAssist/assist/";
+import { registerCompletion } from "../../platform/assist/";
 import { themeService } from "../../workbench/common/classInstances/themeInstance.js";
 import { dispatch, store } from "../../workbench/common/store/store.js";
 import { update_editor_tabs } from "../../workbench/common/store/mainSlice.js";
@@ -17,7 +17,7 @@ import {
   searchIcon,
   triggerSuggestIcon,
 } from "../../workbench/common/svgIcons.js";
-import { CompletionRegistration } from "../../platform/MeridiaAssist/types/core";
+import { CompletionRegistration } from "../../platform/assist/types/core";
 
 export type OpenTab = {
   uri?: string;

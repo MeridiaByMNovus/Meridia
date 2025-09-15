@@ -24,6 +24,9 @@ export class TitleBarLayout extends ElementCore {
     const partLeft = document.createElement("div");
     partLeft.className = "part";
 
+    const logoImg = document.createElement("img");
+    logoImg.src = "./code/resources/assets/icons/icon.png";
+
     const logoDiv = document.createElement("div");
     logoDiv.className = "logo";
 
