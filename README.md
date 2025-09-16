@@ -49,6 +49,8 @@ Studio makes Meridia an excellent choice for data scientists, analysts, and engi
 
    ```properties
    NODE_ENV=development
+   GEMINI_API=your_gemini_api
+   MISTRAL_API=your_mistral_api
    ```
 
    - Set `NODE_ENV=production` for production builds.

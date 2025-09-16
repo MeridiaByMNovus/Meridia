@@ -191,6 +191,7 @@ interface CreateWindowOptions {
   titlebar?: boolean;
   fullscreen?: boolean;
   center?: boolean;
+  menu?: boolean;
   x?: number;
   y?: number;
 }
@@ -207,6 +208,7 @@ function createWindow({
   titlebar = false,
   fullscreen = true,
   center = true,
+  menu = true,
   x,
   y,
 }: CreateWindowOptions): BrowserWindow {
@@ -218,6 +220,7 @@ function createWindow({
     resizable,
     show,
     fullscreen,
+    menu,
     x,
     y,
   });
@@ -260,6 +263,8 @@ function createWindow({
   }
 
   const window = new BrowserWindow(windowOptions);
+
+  !menu && window.setMenuBarVisibility(false);
 
   log("debug", "BrowserWindow created", {
     id: window.id,
@@ -451,6 +456,7 @@ app.whenReady().then(async () => {
       fullscreen: false,
       resizable: false,
       center: true,
+      menu: false,
       x: 300,
       y: 100,
     });

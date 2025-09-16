@@ -53,18 +53,6 @@ export class BootstrapService {
       required: true,
     },
     {
-      name: "Python3",
-      command: "python3 --version",
-      installCommand: {
-        win32: "winget install Python.Python.3 || choco install python",
-        darwin: "brew install python",
-        linux:
-          "sudo apt-get install python3 || sudo yum install python3 || sudo pacman -S python",
-        default: "Please install Python3 from https://python.org",
-      },
-      required: true,
-    },
-    {
       name: "pip",
       command: "pip --version",
       installCommand: {
@@ -82,6 +70,8 @@ export class BootstrapService {
       command: "python -m IPython --version",
       installCommand: {
         linux: "pip3 install ipython --break-system-packages",
+        darwin: "pip3 install ipython --break-system-packages",
+        win32: "pip install ipython",
         default: "pip install ipython",
       },
       required: true,

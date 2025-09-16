@@ -6,6 +6,7 @@
 #define MyAppPublisher "MNovus, Inc"
 #define MyAppURL "https://meridia.dev"
 #define MyAppExeName "Meridia.exe"
+#define src "C:\Users\Time Machine\Meridia"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
@@ -44,24 +45,24 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "dist\win-unpacked\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "dist\win-unpacked\locales\*"; DestDir: "{app}\locales"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "dist\win-unpacked\resources\*"; DestDir: "{app}\resources"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "dist\win-unpacked\chrome_100_percent.pak"; DestDir: "{app}"; Flags: ignoreversion
-Source: "dist\win-unpacked\chrome_200_percent.pak"; DestDir: "{app}"; Flags: ignoreversion
-Source: "dist\win-unpacked\d3dcompiler_47.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "dist\win-unpacked\ffmpeg.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "dist\win-unpacked\icudtl.dat"; DestDir: "{app}"; Flags: ignoreversion
-Source: "dist\win-unpacked\libEGL.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "dist\win-unpacked\libGLESv2.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "dist\win-unpacked\LICENSE.electron.txt"; DestDir: "{app}"; Flags: ignoreversion
-Source: "dist\win-unpacked\LICENSES.chromium.html"; DestDir: "{app}"; Flags: ignoreversion
-Source: "dist\win-unpacked\resources.pak"; DestDir: "{app}"; Flags: ignoreversion
-Source: "dist\win-unpacked\snapshot_blob.bin"; DestDir: "{app}"; Flags: ignoreversion
-Source: "dist\win-unpacked\v8_context_snapshot.bin"; DestDir: "{app}"; Flags: ignoreversion
-Source: "dist\win-unpacked\vk_swiftshader.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "dist\win-unpacked\vk_swiftshader_icd.json"; DestDir: "{app}"; Flags: ignoreversion
-Source: "dist\win-unpacked\vulkan-1.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#src}\dist\win-unpacked\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#src}\dist\win-unpacked\locales\*"; DestDir: "{app}\locales"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#src}\dist\win-unpacked\resources\*"; DestDir: "{app}\resources"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#src}\dist\win-unpacked\chrome_100_percent.pak"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#src}\dist\win-unpacked\chrome_200_percent.pak"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#src}\dist\win-unpacked\d3dcompiler_47.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#src}\dist\win-unpacked\ffmpeg.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#src}\dist\win-unpacked\icudtl.dat"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#src}\dist\win-unpacked\libEGL.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#src}\dist\win-unpacked\libGLESv2.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#src}\dist\win-unpacked\LICENSE.electron.txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#src}\dist\win-unpacked\LICENSES.chromium.html"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#src}\dist\win-unpacked\resources.pak"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#src}\dist\win-unpacked\snapshot_blob.bin"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#src}\dist\win-unpacked\v8_context_snapshot.bin"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#src}\dist\win-unpacked\vk_swiftshader.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#src}\dist\win-unpacked\vk_swiftshader_icd.json"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#src}\dist\win-unpacked\vulkan-1.dll"; DestDir: "{app}"; Flags: ignoreversion
 
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
