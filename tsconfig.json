@@ -9,16 +9,10 @@
     "noEmit": false,
     "skipLibCheck": true
   },
-  "include": [
-    "./src/*.ts",
-    "./src/typings",
-    "./src/code/**/*.ts",
-    "src/code/platform/editor/standalone"
-  ],
+  "include": ["src/typings", "src/code/base/**/*.ts"],
   "exclude": [
     "src/code/workbench/**/*.ts",
     "src/code/platform/**/*.ts",
-    "src/code/editor/**/*",
-    "node_modules"
+    "src/code/editor/**/*"
   ]
 }

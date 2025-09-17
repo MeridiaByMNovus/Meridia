@@ -11,8 +11,7 @@ export class FileInitService {
   public readonly PUBLIC_FOLDER_PATH = path.join(
     this.appDataPath,
     "Meridia",
-    "User",
-    "Storage"
+    "User"
   );
 
   public readonly SETTINGS_JSON_PATH = path.join(
@@ -82,7 +81,6 @@ export class FileInitService {
           });
         }
 
-        // Verify folder was created/exists and get stats
         const stats = fs.statSync(folder);
         log("debug", "Folder verification complete", {
           folder,
@@ -141,7 +139,20 @@ export class FileInitService {
           });
 
           const jsonString = JSON.stringify(defaultContent, null, 2);
-          fs.writeFileSync(filePath, jsonString);
+          const settingsString = fs.readFileSync(
+            path.join(
+              __dirname,
+              "code",
+              "resources",
+              "data",
+              "defaultSettings.json"
+            )
+          );
+
+          fs.writeFileSync(
+            filePath,
+            filePath.endsWith("settings.json") ? settingsString : jsonString
+          );
           const duration = Date.now() - startTime;
 
           results.created++;
@@ -160,7 +171,6 @@ export class FileInitService {
           });
         }
 
-        // Verify file was created/exists and get stats
         const stats = fs.statSync(filePath);
         log("debug", "File verification complete", {
           filePath,
@@ -170,7 +180,6 @@ export class FileInitService {
           isFile: stats.isFile(),
         });
 
-        // Validate JSON content
         try {
           const content = fs.readFileSync(filePath, "utf8");
           const parsed = JSON.parse(content);
@@ -205,7 +214,6 @@ export class FileInitService {
       }
     });
 
-    // Summary logging
     log("info", "File initialization completed", {
       created: results.created,
       existed: results.existed,

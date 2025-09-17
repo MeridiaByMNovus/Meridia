@@ -123,35 +123,29 @@ export class FileTreeController {
   }
 
   private initializeParents() {
-    if (
-      this.fileTree &&
-      this.fileTree.children &&
-      this.fileTree.children.length > 0
-    ) {
-      const assignParents = (
-        nodes: TreeNode[],
-        parent: TreeNode | null = null
-      ) => {
-        nodes.forEach((node) => {
-          node.parent = parent;
-          if (node.type === "folder" && node.children) {
-            assignParents(node.children as TreeNode[], node);
-          }
-        });
-      };
+    const assignParents = (
+      nodes: TreeNode[],
+      parent: TreeNode | null = null
+    ) => {
+      nodes.forEach((node) => {
+        node.parent = parent;
+        if (node.type === "folder" && node.children) {
+          assignParents(node.children as TreeNode[], node);
+        }
+      });
+    };
 
-      const rootNode: TreeNode = {
-        id: this.fileTree.id,
-        name: this.fileTree.name,
-        parentPath: "",
-        path: this.fileTree.root,
-        children: this.fileTree.children,
-        type: "folder",
-        parent: null,
-      };
+    const rootNode: TreeNode = {
+      id: this.fileTree.id,
+      name: this.fileTree.name,
+      parentPath: "",
+      path: this.fileTree.root,
+      children: this.fileTree.children,
+      type: "folder",
+      parent: null,
+    };
 
-      assignParents(rootNode.children as TreeNode[], rootNode);
-    }
+    assignParents(rootNode.children as TreeNode[], rootNode);
   }
 
   private sortChildren = (children: TFolderTree[]) => {
@@ -682,7 +676,7 @@ export class FileTreeController {
     const fragment = document.createElement("div");
     fragment.id = "filetree-root";
 
-    if (this.fileTree.children.length > 0) {
+    if (this.fileTree.root) {
       const fullPath = this.fileTree.name.replace(/\/$/, "").replace(/\\$/, "");
 
       const parts = fullPath.split(/[/\\]/);

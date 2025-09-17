@@ -103,7 +103,7 @@ export class GeminiLayout extends ElementCore {
     this.chatEl.className = "gm-chat";
 
     this.chatMessagesEl = document.createElement("div");
-    this.chatMessagesEl.className = "gm-chat-messages";
+    this.chatMessagesEl.className = "gm-chat-messages scrollbar-container";
 
     this.agentHead.appendChild(heading);
     this.agentHead.appendChild(description);
@@ -159,10 +159,6 @@ export class GeminiLayout extends ElementCore {
 
     this.agentEl.appendChild(contentPart);
     this.agentEl.appendChild(chatboxPart);
-
-    new PerfectScrollbar(this.chatMessagesEl, {
-      suppressScrollX: true,
-    });
   }
 
   private async sendMessage(content: string) {
@@ -240,7 +236,7 @@ export class GeminiLayout extends ElementCore {
           const preElement = codeBlock.parentElement as HTMLPreElement;
           if (preElement && preElement.tagName === "PRE") {
             const wrapper = document.createElement("div");
-            wrapper.className = "gm-code-wrapper";
+            wrapper.className = "gm-code-wrapper scrollbar-container";
 
             const copyBtn = document.createElement("button");
             copyBtn.className = "gm-copy-btn";
@@ -260,7 +256,6 @@ export class GeminiLayout extends ElementCore {
                   copyBtn.classList.remove("copied");
                 }, 2000);
               } catch (error) {
-                console.error("Failed to copy to clipboard:", error);
                 this.fallbackCopyToClipboard(originalCode);
 
                 const originalText = copyBtn.textContent;
@@ -280,7 +275,6 @@ export class GeminiLayout extends ElementCore {
           }
         });
       } catch (error) {
-        console.error("Error rendering message:", error);
         contentEl.textContent = message.content;
       }
     }
@@ -303,9 +297,7 @@ export class GeminiLayout extends ElementCore {
 
     try {
       document.execCommand("copy");
-    } catch (err) {
-      console.error("Fallback copy failed:", err);
-    }
+    } catch (err) {}
 
     document.body.removeChild(textarea);
   }

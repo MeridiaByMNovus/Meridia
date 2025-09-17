@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap");
 @import url("./scrollbar.css");
 @import url("./splitter.css");
 @import url("./tailwind.css");
@@ -648,8 +649,6 @@ body {
 .filetree-toggle svg {
   width: 16px;
   height: auto;
-  stroke: var(--file-tree-icon-foreground);
-  stroke-width: 1;
 }
 
 .filetree-icon {
@@ -887,7 +886,6 @@ body {
   flex-shrink: 0;
   background: var(--settings-nav-background);
   border-right: 1px solid var(--settings-border);
-  overflow-y: auto;
   max-height: 100%;
 }
 

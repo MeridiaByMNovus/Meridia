@@ -1,6 +1,7 @@
 import fs from "fs";
-import { FileInitService } from "./FileInitService";
 import dotenv from "dotenv";
+import { ipcMain } from "electron";
+import { FileInitService } from "./FileInitService";
 
 dotenv.config();
 
@@ -14,6 +15,15 @@ export class StorageService {
     this.STORE_JSON_PATH = fileInit.STORE_JSON_PATH;
     this.filePath = this.STORE_JSON_PATH;
     this.data = this.load();
+  }
+
+  static loadIpcMainListner() {
+    ipcMain.handle("get-store-value", (_, key) => {
+      return this.get(key);
+    });
+    ipcMain.handle("set-store-value", (_, key, value) => {
+      return this.set(key, value);
+    });
   }
 
   private static load(): Record<string, any> {

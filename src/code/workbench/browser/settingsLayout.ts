@@ -5,6 +5,7 @@ import {
   SettingsCategory,
 } from "./common/controller/SettingsController.js";
 import { ElementCore } from "./elementCore.js";
+import { searchIcon } from "../common/svgIcons.js";
 
 export class SettingsLayout extends ElementCore {
   private controller: SettingsController;
@@ -17,6 +18,7 @@ export class SettingsLayout extends ElementCore {
   constructor() {
     super();
     this.controller = SettingsController.getInstance();
+    console.log(this.controller.getCategories());
     this.render();
     this.setupEventListeners();
   }
@@ -48,16 +50,11 @@ export class SettingsLayout extends ElementCore {
     this.searchInput.className = "settings-search";
     this.searchInput.placeholder = "Search settings";
 
-    const searchIcon = document.createElement("div");
-    searchIcon.className = "settings-search-icon";
-    searchIcon.innerHTML = `
-      <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-        <circle cx="11" cy="11" r="8"/>
-        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-      </svg>
-    `;
+    const _searchIcon = document.createElement("div");
+    _searchIcon.className = "settings-search-icon";
+    _searchIcon.innerHTML = searchIcon;
 
-    searchContainer.appendChild(searchIcon);
+    searchContainer.appendChild(_searchIcon);
     searchContainer.appendChild(this.searchInput);
 
     header.appendChild(title);
@@ -148,6 +145,7 @@ export class SettingsLayout extends ElementCore {
     const category = this.controller
       .getCategories()
       .find((c) => c.id === categoryId);
+
     if (!category) return;
 
     const categoryHeader = document.createElement("div");
@@ -411,6 +409,7 @@ export class SettingsLayout extends ElementCore {
     this.settingsContent.innerHTML = "";
 
     const allSettings = this.controller.getSettingsConfig();
+
     const filteredSettings = allSettings.filter(
       (setting) =>
         setting.title.toLowerCase().includes(query) ||

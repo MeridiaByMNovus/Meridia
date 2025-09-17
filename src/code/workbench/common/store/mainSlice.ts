@@ -1,6 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import {
+  ActiveActivityBarItem,
   IFolderStructure,
   IMainState,
   ITab,
@@ -67,15 +68,9 @@ export const mainSlice = createSlice({
     },
     update_active_activitybar_item: (
       state,
-      action: PayloadAction<{
-        bar: "left" | "right";
-        position: "top" | "bottom";
-        id: string;
-      }>
+      action: PayloadAction<ActiveActivityBarItem>
     ) => {
-      state.active_activityBaritem[action.payload.bar][
-        action.payload.position
-      ] = action.payload.id;
+      state.active_activityBaritem = action.payload;
     },
     update_panel_state: (state, action: PayloadAction<PanelState>) => {
       state.panel_state = action.payload;

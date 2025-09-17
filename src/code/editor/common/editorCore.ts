@@ -17,7 +17,11 @@ import {
   searchIcon,
   triggerSuggestIcon,
 } from "../../workbench/common/svgIcons.js";
-import { CompletionRegistration } from "../../platform/assist/types/core";
+import {
+  CompletionRegistration,
+  RegisterCompletionOptions,
+} from "../../platform/assist/types/core";
+import { RelatedFile } from "../../platform/assist/core";
 
 export type OpenTab = {
   uri?: string;
@@ -60,6 +64,7 @@ export class EditorCore {
   private jupyterViewer: JupyterStandalone | null = null;
 
   private completionRef: CompletionRegistration | null = null;
+  private relatedFiles: Map<string, RelatedFile> = new Map();
 
   private readonly imageExtensions = new Set([
     ".png",
@@ -225,6 +230,19 @@ export class EditorCore {
     this.languageHandler = new LanguageSupport(this.editor);
   }
 
+  updateCompletionRefRelatedFiles() {
+    this.completionRef?.updateOptions((currentOps) => {
+      const relatedFiles = Array.from(this.relatedFiles.values());
+
+      const newOps: RegisterCompletionOptions = {
+        ...currentOps,
+        relatedFiles: relatedFiles,
+      };
+
+      return newOps;
+    });
+  }
+
   open(tab: OpenTab, preserveViewState = true) {
     if (!this.editor) return;
 
@@ -287,27 +305,40 @@ export class EditorCore {
       this.structureController.reset();
     }
 
-    this.completionRef = registerCompletion(monaco, this.editor, {
-      language: tab.language!,
-      filename: window.path.basename(tab.uri!),
-    });
+    if (!this.completionRef) {
+      this.completionRef = registerCompletion(monaco, this.editor, {
+        language: tab.language!,
+        filename: window.path.basename(tab.uri!),
+      });
+    }
 
     this.applyModelSettings(model);
 
     this.decorationsHandler?.updateTabLevelDecorations();
 
-    const markFileTouched = debounce(() => {
+    this.relatedFiles.set(tab.uri!, {
+      path: tab.uri!,
+      content: tab.editorContent!,
+    });
+
+    const markFileTouched = debounce(async () => {
       const model = this.editor?.getModel();
       const uriPath = this.normalizePath(model?.uri?.path ?? "");
       const tabs = store.getState().main.editor_tabs;
       const index = tabs.findIndex(
         (file) => this.normalizePath(file.uri as string) === uriPath
       );
+      const content = await window.filesystem.get_file_content(uriPath);
       if (index > -1 && !tabs[index].is_touched) {
         const updatedTabs = [...tabs];
         updatedTabs[index] = { ...updatedTabs[index], is_touched: true };
         dispatch(update_editor_tabs(updatedTabs));
       }
+      this.relatedFiles.set(tab.uri!, {
+        path: tab.uri!,
+        content: content,
+      });
+      this.updateCompletionRefRelatedFiles();
     }, 100);
 
     const debouncedContentChange = debounce((content: string) => {
@@ -336,6 +367,8 @@ export class EditorCore {
     });
 
     this.editor.focus();
+
+    this.updateCompletionRefRelatedFiles();
   }
 
   private setupThemeWatcher() {

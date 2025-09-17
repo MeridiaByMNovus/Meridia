@@ -12,6 +12,7 @@ import {
   geminiBridge,
   windowManagerBridge,
   assistBridge,
+  uiStateBridge,
 } from "../code/base/window/preload/preload.js";
 import { ExtensionManager } from "../code/platform/extension/manager.js";
 
@@ -20,6 +21,7 @@ declare global {
     filesystem: typeof filesystem;
     path: typeof pathBridge;
     folder: typeof folderBridge;
+    uistate: typeof uiStateBridge;
     windowmanager: typeof windowManagerBridge;
     menu: typeof menuBridge;
     dialog: typeof dialogBridge;

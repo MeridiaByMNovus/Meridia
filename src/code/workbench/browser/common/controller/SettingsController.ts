@@ -1,5 +1,13 @@
 import { SettingsRegistryManager } from "../../../common/registery/SettingsRegistery.js";
 import { themeService } from "../../../common/classInstances/themeInstance.js";
+import {
+  aiIcon,
+  editorIcon,
+  fileIcon,
+  terminalIcon,
+  themeIcon,
+  workbenchIcon,
+} from "../../../common/svgIcons.js";
 
 export interface SettingOption {
   label: string;
@@ -69,45 +77,39 @@ export class SettingsController {
   private loadInlineSettingsConfig() {
     this.categories = [
       {
+        id: "ai",
+        title: "AI",
+        icon: aiIcon,
+        description: "Control Gemini and Inline editor suggestions.",
+      },
+      {
         id: "editor",
         title: "Editor",
-        icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-      </svg>`,
+        icon: editorIcon,
         description: "Customize editor behavior and appearance",
       },
       {
         id: "workbench",
         title: "Workbench",
-        icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-        <path d="M3 3h18v18H3V3zm2 2v14h14V5H5zm2 2h10v2H7V7zm0 4h10v2H7v-2zm0 4h7v2H7v-2z"/>
-      </svg>`,
+        icon: workbenchIcon,
         description: "Control the appearance and layout of the workbench",
       },
       {
         id: "terminal",
         title: "Terminal",
-        icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-        <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM4 18V8h16v10H4z"/>
-        <path d="M6 10l4 2-4 2z"/>
-        <path d="M12 14h6v2h-6z"/>
-      </svg>`,
+        icon: terminalIcon,
         description: "Configure terminal settings and behavior",
       },
       {
         id: "theme",
         title: "Theme",
-        icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-        <path d="M12 18c-.89 0-1.74-.19-2.5-.56C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.44C10.26 6.19 11.11 6 12 6c3.31 0 6 2.69 6 6s-2.69 6-6 6z"/>
-      </svg>`,
+        icon: themeIcon,
         description: "Choose and customize your color theme",
       },
       {
         id: "files",
         title: "Files",
-        icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-        <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12V8l-6-6z"/>
-      </svg>`,
+        icon: fileIcon,
         description: "Control file saving and auto-save options",
       },
     ];
@@ -1299,6 +1301,133 @@ export class SettingsController {
         min: 100,
         max: 10000,
         step: 100,
+      },
+      {
+        id: "ai.geminiApiKey",
+        title: "Gemini API Key",
+        description: "Without API key Gemini won't function.",
+        type: "input",
+        category: "ai",
+        defaultValue: "",
+      },
+      {
+        id: "ai.mistralApiKey",
+        title: "Mistral API Key",
+        description: "Without API key Inline code suggestions won't function.",
+        type: "input",
+        category: "ai",
+        defaultValue: "",
+      },
+      {
+        id: "ai.inlineCodeSuggestions",
+        title: "Inline Code Suggestions",
+        description: "Controls whether inline suggestions appear or not.",
+        type: "toggle",
+        category: "ai",
+        defaultValue: "on",
+      },
+      {
+        id: "ai.enableAutoComplete",
+        title: "Enable AI Autocomplete",
+        description:
+          "Enable or disable AI-powered autocomplete suggestions while typing.",
+        type: "toggle",
+        category: "ai",
+        defaultValue: "on",
+      },
+      {
+        id: "ai.responseTimeout",
+        title: "AI Response Timeout",
+        description:
+          "Maximum time (in milliseconds) to wait for AI service response.",
+        type: "number",
+        category: "ai",
+        defaultValue: 5000,
+      },
+      {
+        id: "ai.suggestionDetailLevel",
+        title: "Suggestion Detail Level",
+        description:
+          "Controls the verbosity of inline suggestions (e.g., concise, detailed).",
+        type: "select",
+        category: "ai",
+        options: [
+          {
+            label: "concise",
+            value: "concise",
+          },
+          {
+            label: "detailed",
+            value: "detailed",
+          },
+        ],
+        defaultValue: "concise",
+      },
+      {
+        id: "ai.enableTelemetry",
+        title: "Enable Telemetry",
+        description:
+          "Sends anonymous usage data to help improve the AI service.",
+        type: "toggle",
+        category: "ai",
+        defaultValue: "off",
+      },
+      {
+        id: "ai.languageModelVersion",
+        title: "AI Model Version",
+        description: "Select which AI model version to use for suggestions.",
+        type: "select",
+        category: "ai",
+        options: [
+          {
+            label: "latest",
+            value: "latest",
+          },
+          {
+            label: "stable",
+            value: "stable",
+          },
+          {
+            label: "legacy",
+            value: "legacy",
+          },
+        ],
+        defaultValue: "latest",
+      },
+      {
+        id: "ai.inlineSuggestionsDelay",
+        title: "Inline Suggestions Delay",
+        description:
+          "Time delay in milliseconds before inline suggestions appear.",
+        type: "number",
+        category: "ai",
+        defaultValue: 300,
+      },
+      {
+        id: "ai.personalizedSuggestions",
+        title: "Personalized Suggestions",
+        description:
+          "Enable AI to learn and personalize suggestions based on your coding patterns.",
+        type: "toggle",
+        category: "ai",
+        defaultValue: "on",
+      },
+      {
+        id: "ai.storeHistory",
+        title: "Store AI Interaction History",
+        description:
+          "Store your interaction history locally to improve suggestions. Disabled for privacy.",
+        type: "toggle",
+        category: "ai",
+        defaultValue: "off",
+      },
+      {
+        id: "ai.apiKeyExpirationNotification",
+        title: "API Key Expiration Notification",
+        description: "Notify when your API key is about to expire.",
+        type: "toggle",
+        category: "ai",
+        defaultValue: "on",
       },
     ];
   }

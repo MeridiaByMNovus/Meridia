@@ -4,7 +4,12 @@ import chokidar from "chokidar";
 import dotenv from "dotenv";
 import { contextBridge, ipcRenderer } from "electron";
 import { PythonShell } from "python-shell";
-import { IFolderStructure } from "../../../../typings/types.js";
+import {
+  ActiveActivityBarItem,
+  IFolderStructure,
+  ITab,
+  PanelState,
+} from "../../../../typings/types.js";
 
 dotenv.config();
 
@@ -48,6 +53,19 @@ export const filesystem = {
     rootPath: string;
     containingFolder: string;
   }) => ipcRenderer.send("rename", data),
+  getSettings: () => {
+    const appDataPath =
+      process.platform === "win32"
+        ? process.env.APPDATA
+        : path.join(process.env.HOME, ".config");
+
+    const PUBLIC_FOLDER_PATH = path.join(appDataPath, "Meridia", "User");
+
+    const SETTINGS_JSON_PATH = path.join(PUBLIC_FOLDER_PATH, "settings.json");
+    const settings = JSON.parse(fs.readFileSync(SETTINGS_JSON_PATH, "utf-8"));
+
+    return settings;
+  },
 };
 
 export const pathBridge = {
@@ -262,7 +280,45 @@ export const geminiBridge = {
 };
 
 export const assistBridge = {
- invokeCompletionRequest: (params) => ipcRenderer.invoke("assist-completion", params),
+  invokeCompletionRequest: (params) =>
+    ipcRenderer.invoke("assist-completion", params),
+};
+
+export const uiStateBridge = {
+  get_panel_state: async () => {
+    const panel_state = (await ipcRenderer.invoke(
+      "get-store-value",
+      "panelstate"
+    )) ?? {
+      left: "on",
+      right: "on",
+      bottom: "on",
+    };
+    return panel_state as PanelState;
+  },
+  set_panel_state: (panel_state: PanelState) => {
+    ipcRenderer.invoke("set-store-value", "panelstate", panel_state);
+  },
+  get_editor_tabs: async () => {
+    const editor_tabs = await ipcRenderer.invoke(
+      "get-store-value",
+      "editortabs"
+    );
+    return editor_tabs as ITab[];
+  },
+  set_editor_tabs: (tabs: ITab[]) => {
+    ipcRenderer.invoke("set-store-value", "editortabs", tabs);
+  },
+  get_active_activity_bar_item: async () => {
+    const activity_bar_items = await ipcRenderer.invoke(
+      "get-store-value",
+      "activeactivitybaritem"
+    );
+    return activity_bar_items as ActiveActivityBarItem;
+  },
+  set_active_activity_bar_item: (item: ActiveActivityBarItem) => {
+    ipcRenderer.invoke("set-store-value", "activeactivitybaritem", item);
+  },
 };
 
 ipcRenderer.on("command-update-folder-structure", (event, data) => {
@@ -282,3 +338,4 @@ contextBridge.exposeInMainWorld("system", systemBridge);
 contextBridge.exposeInMainWorld("utils", utilsBridge);
 contextBridge.exposeInMainWorld("gemini", geminiBridge);
 contextBridge.exposeInMainWorld("assist", assistBridge);
+contextBridge.exposeInMainWorld("uistate", uiStateBridge);

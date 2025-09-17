@@ -1,5 +1,6 @@
 import esbuild from "esbuild";
 import fg from "fast-glob";
+import path from "path";
 
 const importMetaUrlPlugin = {
   name: "import-meta-url",
@@ -51,6 +52,11 @@ async function buildAll() {
     "src/code/editor/**/*.ts",
   ]);
 
+  const electronEntries = [
+    "src/main.ts",
+    ...(await fg(["src/code/base/**/*.ts"])),
+  ];
+
   const workerEntries = {
     "workers/editor.worker":
       "node_modules/monaco-editor/esm/vs/editor/editor.worker.js",
@@ -64,22 +70,8 @@ async function buildAll() {
       "node_modules/monaco-editor/esm/vs/language/html/html.worker.js",
   };
 
-  const workersOpts = {
-    bundle: true,
-    format: "esm",
-    platform: "browser",
-    target: ["chrome114", "firefox115"],
-    entryPoints: workerEntries,
-    outdir: "out/workers",
-    entryNames: "[name]",
-    sourcemap: false,
-    minify: prod,
-  };
-
   const Loaders = {
     ".ttf": "dataurl",
-    ".woff": "dataurl",
-    ".woff2": "dataurl",
     ".woff": "file",
     ".woff2": "file",
     ".svg": "file",
@@ -101,15 +93,49 @@ async function buildAll() {
     loader: Loaders,
   };
 
+  const workersOpts = {
+    bundle: true,
+    format: "esm",
+    platform: "browser",
+    target: ["chrome114", "firefox115"],
+    entryPoints: workerEntries,
+    outdir: "out/workers",
+    entryNames: "[name]",
+    sourcemap: false,
+    minify: prod,
+  };
+
+  const electronOpts = {
+    bundle: true,
+    platform: "node",
+    format: "cjs",
+    target: ["node18"],
+    entryPoints: electronEntries,
+    outdir: "out",
+    sourcemap: false,
+    assetNames: "assets/[name]",
+    chunkNames: "chunks/[name]-[hash]",
+    minify: prod,
+    external: ["electron", "node-pty", "electron-reload"],
+    plugins: [importMetaUrlPlugin],
+    logLevel: "error",
+  };
+
   if (watch) {
     const rendererCtx = await esbuild.context(rendererOpts);
     const workersCtx = await esbuild.context(workersOpts);
-    await workersCtx.watch();
-    await rendererCtx.watch();
+    const electronCtx = await esbuild.context(electronOpts);
+
+    await Promise.all([
+      workersCtx.watch(),
+      rendererCtx.watch(),
+      electronCtx.watch(),
+    ]);
   } else {
     await Promise.all([
       esbuild.build(rendererOpts),
       esbuild.build(workersOpts),
+      esbuild.build(electronOpts),
     ]);
   }
 }

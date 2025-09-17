@@ -8,11 +8,6 @@ const _validateParams = (
   options: AssistOptions
 ): void => {
   if (!apiKey && typeof options.model !== "function") {
-    throw new Error(
-      options.provider
-        ? `Please provide the ${options.provider} API key.`
-        : "Please provide an API key."
-    );
   }
 
   if (

@@ -8,18 +8,19 @@ export interface IMainState {
   console_active_tab: ITab;
   run_tabs: ITab[];
   run_active_tab: ITab;
-  active_activityBaritem: {
-    left: {
-      top: string;
-      bottom: string;
-    };
-    right: {
-      top: string;
-      bottom: string;
-    };
-  };
-
+  active_activityBaritem: ActiveActivityBarItem;
   panel_state: PanelState;
+}
+
+export interface ActiveActivityBarItem {
+  left: {
+    top: string;
+    bottom: string;
+  };
+  right: {
+    top: string;
+    bottom: string;
+  };
 }
 
 export interface PanelState {

@@ -20,7 +20,12 @@ import {
   update_editor_tabs,
   update_panel_state,
 } from "../common/store/mainSlice.js";
-import { IFolderStructure, ITab } from "../../../typings/types.js";
+import {
+  ActiveActivityBarItem,
+  IFolderStructure,
+  ITab,
+  PanelState,
+} from "../../../typings/types.js";
 import { EditorCore } from "../../editor/common/editorCore.js";
 import { StatusBarController } from "./common/controller/StatusBarController.js";
 import {
@@ -52,6 +57,9 @@ import { StructureController } from "./common/controller/StructureController.js"
 
 export class Layout {
   private fileTree: IFolderStructure | null = null;
+  private panelState: PanelState | null = null;
+  private activeActivityBarItem: ActiveActivityBarItem | null = null;
+  private editorTabs: ITab[] | null = null;
   private layoutService = new LayoutService();
   private splitterLayout!: SplitterLayout;
   private geminiLayout!: GeminiLayout;
@@ -181,6 +189,10 @@ export class Layout {
 
   private async loadData() {
     const folder = await window.folder.get_folder();
+    const panel_state = await window.uistate.get_panel_state();
+    const editor_tabs = await window.uistate.get_editor_tabs();
+    const active_activity_bar_item =
+      await window.uistate.get_active_activity_bar_item();
     if (folder) this.fileTree = folder;
     else
       this.fileTree = {
@@ -190,6 +202,10 @@ export class Layout {
         type: "folder",
         children: [],
       };
+    if (panel_state) this.panelState = panel_state;
+    if (editor_tabs) this.editorTabs = editor_tabs;
+    if (active_activity_bar_item)
+      this.activeActivityBarItem = active_activity_bar_item;
   }
 
   private async buildLayout() {
@@ -608,13 +624,30 @@ export class Layout {
       }
     );
 
-    dispatch(
-      update_panel_state({
-        left: "on",
-        bottom: "on",
-        right: "on",
-      })
+    watch(
+      (s) => s.main.panel_state,
+      (next) => {
+        window.uistate.set_panel_state(next);
+      }
     );
+
+    watch(
+      (s) => s.main.editor_tabs,
+      (next) => {
+        window.uistate.set_editor_tabs(next);
+      }
+    );
+
+    watch(
+      (s) => s.main.active_activityBaritem,
+      (next) => {
+        window.uistate.set_active_activity_bar_item(next);
+      }
+    );
+
+    dispatch(update_panel_state(this.panelState!));
+    dispatch(update_editor_tabs(this.editorTabs!));
+    dispatch(update_active_activitybar_item(this.activeActivityBarItem!));
 
     this.registerRunButtonHandler();
     this.loadScrollbar();
@@ -664,11 +697,19 @@ export class Layout {
         })
       );
 
+      const active_activity_bar_item = select(
+        (s) => s.main.active_activityBaritem
+      );
+
       dispatch(
         update_active_activitybar_item({
-          bar: "left",
-          position: "bottom",
-          id: "run",
+          left: {
+            ...active_activity_bar_item.left,
+            bottom: "run",
+          },
+          right: {
+            ...active_activity_bar_item.right,
+          },
         })
       );
 

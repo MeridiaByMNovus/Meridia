@@ -59,7 +59,7 @@ export let bootstrapWindow: BrowserWindow;
 function RegisterIpcHandlers(): void {
   log("info", "Registering IPC handlers...");
 
-  const assist = new CompletionAssist("0HQb3tNohfObdGY4OOm63VUh7mNAYJ3p", {
+  const assist = new CompletionAssist(process.env.MISTRAL_API || "", {
     provider: "mistral",
     model: "codestral",
   });
@@ -386,8 +386,11 @@ function createWindow({
     if (fullscreen) {
       window.maximize();
     }
+  });
+
+  window.webContents.on("did-finish-load", () => {
     if (process.env.NODE_ENV === "development") {
-      log("debug", "Opening DevTools (development mode)");
+      log("debug", "Opening DevTools after did-finish-load");
       window.webContents.openDevTools();
     }
   });
@@ -556,6 +559,9 @@ app.whenReady().then(async () => {
 
     new ProjectService();
     log("debug", "ProjectService initialized");
+
+    StorageService.loadIpcMainListner();
+    log("debug", "StorageService IPC Listener initialized");
 
     log("info", "Application initialization completed successfully");
 
