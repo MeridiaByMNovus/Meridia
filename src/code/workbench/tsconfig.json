@@ -4,6 +4,7 @@
     "module": "ESNext",
     "lib": ["ES2020", "DOM"],
     "moduleResolution": "node",
+    "ignoreDeprecations": "6.0",
     "outDir": "../../../out/",
     "strict": true,
     "esModuleInterop": true,

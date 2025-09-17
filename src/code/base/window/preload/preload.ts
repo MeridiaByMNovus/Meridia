@@ -5,8 +5,6 @@ import dotenv from "dotenv";
 import { contextBridge, ipcRenderer } from "electron";
 import { PythonShell } from "python-shell";
 import { IFolderStructure } from "../../../../typings/types.js";
-import { FetchCompletionItemParams } from "../../../platform/assist/types/internal.js";
-import { assist } from "../../common/assist.js";
 
 dotenv.config();
 
@@ -264,15 +262,7 @@ export const geminiBridge = {
 };
 
 export const assistBridge = {
-  invokeCompletionRequest: async (params: FetchCompletionItemParams) => {
-    const body = params.body;
-
-    const completion = await assist.complete({
-      body,
-    });
-
-    return completion;
-  },
+ invokeCompletionRequest: (params) => ipcRenderer.invoke("assist-completion", params),
 };
 
 ipcRenderer.on("command-update-folder-structure", (event, data) => {

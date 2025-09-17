@@ -11,7 +11,11 @@ const SOURCE_GLOBS = [
 const EXTENSION_SOURCE = ["extensions/packages/**/*.{css,json,js}"];
 
 function copyFiles() {
-  return src(SOURCE_GLOBS, { base: "src", allowEmpty: true }).pipe(dest("out"));
+  return src(SOURCE_GLOBS, {
+    base: "src",
+    allowEmpty: true,
+    encoding: false,
+  }).pipe(dest("out"));
 }
 
 function copyExtensionFiles() {

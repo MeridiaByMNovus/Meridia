@@ -14,6 +14,7 @@ import { BootstrapService } from "./code/base/services/BootstrapService.js";
 import { log, open_folder } from "./code/base/common/functions.js";
 import { IpcCommandsRegisteryService } from "./code/base/common/IpcCommandsRegisteryService.js";
 import { SpawnPty } from "./code/base/common/spawnPty.js";
+import { CompletionAssist } from "./code/platform/assist/";
 
 dotenv.config();
 
@@ -57,6 +58,23 @@ export let bootstrapWindow: BrowserWindow;
 
 function RegisterIpcHandlers(): void {
   log("info", "Registering IPC handlers...");
+
+  const assist = new CompletionAssist("0HQb3tNohfObdGY4OOm63VUh7mNAYJ3p", {
+    provider: "mistral",
+    model: "codestral",
+  });
+
+  ipcMain.handle("assist-completion", async (event, params) => {
+    try {
+      const completion = await assist.complete({
+        body: params.body,
+      });
+      return completion;
+    } catch (error) {
+      console.error("Assist completion error:", error);
+      throw error;
+    }
+  });
 
   ipcMain.handle("get-gemini-api-key", () => {
     return process.env.GEMINI_KEY;

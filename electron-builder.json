@@ -21,9 +21,10 @@
       }
     ],
     "artifactName": "${productName}-Setup-${version}.${ext}",
-    "icon": "src/resources/assets/icons/icon.ico"
+    "icon": "src/code/resources/assets/icons/icon.ico"
   },
   "nsis": {
+    "installerIcon": "src/code/resources/assets/icons/icon.ico",
     "oneClick": false,
     "perMachine": false,
     "allowToChangeInstallationDirectory": true,
@@ -57,7 +58,7 @@
       }
     ],
     "artifactName": "${productName}-${version}.${ext}",
-    "icon": "src/resources/assets/icons/icon.png",
+    "icon": "src/code/resources/assets/icons/icon.ico",
     "category": "Development",
     "maintainer": "MNovus <riditjangra09@gmail.com>",
     "synopsis": "Powerful IDE for Python development",
