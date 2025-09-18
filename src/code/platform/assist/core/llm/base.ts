@@ -1,4 +1,4 @@
-import type { Model, Provider } from "../../types/llm";
+import type { Model, Provider } from "../../types/llm.js";
 
 export const PROVIDERS = ["mistral"] as const;
 

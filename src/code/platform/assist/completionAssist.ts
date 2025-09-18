@@ -1,12 +1,11 @@
-import { Assist } from "./core";
-import { type PromptData } from "./types/assist";
-
-import { buildPrompt } from "./prompt";
+import { Assist } from "./core/assist.js";
+import { type PromptData } from "./types/assist.js";
+import { buildPrompt } from "./prompt.js";
 import type {
   CompletionMetadata,
   CompletionRequest,
   CompletionResponse,
-} from "./types/core";
+} from "./types/core.js";
 
 export class CompletionAssist extends Assist<CompletionMetadata> {
   public async complete(

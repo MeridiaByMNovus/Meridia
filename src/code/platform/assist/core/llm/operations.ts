@@ -1,13 +1,13 @@
-import type { PromptData } from "../../types/assist";
+import type { PromptData } from "../../types/assist.js";
 import type {
   Completion,
   CompletionCreateParams,
   PickModel,
   Provider,
-} from "../../types/llm";
-import type { BaseAssistMetadata } from "../../types/metadata";
-import type { BaseProviderHandler } from "./handler";
-import { MistralHandler } from "./providers/mistral";
+} from "../../types/llm.js";
+import type { BaseAssistMetadata } from "../../types/metadata.js";
+import type { BaseProviderHandler } from "./handler.js";
+import { MistralHandler } from "./providers/mistral.js";
 
 const providerHandlers: { [P in Provider]: BaseProviderHandler<P> } = {
   mistral: new MistralHandler(),

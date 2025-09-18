@@ -1,6 +1,6 @@
-import type { RegisterCompletionOptions } from "./types/core";
-import type { EditorCompletionState } from "./types/internal";
-import type { StandaloneCodeEditor } from "./types/monaco";
+import type { RegisterCompletionOptions } from "./types/core.js";
+import type { EditorCompletionState } from "./types/internal.js";
+import type { StandaloneCodeEditor } from "./types/monaco.js";
 
 const editorCompletionState = new WeakMap<
   StandaloneCodeEditor,

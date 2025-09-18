@@ -1,9 +1,9 @@
-import { DEFAULT_TRIGGER } from "./defaults";
-import { processInlineCompletions } from "./processor";
-import { getEditorState } from "./state";
-import { type RegisterCompletionOptions, TriggerEnum } from "./types/core";
-import type { Monaco, StandaloneCodeEditor } from "./types/monaco";
-import { getCurrentValue } from "./common/utils/editor";
+import { DEFAULT_TRIGGER } from "./defaults.js";
+import { processInlineCompletions } from "./processor.js";
+import { getEditorState } from "./state.js";
+import { type RegisterCompletionOptions, TriggerEnum } from "./types/core.js";
+import type { Monaco, StandaloneCodeEditor } from "./types/monaco.js";
+import { getCurrentValue } from "./common/utils/editor.js";
 
 export const createInlineCompletionsProvider = (
   monaco: Monaco,

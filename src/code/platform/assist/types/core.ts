@@ -1,22 +1,18 @@
-import type { AIRequestHandler, CustomPrompt } from "./assist";
-
-import type { Filename, RelatedFile, Technologies } from "./metadata";
-
-import type { BaseAssistMetadata } from "./metadata";
-
+import type { AIRequestHandler, CustomPrompt } from "./assist.js";
+import type { Filename, RelatedFile, Technologies } from "./metadata.js";
+import type { BaseAssistMetadata } from "./metadata.js";
 import type {
   FetchCompletionItemHandler,
   FetchCompletionItemParams,
   FetchCompletionItemReturn,
-} from "./internal";
-
+} from "./internal.js";
 import type {
   CursorPosition,
   EditorCancellationToken,
   EditorModel,
   EditorRange,
   Monaco,
-} from "./monaco";
+} from "./monaco.js";
 
 export type CompletionMetadata = BaseAssistMetadata;
 

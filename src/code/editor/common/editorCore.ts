@@ -1,6 +1,11 @@
 import * as monaco from "monaco-editor";
 import debounce from "lodash.debounce";
-import { registerCompletion } from "../../platform/assist/";
+import {
+  CompletionRegistration,
+  RegisterCompletionOptions,
+} from "../../platform/assist/types/core.js";
+import { RelatedFile } from "../../platform/assist/types/metadata.js";
+import { registerCompletion } from "../../platform/assist/register.js";
 import { themeService } from "../../workbench/common/classInstances/themeInstance.js";
 import { dispatch, store } from "../../workbench/common/store/store.js";
 import { update_editor_tabs } from "../../workbench/common/store/mainSlice.js";
@@ -17,16 +22,10 @@ import {
   searchIcon,
   triggerSuggestIcon,
 } from "../../workbench/common/svgIcons.js";
-import {
-  CompletionRegistration,
-  RegisterCompletionOptions,
-} from "../../platform/assist/types/core";
-import { RelatedFile } from "../../platform/assist/core";
 
 export type OpenTab = {
   uri?: string;
   language?: string;
-  editorContent?: string;
 };
 
 type Theme = "dark" | "light";
@@ -243,7 +242,7 @@ export class EditorCore {
     });
   }
 
-  open(tab: OpenTab, preserveViewState = true) {
+  async open(tab: OpenTab, preserveViewState = true) {
     if (!this.editor) return;
 
     const filePath = tab.uri as string;
@@ -253,7 +252,10 @@ export class EditorCore {
 
       if (this.isSvgFile(filePath)) {
         this.showFileViewer();
-        this.imageViewer?.displaySvgFile(filePath, tab.editorContent ?? "");
+        this.imageViewer?.displaySvgFile(
+          filePath,
+          (await window.filesystem.get_file_content(filePath)) ?? ""
+        );
       } else if (this.isImageFile(filePath)) {
         this.showFileViewer();
         this.imageViewer?.displayImageFile(filePath);
@@ -277,7 +279,7 @@ export class EditorCore {
     let model = this.models.get(key) ?? monaco.editor.getModel(uri);
     if (!model) {
       model = monaco.editor.createModel(
-        tab.editorContent ?? "",
+        (await window.filesystem.get_file_content(tab.uri!)) ?? "",
         tab.language,
         uri
       );
@@ -298,7 +300,10 @@ export class EditorCore {
       this.structureController.reset();
       this.lastParsedContent = "";
       this.lastContentHash = "";
-      this.scheduleStructureParsing(tab.editorContent ?? "", tab.language);
+      this.scheduleStructureParsing(
+        (await window.filesystem.get_file_content(tab.uri!)) ?? "",
+        tab.language
+      );
     } else {
       this.lastParsedContent = "";
       this.lastContentHash = "";
@@ -318,7 +323,7 @@ export class EditorCore {
 
     this.relatedFiles.set(tab.uri!, {
       path: tab.uri!,
-      content: tab.editorContent!,
+      content: await window.filesystem.get_file_content(tab.uri!),
     });
 
     const markFileTouched = debounce(async () => {

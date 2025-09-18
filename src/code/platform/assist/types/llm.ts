@@ -3,7 +3,7 @@ import type {
   FIMCompletionRequest$Outbound as MistralFIMCompletionCreateParams,
 } from "@mistralai/mistralai/models/components";
 
-import type { PromptData } from "./assist";
+import type { PromptData } from "./assist.js";
 
 export type Provider = "mistral";
 

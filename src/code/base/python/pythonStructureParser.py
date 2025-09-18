@@ -4,7 +4,6 @@ import sys
 import hashlib
 from typing import Dict, List, Any, Optional, Set
 
-
 class PythonStructureParser(ast.NodeVisitor):
     def __init__(self):
         self.variables: List[Dict[str, Any]] = []
@@ -220,7 +219,6 @@ def parse_python_structure(code_content: str, previous_hash: Optional[str] = Non
 
 if __name__ == "__main__":
     try:
-
         if len(sys.argv) > 1:
             code_content = sys.argv[1]
             previous_hash = sys.argv[2] if len(sys.argv) > 2 else None

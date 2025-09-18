@@ -14,7 +14,7 @@ import { BootstrapService } from "./code/base/services/BootstrapService.js";
 import { log, open_folder } from "./code/base/common/functions.js";
 import { IpcCommandsRegisteryService } from "./code/base/common/IpcCommandsRegisteryService.js";
 import { SpawnPty } from "./code/base/common/spawnPty.js";
-import { CompletionAssist } from "./code/platform/assist/";
+import { CompletionAssist } from "./code/platform/assist/completionAssist.js";
 
 dotenv.config();
 

@@ -1,20 +1,23 @@
-import { logger } from "./core";
-
-import { createInlineCompletionsProvider } from "./completionsProvider";
-import { createKeyDownListener } from "./key-events";
-import { completionCache } from "./processor";
+import { logger } from "./core/logger.js";
+import { createInlineCompletionsProvider } from "./completionsProvider.js";
+import { createKeyDownListener } from "./key-events.js";
+import { completionCache } from "./processor.js";
 import {
   createInitialState,
   deleteEditorState,
   getEditorState,
   setEditorState,
   updateEditorOptions,
-} from "./state";
+} from "./state.js";
 import type {
   CompletionRegistration,
   RegisterCompletionOptions,
-} from "./types/core";
-import type { Disposable, Monaco, StandaloneCodeEditor } from "./types/monaco";
+} from "./types/core.js";
+import type {
+  Disposable,
+  Monaco,
+  StandaloneCodeEditor,
+} from "./types/monaco.js";
 
 export const registerCompletion = (
   monaco: Monaco,

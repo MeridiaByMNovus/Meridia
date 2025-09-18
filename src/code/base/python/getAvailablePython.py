@@ -5,12 +5,10 @@ import os
 import shutil
 import platform
 
-
 def get_registered_pythons():
     result = []
     seen_paths = set()
-    
-    
+
     if platform.system() == "Windows":
         try:
             output = subprocess.check_output(["py", "-0p"], text=True)

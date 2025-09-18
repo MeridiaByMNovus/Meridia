@@ -1,12 +1,12 @@
-import type { PromptData } from "../../types/assist";
+import type { PromptData } from "../../types/assist.js";
 import type {
   Model,
   PickCompletion,
   PickCompletionCreateParams,
   PickModel,
   Provider,
-} from "../../types/llm";
-import type { BaseAssistMetadata } from "../../types/metadata";
+} from "../../types/llm.js";
+import type { BaseAssistMetadata } from "../../types/metadata.js";
 
 export abstract class BaseProviderHandler<P extends Provider> {
   abstract createEndpoint(model: Model, apiKey?: string): string;

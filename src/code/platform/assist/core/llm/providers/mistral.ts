@@ -4,16 +4,16 @@ import {
   DEFAULT_ASSIST_STREAM,
   DEFAULT_ASSIST_TEMPERATURE,
   DEFAULT_ASSIST_TOP_P,
-} from "../../defaults";
-import type { PromptData } from "../../../types/assist";
+} from "../../defaults.js";
+import type { PromptData } from "../../../types/assist.js";
 import type {
   PickCompletion,
   PickCompletionCreateParams,
   PickModel,
-} from "../../../types/llm";
-import type { BaseAssistMetadata } from "../../../types/metadata";
-import { MODEL_IDS, PROVIDER_ENDPOINT_MAP } from "../base";
-import { BaseProviderHandler } from "../handler";
+} from "../../../types/llm.js";
+import type { BaseAssistMetadata } from "../../../types/metadata.js";
+import { MODEL_IDS, PROVIDER_ENDPOINT_MAP } from "../base.js";
+import { BaseProviderHandler } from "../handler.js";
 
 export class MistralHandler extends BaseProviderHandler<"mistral"> {
   createEndpoint(): string {

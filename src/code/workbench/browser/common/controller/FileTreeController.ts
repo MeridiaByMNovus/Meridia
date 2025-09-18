@@ -166,17 +166,13 @@ export class FileTreeController {
         )
       );
     } else {
-      const editor_content = await window.filesystem.get_file_content(
-        node.path
-      );
       const newTab: ITab = {
         id: Date.now(),
-        fileIcon: node.name,
+        icon: node.name,
         name: node.name,
         active: true,
         uri: node.path,
         is_touched: false,
-        editorContent: editor_content,
         language: get_file_types(node.name),
       };
       dispatch(

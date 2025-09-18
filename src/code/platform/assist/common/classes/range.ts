@@ -3,8 +3,8 @@ import type {
   EditorModel,
   EditorRange,
   Monaco,
-} from "../../types/monaco";
-import { TextOverlapCalculator } from "./text-overlap-calculator";
+} from "../../types/monaco.js";
+import { TextOverlapCalculator } from "./text-overlap-calculator.js";
 
 export class CompletionRange {
   private textOverlapCalculator: TextOverlapCalculator;

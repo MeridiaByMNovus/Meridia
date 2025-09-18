@@ -1,18 +1,20 @@
-import type { Endpoint, RelatedFile } from "./core";
-
-import { DEFAULT_MAX_CONTEXT_LINES } from "./defaults";
-import type { CompletionMetadata, CompletionResponse } from "./types/core";
+import type { Endpoint, RelatedFile } from "./types/metadata.js";
+import { DEFAULT_MAX_CONTEXT_LINES } from "./defaults.js";
+import type { CompletionMetadata, CompletionResponse } from "./types/core.js";
 import type {
   ConstructCompletionMetadataParams,
   FetchCompletionItemParams,
   FetchCompletionItemReturn,
-} from "./types/internal";
-import type { CursorPosition, EditorModel } from "./types/monaco";
-import { getTextAfterCursor, getTextBeforeCursor } from "./common/utils/editor";
+} from "./types/internal.js";
+import type { CursorPosition, EditorModel } from "./types/monaco.js";
+import {
+  getTextAfterCursor,
+  getTextBeforeCursor,
+} from "./common/utils/editor.js";
 import {
   type TruncateTextToMaxLinesOptions,
   truncateTextToMaxLines,
-} from "./common/utils/text";
+} from "./common/utils/text.js";
 
 type RequestCompletionItemParams = FetchCompletionItemParams & {
   endpoint: Endpoint;

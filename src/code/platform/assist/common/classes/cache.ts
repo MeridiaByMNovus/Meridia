@@ -1,7 +1,7 @@
-import type { CompletionCacheItem } from "../../types/cache";
-import type { CursorPosition, EditorModel } from "../../types/monaco";
-import { getTextBeforeCursor } from "../utils/editor";
-import { Queue } from "./queue";
+import type { CompletionCacheItem } from "../../types/cache.js";
+import type { CursorPosition, EditorModel } from "../../types/monaco.js";
+import { getTextBeforeCursor } from "../utils/editor.js";
+import { Queue } from "./queue.js";
 
 export class CompletionCache {
   private static readonly MAX_CACHE_SIZE = 20;

@@ -1,3 +1,11 @@
+import type { CompletionRequestBody, RegisterCompletionOptions } from "./core";
+import type {
+  CursorPosition,
+  EditorKeyboardEvent,
+  EditorModel,
+  Monaco,
+} from "./monaco.js";
+
 export type Awaitable<T> = T | Promise<T>;
 
 export type AssistAIResponse = {
@@ -5,14 +13,6 @@ export type AssistAIResponse = {
   raw?: unknown;
   error?: string;
 };
-
-import type { CompletionRequestBody, RegisterCompletionOptions } from "./core";
-import type {
-  CursorPosition,
-  EditorKeyboardEvent,
-  EditorModel,
-  Monaco,
-} from "./monaco";
 
 export type EditorCompletionState = {
   isCompletionAccepted: boolean;

@@ -1,8 +1,7 @@
-import { logger } from "./core";
-
-import { CompletionCache } from "./common/classes/cache";
-import { CompletionFormatter } from "./common/classes/formatter";
-import { CompletionRange } from "./common/classes/range";
+import { logger } from "./core/logger.js";
+import { CompletionCache } from "./common/classes/cache.js";
+import { CompletionFormatter } from "./common/classes/formatter.js";
+import { CompletionRange } from "./common/classes/range.js";
 import {
   DEFAULT_ALLOW_FOLLOW_UP_COMPLETIONS,
   DEFAULT_ENABLE_CACHING,

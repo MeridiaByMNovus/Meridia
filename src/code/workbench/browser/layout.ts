@@ -94,7 +94,9 @@ export class Layout {
 
   private loadScrollbar() {
     document.querySelectorAll(".scrollbar-container").forEach((el) => {
-      new PerfectScrollbar(el as HTMLDivElement);
+      new PerfectScrollbar(el as HTMLDivElement, {
+        suppressScrollX: true,
+      });
     });
   }
 
@@ -168,7 +170,7 @@ export class Layout {
     } else {
       const newTab: ITab = {
         id: randomUUID(),
-        fileIcon: "file.py",
+        icon: "file.py",
         name,
         active: true,
         uri: path,
@@ -339,7 +341,7 @@ export class Layout {
           updateAction,
           true,
           onTabClick,
-          tab.fileIcon as string,
+          tab.icon as string,
           undefined,
           tab
         );

@@ -1,5 +1,5 @@
-import type { Awaitable } from "./internal";
-import type { Provider, ProviderImplementationMap } from "./llm";
+import type { Awaitable } from "./internal.js";
+import type { Provider, ProviderImplementationMap } from "./llm.js";
 
 export interface PromptData {
   context: string;

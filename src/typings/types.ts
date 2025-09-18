@@ -40,9 +40,7 @@ export interface IContentTab {
 export interface ITab {
   id: any;
   name: string;
-  fileIcon?: string;
-  customIcon?: string;
-  editorContent?: string;
+  icon?: string;
   active: boolean;
   is_touched?: boolean;
   uri?: string;
