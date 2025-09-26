@@ -1,0 +1,49 @@
+{
+  "name": "meridia",
+  "version": "1.0.0",
+  "main": "build/main.js",
+  "scripts": {
+    "clean": "rimraf build",
+    "build": "node esbuild.config.js --prod",
+    "build:watch": "node esbuild.config.js --watch",
+    "copy": "gulp copy",
+    "copy:watch": "gulp watch",
+    "start:electron": "electron build/main.js",
+    "dev": "npm run clean && concurrently -c blue,cyan,green -n BUILD,COPY,ELECTRON \"npm run build:watch\" \"npm run copy:watch\" \"npm run start:electron\"",
+    "package": "npm run clean && npm run build && npm run copy && electron-builder"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "type": "commonjs",
+  "dependencies": {
+    "@codingame/monaco-jsonrpc": "^0.3.1",
+    "@google/genai": "^1.20.0",
+    "@reduxjs/toolkit": "^2.9.0",
+    "@xterm/xterm": "^5.5.0",
+    "chokidar": "^4.0.3",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "highlight.js": "^11.11.1",
+    "marked": "^16.3.0",
+    "monaco-editor": "^0.29.0",
+    "monaco-editor-core": "^0.29.0",
+    "monaco-languageclient": "0.13.1-next.9",
+    "monaco-languages": "2.10.0",
+    "node-pty": "^1.0.0",
+    "perfect-scrollbar": "^1.5.6",
+    "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.18.1",
+    "concurrently": "^9.2.1",
+    "electron": "^38.1.2",
+    "electron-builder": "^26.0.12",
+    "electron-reload": "^2.0.0-alpha.1",
+    "esbuild": "^0.25.10",
+    "fast-glob": "^3.3.3",
+    "gulp": "^5.0.1",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.9.2"
+  }
+}

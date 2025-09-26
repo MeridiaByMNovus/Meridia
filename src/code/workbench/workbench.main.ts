@@ -1,0 +1,9 @@
+import "./browser/workbench.web.js";
+import "./common/workbench.theme.js";
+import "./common/workbench.editor/workbench.editor.js";
+import "./common/workbench.scrollbar.js";
+import "./common/workbench.uistate.js";
+import "./event/workbench.event.statusbar.js";
+import "./event/workbench.event.panel.options.js";
+import "./event/workbench.event.editor.js";
+import "./services/workbench.resources.js";

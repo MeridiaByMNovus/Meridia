@@ -1,0 +1,41 @@
+{
+  "appId": "com.mnovus.meridia",
+  "productName": "Meridia",
+  "asar": false,
+  "asarUnpack": false,
+  "extends": null,
+  "directories": {
+    "output": "dist/"
+  },
+  "files": [
+    "build/**/*",
+    "package.json",
+    "node_modules/**/*",
+    "!**/*.map",
+    "!src/**/*"
+  ],
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": ["x64"]
+      },
+      {
+        "target": "portable",
+        "arch": ["x64"]
+      }
+    ],
+    "artifactName": "${productName}-Setup-${version}.${ext}"
+  },
+  "linux": {
+    "target": [
+      {
+        "target": "AppImage",
+        "arch": ["x64"]
+      }
+    ],
+    "artifactName": "${productName}-${version}.${ext}",
+    "category": "Development",
+    "executableName": "meridia"
+  }
+}
