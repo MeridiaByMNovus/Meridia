@@ -1,57 +1,35 @@
+import fs from "fs";
+import path from "path";
 import { ipcMain, dialog } from "electron";
 import { IFolderStructure } from "../../workbench/workbench.types.js";
 import { Storage } from "../services/storage.service.js";
-import fs from "fs";
-import path from "path";
 import { mainWindow } from "../../../main.js";
-import { startFileWatcher } from "./watcher.node.js";
+import { _watch } from "./watcher.node.js";
+import { walkdir } from "../native/rust";
 
-export async function getFolderContent(
-  _path: string
-): Promise<IFolderStructure[]> {
-  const items = fs.readdirSync(_path, { withFileTypes: true });
+export async function _get(
+  _path: string,
+  depth: number = 1
+): Promise<IFolderStructure> {
+  const structure = walkdir(_path, depth);
 
-  const content = await Promise.all(
-    items.map(async (item): Promise<IFolderStructure> => {
-      const fullPath = path.join(_path, item.name);
-
-      return {
-        name: item.name,
-        uri: fullPath,
-        type: item.isDirectory() ? ("folder" as const) : ("file" as const),
-        children: item.isDirectory() ? [] : [],
-        isRoot: false,
-      };
-    })
-  );
-
-  content.sort((a, b) => {
-    if (a.type === b.type) {
-      return a.name.localeCompare(b.name);
-    }
-    return a.type === "folder" ? -1 : 1;
-  });
-
-  return content;
+  return structure;
 }
 
-function updateFolderStructure(
+function _update(
   structure: IFolderStructure,
   targetUri: string,
-  newChildren: IFolderStructure[]
+  newStructure: IFolderStructure
 ): IFolderStructure {
   if (structure.uri === targetUri) {
-    return {
-      ...structure,
-      children: newChildren,
-    };
+    return newStructure;
   }
 
   if (structure.children && structure.children.length > 0) {
     return {
       ...structure,
       children: structure.children.map((child) =>
-        updateFolderStructure(child, targetUri, newChildren)
+        _update(child, targetUri, newStructure)
       ),
     };
   }
@@ -59,7 +37,7 @@ function updateFolderStructure(
   return structure;
 }
 
-async function refreshRootFolder(): Promise<void> {
+async function _refresh(): Promise<void> {
   try {
     const currentStructure = Storage.get("files-structure") as IFolderStructure;
 
@@ -72,14 +50,9 @@ async function refreshRootFolder(): Promise<void> {
       return;
     }
 
-    const updatedChildren = await getFolderContent(currentStructure.uri);
+    const updatedStructure = await _get(currentStructure.uri);
 
-    const refreshedStructure: IFolderStructure = {
-      ...currentStructure,
-      children: updatedChildren,
-    };
-
-    Storage.store("files-structure", refreshedStructure);
+    Storage.store("files-structure", updatedStructure);
   } catch (error) {}
 }
 
@@ -93,17 +66,10 @@ ipcMain.handle("files-open-folder", async () => {
   }
 
   const _path = result.filePaths[0]!;
+  const structure = await _get(_path);
 
-  const _structure: IFolderStructure = {
-    name: path.basename(_path),
-    uri: _path,
-    isRoot: true,
-    type: "folder" as const,
-    children: await getFolderContent(_path),
-  };
-
-  Storage.store("files-structure", _structure);
-  startFileWatcher(_path);
+  Storage.store("files-structure", structure);
+  _watch(_path);
 
   mainWindow.webContents.reload();
 });
@@ -120,9 +86,9 @@ ipcMain.handle(
         return { success: false, error: "No structure found" };
       }
 
-      const folderContent = await getFolderContent(folderUri);
+      const folderContent = await _get(folderUri);
 
-      const updatedStructure = updateFolderStructure(
+      const updatedStructure = _update(
         currentStructure,
         folderUri,
         folderContent
@@ -137,7 +103,7 @@ ipcMain.handle(
   }
 );
 
-function getRootFolderPath(): string | null {
+function _getRoot(): string | null {
   const currentStructure = Storage.get("files-structure") as IFolderStructure;
 
   if (!currentStructure || !currentStructure.isRoot) {
@@ -147,13 +113,13 @@ function getRootFolderPath(): string | null {
   return currentStructure.uri;
 }
 
-async function initializeOnStartup(): Promise<void> {
-  await refreshRootFolder();
+async function _init(): Promise<void> {
+  await _refresh();
 
-  const rootPath = getRootFolderPath();
+  const rootPath = _getRoot();
   if (rootPath) {
-    startFileWatcher(rootPath);
+    _watch(rootPath);
   }
 }
 
-initializeOnStartup();
+_init();

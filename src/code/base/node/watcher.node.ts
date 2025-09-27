@@ -4,8 +4,8 @@ import { mainWindow } from "../../../main";
 
 let fileWatcher: FSWatcher | null = null;
 
-export function startFileWatcher(rootPath: string) {
-  stopFileWatcher();
+export function _watch(rootPath: string) {
+  _stop();
 
   fileWatcher = chokidar.watch(rootPath, {
     ignored: [/node_modules/, /\.git/, /\.DS_Store/, /Thumbs\.db/],
@@ -59,7 +59,7 @@ export function startFileWatcher(rootPath: string) {
   });
 }
 
-export function stopFileWatcher() {
+export function _stop() {
   if (fileWatcher) {
     fileWatcher.close();
     fileWatcher = null;

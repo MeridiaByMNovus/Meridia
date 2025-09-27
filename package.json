@@ -23,6 +23,7 @@
     "@xterm/xterm": "^5.5.0",
     "chokidar": "^4.0.3",
     "dotenv": "^17.2.2",
+    "esbuild-node-externals": "^1.18.0",
     "express": "^5.1.0",
     "highlight.js": "^11.11.1",
     "marked": "^16.3.0",
@@ -32,7 +33,8 @@
     "monaco-languages": "2.10.0",
     "node-pty": "^1.0.0",
     "perfect-scrollbar": "^1.5.6",
-    "ws": "^8.18.3"
+    "ws": "^8.18.3",
+    "@neon-rs/load": "^0.1.82"
   },
   "devDependencies": {
     "@types/ws": "^8.18.1",
@@ -44,6 +46,9 @@
     "fast-glob": "^3.3.3",
     "gulp": "^5.0.1",
     "rimraf": "^6.0.1",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "@neon-rs/cli": "^0.1.82",
+    "@tsconfig/node20": "^20.1.4",
+    "@types/node": "^20.11.16"
   }
 }

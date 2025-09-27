@@ -1,6 +1,7 @@
 const esbuild = require("esbuild");
 const fg = require("fast-glob");
 const { copyFileSync, mkdirSync, existsSync } = require("fs");
+const { nodeExternalsPlugin } = require("esbuild-node-externals");
 
 const watch = process.argv.includes("--watch");
 const prod = process.argv.includes("--prod");
@@ -92,9 +93,22 @@ async function buildAll() {
     assetNames: "assets/[name]",
     chunkNames: "chunks/[name]-[hash]",
     minify: prod,
-    external: ["electron", "node-pty", "electron-reload"],
+    plugins: [nodeExternalsPlugin()],
+    external: [
+      "electron",
+      "node-pty",
+      "electron-reload",
+      "@walkdir/win32-x64-msvc",
+      "@walkdir/darwin-x64",
+      "@walkdir/darwin-arm64",
+      "@walkdir/linux-x64-gnu",
+      "@walkdir/linux-arm64-gnu",
+    ],
     logLevel: "error",
-    loader: Loaders,
+    loader: {
+      ...Loaders,
+      ".node": "copy",
+    },
   };
 
   if (watch) {
