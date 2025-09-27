@@ -3,6 +3,14 @@ import { setPanelVisibilty } from "../event/workbench.event.panel.js";
 import { changePanelOptionsWidth } from "../event/workbench.event.panel.options.js";
 import { watch } from "./workbench.store/workbench.store.selector.js";
 
+const resizeObserver = new ResizeObserver((entries) => {
+  for (const entry of entries) {
+    changePanelOptionsWidth();
+  }
+});
+
+resizeObserver.observe(document.body);
+
 watch(
   (s) => s.main.panel_state,
   (next) => {

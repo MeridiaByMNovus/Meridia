@@ -250,8 +250,6 @@ export class Titlebar extends CoreEl {
       detail: { action },
     });
     document.dispatchEvent(menuEvent);
-
-    console.log(`Menu action triggered: ${action}`);
   }
 
   private _showSubmenu(submenu: HTMLElement): void {

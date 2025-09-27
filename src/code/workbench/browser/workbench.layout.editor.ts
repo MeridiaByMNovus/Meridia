@@ -29,7 +29,7 @@ export class Editor extends CoreEl {
     const editorArea = document.createElement("div");
     editorArea.className = "editor-area";
 
-    const closeTab = (tabUri: string, event?: Event) => {
+    const _close = (tabUri: string, event?: Event) => {
       if (event) {
         event.stopPropagation();
       }
@@ -61,26 +61,26 @@ export class Editor extends CoreEl {
       dispatch(update_editor_tabs(updatedTabs));
 
       const editor = getStandalone("editor") as _editor;
-      if (editor && editor.close) {
-        editor.close(tabUri);
-      }
+      if (editor) editor._close(tabUri);
     };
 
-    function renderIEditorTabs(_tabs: IEditorTab[]) {
+    function _render(_tabs: IEditorTab[]) {
       const editor = getStandalone("editor") as _editor;
       const activeTab = _tabs.find((t) => t.active);
 
-      if (activeTab && editor) {
-        if (editor._editor) {
-          editor._open(activeTab);
-        } else {
-          editor._mount();
-
-          setTimeout(() => {
+      setTimeout(() => {
+        if (activeTab && editor) {
+          if (editor._editor) {
             editor._open(activeTab);
-          }, 0);
+          } else {
+            editor._mount();
+
+            setTimeout(() => {
+              editor._open(activeTab);
+            }, 0);
+          }
         }
-      }
+      }, 50);
 
       IEditorTabs.innerHTML = "";
       _tabs.forEach((_tab) => {
@@ -121,7 +121,7 @@ export class Editor extends CoreEl {
         _closeIcon.innerHTML = closeIcon;
 
         _closeIcon.onclick = (e) => {
-          closeTab(_tab.uri, e);
+          _close(_tab.uri, e);
         };
 
         const dotIcon = document.createElement("span");
@@ -139,13 +139,13 @@ export class Editor extends CoreEl {
     }
 
     if (_tabs.length > 0) {
-      renderIEditorTabs(_tabs);
+      _render(_tabs);
     }
 
     watch(
       (s) => s.main.editor_tabs,
       (next) => {
-        renderIEditorTabs(next);
+        _render(next);
       }
     );
 

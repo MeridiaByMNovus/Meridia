@@ -1,8 +1,5 @@
 import "../common/workbench.init.js";
-import {
-  getStandalone,
-  registerStandalone,
-} from "../common/workbench.standalone.js";
+import { registerStandalone } from "../common/workbench.standalone.js";
 import { changePanelOptionsWidth } from "../event/workbench.event.panel.options.js";
 import { Editor as EditorLayout } from "./workbench.layout.editor.js";
 import { Files } from "./workbench.layout.files.js";
@@ -14,7 +11,7 @@ import { Statusbar } from "./workbench.parts/workbench.part.status.js";
 import { DevPanel } from "./workbench.parts/workbench.part.dev.panel/workbench.part.dev.panel.el.js";
 import { Titlebar } from "./workbench.parts/workbench.part.titlebar.js";
 import { runIcon } from "./workbench.media/workbench.icons.js";
-import { Gemini } from "./workbench.layout.gemini.js";
+import { Mira } from "./workbench.layout.mira.js";
 
 export class Layout {
   constructor() {
@@ -29,7 +26,7 @@ export class Layout {
 
     const files = new Files().getDomElement()!;
 
-    const gemini = new Gemini().getDomElement()!;
+    const mira = new Mira().getDomElement()!;
 
     const devPanel = new DevPanel();
     registerStandalone("dev-panel", devPanel);
@@ -57,8 +54,8 @@ export class Layout {
 
     leftPanelOptions._updateContent(files);
 
-    const geminiOption = new PanelOption("Gemini").getDomElement()!;
-    geminiOption.className = "active";
+    const miraOption = new PanelOption("Mira").getDomElement()!;
+    miraOption.className = "active";
 
     const structureOption = new PanelOption("Structure").getDomElement()!;
 
@@ -75,12 +72,12 @@ export class Layout {
     );
 
     const rightPanelOptions = new PanelOptions(
-      [geminiOption, structureOption],
+      [miraOption, structureOption],
       rightPanel,
       "right-panel-options"
     );
 
-    rightPanelOptions._updateContent(gemini);
+    rightPanelOptions._updateContent(mira);
 
     commandPanel.appendChild(leftPanelOptions.getDomElement()!);
     commandPanel.appendChild(middlePanelOptions.getDomElement()!);

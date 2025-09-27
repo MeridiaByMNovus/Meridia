@@ -23,7 +23,8 @@ export class DevPanel extends CoreEl {
     this._el.className = "dev-panel";
 
     this._content = new Panel("content").getDomElement()!;
-    this._content.className = "panel content scrollbar-container x-disable";
+    this._content.className =
+      "panel content scrollbar-container x-disable y-disable";
 
     this._tabs = new DevPanelTabs(this._content, this);
 

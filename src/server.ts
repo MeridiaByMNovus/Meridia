@@ -1,8 +1,14 @@
-import { spawn, ChildProcess } from "child_process";
 import { WebSocketServer } from "ws";
+import { spawn, ChildProcess } from "child_process";
+import { createWebSocketConnection, forward } from "vscode-ws-jsonrpc/server";
+import {
+  createConnection,
+  createServerProcess,
+} from "vscode-ws-jsonrpc/server";
 import * as http from "http";
 import * as fs from "fs";
 import * as path from "path";
+import { Storage } from "./code/base/services/storage.service";
 
 export class HttpServer {
   public _port: number;
@@ -68,183 +74,37 @@ export class HttpServer {
 }
 
 export function runPyrightLanguageServer() {
-  const wss = new WebSocketServer({ port: 3000 });
+  Storage.store("pyright-port", 9273);
 
-  wss.on("connection", function connection(ws): void {
+  const port = Storage.get("pyright-port");
+  const wss = new WebSocketServer({ port: port });
+
+  wss.on("connection", (webSocket) => {
     console.log("WebSocket client connected");
 
-    let pyright: ChildProcess | null = null;
-    let buffer: string = "";
-    let messageQueue: string[] = [];
-    let isProcessing = false;
-    let reconnectAttempts = 0;
-    const maxReconnectAttempts = 5;
+    const socket = {
+      send: (content: any) => webSocket.send(content),
+      onMessage: (cb: any) => webSocket.on("message", cb),
+      onError: (cb: any) => webSocket.on("error", cb),
+      onClose: (cb: any) => webSocket.on("close", cb),
+      dispose: () => webSocket.close(),
+    };
 
-    function createPyrightProcess(): ChildProcess {
-      const process = spawn("pyright-langserver", ["--stdio"], {
-        stdio: ["pipe", "pipe", "pipe"],
-      });
+    const connection = createWebSocketConnection(socket);
 
-      process.on("error", (error: Error): void => {
-        console.error("Pyright process error:", error);
-        attemptReconnect();
-      });
+    const serverConnection = createServerProcess(
+      "Pyright",
+      "pyright-langserver",
+      ["--stdio"],
+      { stdio: ["pipe", "pipe", "pipe"] }
+    );
+    forward(connection, serverConnection!);
 
-      process.on(
-        "close",
-        (code: number | null, signal: string | null): void => {
-          console.log(
-            `Pyright process exited with code ${code}, signal ${signal}`
-          );
-          if (code !== 0 && code !== null) {
-            attemptReconnect();
-          }
-        }
-      );
-
-      if (process.stderr) {
-        process.stderr.on("data", (data: Buffer): void => {
-          console.error("Pyright stderr:", data.toString());
-        });
-      }
-
-      if (process.stdout) {
-        process.stdout.on("data", (data: Buffer): void => {
-          handlePyrightOutput(data);
-        });
-      }
-
-      return process;
-    }
-
-    function handlePyrightOutput(data: Buffer): void {
-      buffer += data.toString();
-
-      // Process all complete messages in the buffer
-      while (true) {
-        const match: RegExpMatchArray | null = buffer.match(
-          /^Content-Length: (\d+)\r?\n\r?\n/
-        );
-        if (!match) break;
-
-        const contentLength: number = parseInt(match[1]!, 10);
-        const headerLength: number = match[0].length;
-
-        if (buffer.length >= headerLength + contentLength) {
-          const message: string = buffer.substring(
-            headerLength,
-            headerLength + contentLength
-          );
-
-          // Send each LSP message as a separate WebSocket message
-          if (ws.readyState === ws.OPEN) {
-            try {
-              // Validate JSON before sending
-              JSON.parse(message);
-              ws.send(message);
-            } catch (error) {
-              console.error("Invalid JSON message from pyright:", error);
-              console.error("Message:", message);
-            }
-          }
-
-          buffer = buffer.substring(headerLength + contentLength);
-        } else {
-          break;
-        }
-      }
-    }
-
-    async function processMessageQueue(): Promise<void> {
-      if (isProcessing || !pyright || !pyright.stdin) {
-        return;
-      }
-
-      isProcessing = true;
-
-      while (messageQueue.length > 0 && pyright && pyright.stdin) {
-        const jsonMessage = messageQueue.shift()!;
-
-        try {
-          // Validate JSON before sending to pyright
-          JSON.parse(jsonMessage);
-
-          const contentLength: number = Buffer.byteLength(jsonMessage, "utf8");
-          const fullMessage = `Content-Length: ${contentLength}\r\n\r\n${jsonMessage}`;
-
-          if (pyright.stdin.writable) {
-            const written = pyright.stdin.write(fullMessage);
-
-            if (!written) {
-              await new Promise<void>((resolve) => {
-                pyright!.stdin!.once("drain", resolve);
-                setTimeout(resolve, 5000);
-              });
-            }
-
-            // Small delay to prevent overwhelming pyright
-            await new Promise((resolve) => setTimeout(resolve, 10));
-          } else {
-            messageQueue.unshift(jsonMessage);
-            break;
-          }
-        } catch (error) {
-          console.error("Invalid JSON from Monaco:", error);
-          console.error("Message:", jsonMessage);
-        }
-      }
-
-      isProcessing = false;
-    }
-
-    function attemptReconnect(): void {
-      if (
-        reconnectAttempts < maxReconnectAttempts &&
-        ws.readyState === ws.OPEN
-      ) {
-        reconnectAttempts++;
-        console.log(
-          `Attempting to reconnect pyright (attempt ${reconnectAttempts}/${maxReconnectAttempts})`
-        );
-
-        setTimeout(() => {
-          pyright = createPyrightProcess();
-          processMessageQueue();
-        }, 1000 * reconnectAttempts);
-      } else {
-        console.error("Max reconnection attempts reached or WebSocket closed");
-        ws.close();
-      }
-    }
-
-    pyright = createPyrightProcess();
-
-    ws.on("message", function message(data): void {
-      const msg: string = data.toString();
-      messageQueue.push(msg);
-      processMessageQueue();
-    });
-
-    ws.on("close", (): void => {
-      console.log("WebSocket client disconnected");
-      if (pyright) {
-        pyright.kill("SIGTERM");
-        setTimeout(() => {
-          if (pyright && !pyright.killed) {
-            pyright.kill("SIGKILL");
-          }
-        }, 5000);
-      }
-    });
-
-    ws.on("error", (error): void => {
-      console.error("WebSocket error:", error);
-    });
-
-    ws.on("message", () => {
-      reconnectAttempts = 0;
+    webSocket.on("close", () => {
+      console.log("WebSocket disconnected");
+      serverConnection!.dispose();
     });
   });
 
-  console.log("WebSocket proxy server listening on port 3000");
+  console.log("LSP WebSocket server listening on port 3001");
 }

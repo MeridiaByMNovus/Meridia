@@ -6,7 +6,6 @@ import * as addon from "./load.cjs";
 // Use this declaration to assign types to the addon's exports,
 // which otherwise by default are `any`.
 declare module "./load.cjs" {
-  function hello(name: string): string;
   function walkdir(options: WalkdirOptions): IFolderStructure;
 }
 
@@ -21,15 +20,6 @@ export interface IFolderStructure {
 export interface WalkdirOptions {
   dir_path: string;
   level?: number;
-}
-
-export type Greeting = {
-  message: string;
-};
-
-export function greeting(name: string): Greeting {
-  const message = addon.hello(name);
-  return { message };
 }
 
 export function walkdir(dirPath: string, level?: number): IFolderStructure {

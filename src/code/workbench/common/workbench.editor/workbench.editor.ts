@@ -15,6 +15,7 @@ import { update_editor_tabs } from "../workbench.store/workbench.store.slice.js"
 import { select } from "../workbench.store/workbench.store.selector.js";
 import { getLanguage } from "../workbench.utils.js";
 import { registerTheme } from "./workbench.editor.theme.js";
+import { registerCompletion } from "../../../platform/mira/editor.suggestions/register.js";
 
 Object.assign(window, {
   MonacoEnvironment: {
@@ -42,16 +43,17 @@ export class Editor {
   private _editorLayout = document.querySelector(".editor-area") as HTMLElement;
   private _languageClient?: MonacoLanguageClient;
   private _models = new Map<string, monaco.editor.ITextModel>();
-  private _fileWatchers = new Map<string, any>();
+  private _watchers = new Map<string, any>();
   private _isUpdatingFromExternal = false;
   private _saveActionDisposable?: monaco.IDisposable;
+  private _isEditorMounted = false;
 
   constructor() {
     registerTheme(monaco);
-    this._setupHoverProvider();
+    this._hoverProvider();
   }
 
-  private _setupHoverProvider() {
+  private _hoverProvider() {
     monaco.languages.registerHoverProvider("python", {
       provideHover: (model, position) => {
         const word = model.getWordAtPosition(position);
@@ -81,8 +83,23 @@ export class Editor {
     });
   }
 
+  private _ensure() {
+    const editorElement = document.querySelector(".monaco-editor");
+    const needsMount =
+      !this._editor || !this._isEditorMounted || !editorElement;
+
+    if (needsMount) {
+      this._mount();
+    }
+  }
+
   _mount() {
-    if (this._editor) return;
+    if (this._editor) {
+      try {
+        this._saveActionDisposable?.dispose();
+        this._editor.dispose();
+      } catch (e) {}
+    }
 
     this._editor = monaco.editor.create(this._editorLayout, {
       theme: "meridia-theme",
@@ -95,15 +112,26 @@ export class Editor {
       renderWhitespace: "none",
     });
 
-    (document.querySelector(".monaco-editor") as HTMLDivElement).style.display =
-      "none";
+    this._isEditorMounted = true;
 
-    this._setupLanguageClient();
+    this._visiblity(false);
+
+    this._setupCLient();
     this._setupCursorTracking();
     this._setupSaveAction();
   }
 
+  private _visiblity(visible: boolean) {
+    const editorElement = document.querySelector(
+      ".monaco-editor"
+    ) as HTMLDivElement;
+    if (editorElement) {
+      editorElement.style.display = visible ? "flex" : "none";
+    }
+  }
+
   private _setupSaveAction() {
+    this._saveActionDisposable?.dispose();
     this._saveActionDisposable = this._editor.addAction({
       id: "workbench.save",
       label: "Save File",
@@ -112,7 +140,7 @@ export class Editor {
       contextMenuOrder: 1,
       run: async () => {
         const model = this._editor.getModel();
-        if (model) await this._saveFile(model.uri.fsPath);
+        if (model) await this._save(model.uri.fsPath);
       },
     });
   }
@@ -134,27 +162,13 @@ export class Editor {
     });
   }
 
-  private _setupLanguageClient() {
+  private _setupCLient() {
     try {
-      const ws = new WebSocket("ws://localhost:3000");
-
-      ws.onopen = () => {
-        console.log("WebSocket connected");
-        this._editor.updateOptions({ readOnly: false });
-      };
-
-      ws.onerror = (error) => {
-        console.error("WebSocket error:", error);
-        this._editor.updateOptions({ readOnly: true });
-      };
-
-      ws.onclose = () => {
-        console.log("WebSocket disconnected");
-        this._editor.updateOptions({ readOnly: true });
-      };
+      const port = window.storage.get("pyright-port");
+      const webSocket = new WebSocket(`ws://localhost:${port}`);
 
       listen({
-        webSocket: ws,
+        webSocket,
         onConnection: (connection) => {
           this._languageClient = new MonacoLanguageClient({
             name: "Pyright Language Client",
@@ -188,25 +202,19 @@ export class Editor {
           this._languageClient
             .onReady()
             .then(() => {
-              console.log("Language client ready");
               this._editor.updateOptions({ readOnly: false });
             })
             .catch((error) => {
-              console.error("Language client initialization failed:", error);
               this._editor.updateOptions({ readOnly: false });
             });
 
           try {
             const disposable = this._languageClient.start();
             connection.onClose(() => disposable.dispose());
-          } catch (error) {
-            console.error("Failed to start language client:", error);
-            this._editor.updateOptions({ readOnly: false });
-          }
+          } catch (error) {}
         },
       });
     } catch (error) {
-      console.error("WebSocket setup failed:", error);
       this._editor.updateOptions({ readOnly: false });
     }
   }
@@ -225,15 +233,13 @@ export class Editor {
         }
       )) as any[];
 
-      return symbols?.length
-        ? this._findSymbolAtLine(symbols, lineNumber)
-        : null;
+      return symbols?.length ? this._findSymbol(symbols, lineNumber) : null;
     } catch {
       return null;
     }
   }
 
-  private _findSymbolAtLine(symbols: any[], lineNumber: number): any | null {
+  private _findSymbol(symbols: any[], lineNumber: number): any | null {
     for (const symbol of symbols) {
       const range = symbol.range || symbol.location?.range;
       if (!range) continue;
@@ -247,7 +253,7 @@ export class Editor {
 
       if (lineNumber >= startLine && lineNumber <= endLine) {
         return symbol.children?.length
-          ? this._findSymbolAtLine(symbol.children, lineNumber) || symbol
+          ? this._findSymbol(symbol.children, lineNumber) || symbol
           : symbol;
       }
     }
@@ -255,10 +261,9 @@ export class Editor {
   }
 
   async _open(tab: IEditorTab) {
-    if (!this._editor) return;
+    this._ensure();
 
-    (document.querySelector(".monaco-editor") as HTMLDivElement).style.display =
-      "flex";
+    this._visiblity(true);
 
     let model = this._models.get(tab.uri);
 
@@ -279,26 +284,32 @@ export class Editor {
         if (!this._isUpdatingFromExternal) this._updateTabState(tab.uri, true);
       });
 
-      this._startFileWatching(tab.uri);
+      this._watch(tab.uri);
     }
 
+    registerCompletion(monaco, this._editor, {
+      language: getLanguage(tab.uri),
+      filename: tab.name,
+    });
+
     this._editor.setModel(model);
+    this._editor.focus();
   }
 
-  private _startFileWatching(uri: string) {
-    if (this._fileWatchers.has(uri)) return;
+  private _watch(uri: string) {
+    if (this._watchers.has(uri)) return;
 
     try {
       const watcher = window.fs.watchFile(
         uri,
         { persistent: true, interval: 1000 },
-        () => this._handleExternalFileChange(uri)
+        () => this._externalFileChange(uri)
       );
-      this._fileWatchers.set(uri, watcher);
+      this._watchers.set(uri, watcher);
     } catch {}
   }
 
-  private async _handleExternalFileChange(uri: string) {
+  private async _externalFileChange(uri: string) {
     const model = this._models.get(uri);
     if (!model) return;
 
@@ -336,7 +347,7 @@ export class Editor {
     dispatch(update_editor_tabs(updatedTabs));
   }
 
-  private async _saveFile(uri: string) {
+  private async _save(uri: string) {
     const model = this._models.get(uri);
     if (!model) return;
 
@@ -346,33 +357,59 @@ export class Editor {
     } catch {}
   }
 
-  close(uri: string) {
+  _close(uri: string) {
     const model = this._models.get(uri);
     if (!model) return;
 
-    const watcher = this._fileWatchers.get(uri);
+    const watcher = this._watchers.get(uri);
     if (watcher) {
       try {
         window.fs.unwatchFile(uri);
       } catch {}
-      this._fileWatchers.delete(uri);
+      this._watchers.delete(uri);
     }
 
     this._models.delete(uri);
     model.dispose();
     this._tabs = this._tabs.filter((tab) => tab.uri !== uri);
 
-    if (this._editor.getModel() === model) {
+    if (this._editor && this._editor.getModel() === model) {
       if (this._tabs.length > 0) {
         this._open(this._tabs[this._tabs.length - 1]!);
       } else {
         this._editor.setModel(null);
+        this._visiblity(false);
         this._saveActionDisposable?.dispose();
         this._saveActionDisposable = undefined as any;
       }
     }
 
-    this._editor.focus();
+    if (this._editor && this._tabs.length > 0) {
+      this._editor.focus();
+    }
+  }
+
+  dispose() {
+    this._models.forEach((model) => model.dispose());
+    this._models.clear();
+
+    this._watchers.forEach((_, uri) => {
+      try {
+        window.fs.unwatchFile(uri);
+      } catch {}
+    });
+    this._watchers.clear();
+
+    this._saveActionDisposable?.dispose();
+
+    if (this._editor) {
+      try {
+        this._editor.dispose();
+      } catch {}
+    }
+
+    this._tabs = [];
+    this._isEditorMounted = false;
   }
 }
 

@@ -1,4 +1,6 @@
+import { Editor } from "../common/workbench.editor/workbench.editor.js";
 import { _generateUUID } from "../common/workbench.files/workbench.files.utils.js";
+import { getStandalone } from "../common/workbench.standalone.js";
 import { dispatch, store } from "../common/workbench.store/workbench.store.js";
 import { select } from "../common/workbench.store/workbench.store.selector.js";
 import {
@@ -19,12 +21,13 @@ export class Files extends CoreEl {
     super();
     this._structure = [] as any;
     const _expanded = window.storage.get("files-expanded-folder");
-    const _structure = window.storage.get("files-structure");
-    dispatch(update_folder_structure(_structure));
+    let _structure = window.storage.get("files-structure");
 
     if (_structure) {
-      this._structure = _structure;
+      this._structure = this._createMutableCopy(_structure);
     }
+
+    dispatch(update_folder_structure(this._structure));
 
     if (_expanded && Array.isArray(_expanded)) {
       this._expandedFolders = new Set(_expanded);
@@ -40,11 +43,30 @@ export class Files extends CoreEl {
     }
 
     this._createEl();
-    this._restoreExpandedState();
-    this._setupFileWatcherListeners();
+    this._restore();
+    this._changeLinst();
   }
 
-  private _setupFileWatcherListeners(): void {
+  private _createMutableCopy<T>(obj: T): T {
+    if (obj === null || typeof obj !== "object") {
+      return obj;
+    }
+
+    if (Array.isArray(obj)) {
+      return obj.map((item) => this._createMutableCopy(item)) as unknown as T;
+    }
+
+    const copy = {} as T;
+    for (const key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        copy[key] = this._createMutableCopy(obj[key]);
+      }
+    }
+
+    return copy;
+  }
+
+  private _changeLinst(): void {
     window.ipc.on(
       "files-node-added",
       (data: {
@@ -63,7 +85,7 @@ export class Files extends CoreEl {
     window.ipc.on("files-node-changed", (data: { nodeUri: string }) => {});
   }
 
-  private async _restoreExpandedState() {
+  private async _restore() {
     if (
       this._expandedFolders.size > 0 &&
       this._structure &&
@@ -86,9 +108,9 @@ export class Files extends CoreEl {
         const result = await window.files.openChildFolder(folderUri);
 
         if (result && result.success) {
-          this._structure = result.structure;
+          this._structure = this._createMutableCopy(result.structure);
           this._loadedFolders.add(folderUri);
-          window.storage.store("files-structure", result.structure);
+          window.storage.store("files-structure", this._structure);
         }
       } catch (error) {
         this._expandedFolders.delete(folderUri);
@@ -104,11 +126,7 @@ export class Files extends CoreEl {
     this._el = document.createElement("div");
     this._el.className = "files scrollbar-container x-disable";
 
-    if (
-      !this._structure ||
-      !this._structure.children ||
-      this._structure.children.length === 0
-    ) {
+    if (!this._structure.isRoot) {
       this._createEmptyState();
     } else {
       this._createTreeView();
@@ -269,8 +287,8 @@ export class Files extends CoreEl {
       const result = await window.files.openChildFolder(folderUri);
 
       if (result && result.success) {
-        this._structure = result.structure;
-        window.storage.store("files-structure", result.structure);
+        this._structure = this._createMutableCopy(result.structure);
+        window.storage.store("files-structure", this._structure);
         this._loadedFolders.add(folderUri);
 
         const updatedNode = this._findNodeByUri(this._structure, folderUri);
@@ -285,7 +303,9 @@ export class Files extends CoreEl {
 
         dispatch(update_folder_structure(this._structure));
       }
-    } catch (error) {}
+    } catch (error) {
+      console.error("Error loading folder contents:", error);
+    }
   }
 
   private async _toggleFolder(nodeId: string, nodeEl: HTMLElement) {
@@ -396,14 +416,29 @@ export class Files extends CoreEl {
     nodeType: "file" | "folder"
   ): Promise<boolean> {
     try {
-      const parentNode = this._findNodeByUri(this._structure, parentUri);
+      console.log(`Adding node: ${nodeName} to parent: ${parentUri}`);
+
+      const normalizedParentUri = parentUri.replace(/\\/g, "/");
+
+      this._structure = this._createMutableCopy(this._structure);
+
+      console.log(this._structure);
+
+      const parentNode = this._findNodeByUri(
+        this._structure,
+        normalizedParentUri
+      );
+
       if (!parentNode || parentNode.type !== "folder") {
+        console.error(
+          `Parent node not found or not a folder: ${normalizedParentUri}`
+        );
         return false;
       }
 
       const newNode: IFolderStructure = {
         name: nodeName,
-        uri: `${parentUri}/${nodeName}`,
+        uri: `${normalizedParentUri}/${nodeName}`,
         type: nodeType,
         children: nodeType === "folder" ? [] : undefined!,
         isRoot: false,
@@ -412,31 +447,49 @@ export class Files extends CoreEl {
       if (!parentNode.children) {
         parentNode.children = [];
       }
-      parentNode.children.push(newNode);
 
+      const existingNode = parentNode.children.find(
+        (child) => child.name === nodeName
+      );
+      if (existingNode) {
+        console.log(
+          `Node ${nodeName} already exists in parent ${normalizedParentUri}`
+        );
+        return true;
+      }
+
+      parentNode.children.push(newNode);
       this._sortChildren(parentNode.children);
 
       window.storage.store("files-structure", this._structure);
+      dispatch(update_folder_structure(this._structure));
 
-      const parentContainer = this._el?.querySelector(
-        `.child-nodes[data-node-id="${parentUri}"]`
-      ) as HTMLElement;
+      this._refreshTree();
 
-      if (parentContainer) {
-        parentContainer.innerHTML = "";
-        this._renderNodes(parentNode.children, parentContainer);
-      } else {
-        this._refreshTree();
-      }
-
+      console.log(
+        `Successfully added node: ${nodeName} to ${normalizedParentUri}`
+      );
       return true;
     } catch (error) {
+      console.error("Error adding node:", error);
       return false;
     }
   }
 
   public async removeNode(nodeUri: string): Promise<boolean> {
     try {
+      const _tabs = select((s) => s.main.editor_tabs);
+      const _tab = _tabs.find((t) => t.uri === nodeUri);
+
+      if (_tab) {
+        const _updated = _tabs.filter((t) => t.uri !== _tab.uri);
+        const _editor = getStandalone("editor") as Editor;
+        dispatch(update_editor_tabs(_updated));
+        _editor._close(_tab.uri);
+      }
+
+      this._structure = this._createMutableCopy(this._structure);
+
       const result = this._removeNodeFromStructure(this._structure, nodeUri);
       if (result) {
         this._expandedFolders.delete(nodeUri);
@@ -448,17 +501,42 @@ export class Files extends CoreEl {
           Array.from(this._expandedFolders)
         );
 
+        dispatch(update_folder_structure(this._structure));
         this._refreshTree();
         return true;
       }
       return false;
     } catch (error) {
+      console.error("Error removing node:", error);
       return false;
     }
   }
 
   public async renameNode(nodeUri: string, newName: string): Promise<boolean> {
     try {
+      this._structure = this._createMutableCopy(this._structure);
+
+      const _tabs = select((s) => s.main.editor_tabs);
+
+      if (_tabs && Array.isArray(_tabs)) {
+        const updatedTabs = _tabs.map((tab) => {
+          if (tab.uri === nodeUri) {
+            const pathParts = tab.uri.split("/");
+            pathParts[pathParts.length - 1] = newName;
+            const newUri = pathParts.join("/");
+
+            return {
+              ...tab,
+              name: newName,
+              uri: newUri,
+            };
+          }
+          return tab;
+        });
+
+        dispatch(update_editor_tabs(updatedTabs));
+      }
+
       const node = this._findNodeByUri(this._structure, nodeUri);
       if (!node) {
         return false;
@@ -489,9 +567,11 @@ export class Files extends CoreEl {
         Array.from(this._expandedFolders)
       );
 
+      dispatch(update_folder_structure(this._structure));
       this._refreshTree();
       return true;
     } catch (error) {
+      console.error("Error renaming node:", error);
       return false;
     }
   }
@@ -501,6 +581,8 @@ export class Files extends CoreEl {
     targetParentUri: string
   ): Promise<boolean> {
     try {
+      this._structure = this._createMutableCopy(this._structure);
+
       const sourceNode = this._findNodeByUri(this._structure, sourceUri);
       const targetParent = this._findNodeByUri(
         this._structure,
@@ -539,9 +621,11 @@ export class Files extends CoreEl {
         Array.from(this._expandedFolders)
       );
 
+      dispatch(update_folder_structure(this._structure));
       this._refreshTree();
       return true;
     } catch (error) {
+      console.error("Error moving node:", error);
       return false;
     }
   }

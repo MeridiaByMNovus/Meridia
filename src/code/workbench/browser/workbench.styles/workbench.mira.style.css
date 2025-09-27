@@ -99,31 +99,38 @@ code.hljs {
   background-color: #ffeef0;
 }
 
-.code .gemini .content .message.ai pre {
+.code .mira .content .message.ai pre {
   background: var(--code-background) !important;
   border-radius: 8px;
   padding: 16px;
   margin: 12px 0;
   overflow-x: auto;
   border: 1px solid var(--workbench-border-foreground);
+  max-width: 100%;
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
-.code .gemini .content .message.ai code.hljs {
+.code .mira .content .message.ai code.hljs {
   background: transparent !important;
   font-family: "Jetbrains Mono";
   font-size: 14px;
   line-height: 1.5;
+  word-wrap: break-word;
+  max-width: 100%;
 }
 
-.code .gemini .content .message.ai code.hljs-inline {
+.code .mira .content .message.ai code.hljs-inline {
   background: var(--inline-code-background) !important;
   padding: 2px 4px;
   border-radius: 3px;
   font-family: "Jetbrains Mono";
   font-size: 0.9em;
+  word-wrap: break-word;
+  max-width: 100%;
 }
 
-.code .gemini {
+.code .mira {
   position: relative;
   display: flex;
   height: 100%;
@@ -132,7 +139,7 @@ code.hljs {
   justify-content: space-between;
 }
 
-.code .gemini .content {
+.code .mira .content {
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -142,22 +149,23 @@ code.hljs {
   padding: 24px 0;
 }
 
-.code .gemini .content:not(.chat) {
+.code .mira .content:not(.chat) {
   align-items: center;
   justify-content: center;
 }
 
-.code .gemini .content span svg {
+.code .mira .content span svg {
   width: 2.6rem;
   height: auto;
 }
 
-.code .gemini .content .title {
+.code .mira .content .title {
+  font-family: "Inconsolata";
   font-size: 20px;
   font-weight: 500;
 }
 
-.code .gemini .chatbox {
+.code .mira .chatbox {
   position: absolute;
   bottom: 12px;
   left: 50%;
@@ -166,70 +174,70 @@ code.hljs {
   align-items: center;
   justify-content: space-between;
   width: 80%;
-  background: var(--workbench-gemini-chatbox-background);
-  color: var(--workbench-gemini-chatbox-foreground);
-  outline: 1px solid var(--workbench-gemini-chatbox-border-foreground);
+  background: var(--workbench-mira-chatbox-background);
+  color: var(--workbench-mira-chatbox-foreground);
+  outline: 1px solid var(--workbench-mira-chatbox-border-foreground);
   border-radius: 8px;
   padding: 4px 12px;
   z-index: 10;
 }
 
-.code .gemini .chatbox input {
+.code .mira .chatbox input {
   width: 100%;
   background: transparent;
   border: none;
-  color: var(--workbench-gemini-chatbox-foreground);
+  color: var(--workbench-mira-chatbox-foreground);
   font-size: 18px;
 }
 
-.code .gemini .chatbox input:focus {
+.code .mira .chatbox input:focus {
   outline: none;
 }
 
-.code .gemini .chatbox:focus-within {
-  outline: 1px solid var(--workbench-gemini-chatbox-active-border-foreground);
+.code .mira .chatbox:focus-within {
+  outline: 1px solid var(--workbench-mira-chatbox-active-border-foreground);
 }
 
-.code .gemini .chatbox svg {
+.code .mira .chatbox svg {
   width: 20px;
   height: auto;
 }
 
-.code .gemini .chatbox span {
+.code .mira .chatbox span {
   padding: 2px 6px;
   cursor: pointer;
   border-radius: 4px;
 }
 
-.code .gemini .chatbox span:hover {
+.code .mira .chatbox span:hover {
   background: var(--workbench-hover-background);
 }
 
-.code .gemini .content .message.user {
+.code .mira .content .message.user {
   margin-left: auto;
   padding: 8px 32px;
-  background: var(--workbench-gemini-message-user-background);
-  color: var(--workbench-gemini-message-user-foreground);
+  background: var(--workbench-mira-message-user-background);
+  color: var(--workbench-mira-message-user-foreground);
   font-size: 18px;
   margin-right: 24px;
   border-radius: 6px;
   max-width: 90%;
 }
 
-.code .gemini .content .message.ai {
+.code .mira .content .message.ai {
   display: flex;
   align-items: flex-start;
   align-self: flex-start;
   gap: 12px;
   padding: 8px 32px;
-  background: var(--workbench-gemini-message-ai-background);
-  color: var(--workbench-gemini-message-ai-foreground);
+  background: var(--workbench-mira-message-ai-background);
+  color: var(--workbench-mira-message-ai-foreground);
   font-size: 18px;
   border-radius: 6px;
   margin: 20px 0;
 }
 
-.code .gemini .content .message.ai svg {
+.code .mira .content .message.ai svg {
   width: 24px;
   height: auto;
   flex-shrink: 0;
@@ -238,18 +246,22 @@ code.hljs {
   transform: translateY(-0.125em);
 }
 
-.code .gemini .content .message .message-text {
+.code .mira .content .message .message-text {
   flex: 1;
   word-break: break-word;
   line-height: 1.4;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
 }
 
-.code .gemini .content .message .message-text * {
+.code .mira .content .message .message-text * {
   max-width: 100%;
   overflow-wrap: break-word;
+  word-wrap: break-word;
 }
 
-.code .gemini .content .message.ai code.hljs {
+.code .mira .content .message.ai code.hljs {
   background: transparent !important;
   font-family: "Jetbrains Mono";
   font-size: 14px;
@@ -258,9 +270,10 @@ code.hljs {
   overflow-x: auto;
   white-space: pre-wrap;
   word-break: break-all;
+  word-wrap: break-word;
 }
 
-.code .gemini .content .message.ai pre {
+.code .mira .content .message.ai pre {
   background: var(--code-background) !important;
   border-radius: 8px;
   padding: 16px;
@@ -269,14 +282,18 @@ code.hljs {
   border: 1px solid var(--workbench-border-foreground);
   max-width: 100%;
   box-sizing: border-box;
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
-.code .gemini .content .message.ai code {
+.code .mira .content .message.ai code {
   max-width: 100%;
   overflow-x: auto;
+  word-wrap: break-word;
 }
 
-.code .gemini .content .message.ai pre code {
+.code .mira .content .message.ai pre code {
   max-width: calc(100vw - 200px);
   display: block;
+  word-wrap: break-word;
 }

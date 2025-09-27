@@ -23,8 +23,6 @@ export class StatusbarEventListner {
       const _customEvent = _event as CustomEvent;
       const _item = _customEvent.detail.message;
 
-      console.log(itemSectionEl, _item);
-
       itemSectionEl?.appendChild(_item);
     });
   }

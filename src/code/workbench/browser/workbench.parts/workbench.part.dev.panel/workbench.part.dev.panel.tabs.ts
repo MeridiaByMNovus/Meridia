@@ -96,8 +96,6 @@ export class DevPanelTabs extends CoreEl {
 
     const _devPanel = this._devPanel;
 
-    console.log(_devPanel);
-
     const collapse = document.createElement("span");
     collapse.className = "collapse";
     collapse.innerHTML = _devPanel._isCollapsed ? collapseIcon : expandIcon;

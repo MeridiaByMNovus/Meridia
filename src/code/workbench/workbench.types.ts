@@ -89,16 +89,16 @@ export const ThemeColors = [
   "workbench.editor.foreground",
   "workbench.editor.cursor.foreground",
   "workbench.editor.line.highlight.background",
-  "workbench.gemini.message.user.background",
-  "workbench.gemini.message.user.foreground",
-  "workbench.gemini.message.user.border.foreground",
-  "workbench.gemini.message.ai.background",
-  "workbench.gemini.message.ai.foreground",
-  "workbench.gemini.message.ai.border.foreground",
-  "workbench.gemini.chatbox.background",
-  "workbench.gemini.chatbox.foreground",
-  "workbench.gemini.chatbox.border.foreground",
-  "workbench.gemini.chatbox.active.border.foreground",
+  "workbench.mira.message.user.background",
+  "workbench.mira.message.user.foreground",
+  "workbench.mira.message.user.border.foreground",
+  "workbench.mira.message.ai.background",
+  "workbench.mira.message.ai.foreground",
+  "workbench.mira.message.ai.border.foreground",
+  "workbench.mira.chatbox.background",
+  "workbench.mira.chatbox.foreground",
+  "workbench.mira.chatbox.border.foreground",
+  "workbench.mira.chatbox.active.border.foreground",
   "workbench.terminal.background",
   "workbench.terminal.foreground",
   "workbench.terminal.cursor.foreground",
@@ -172,7 +172,7 @@ export interface IChatMessage {
   isUser: boolean;
 }
 
-export interface IGeminiResponse {
+export interface IMiraResponse {
   response: string;
   error?: string;
 }

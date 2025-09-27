@@ -9,7 +9,7 @@ import {
 import { CoreEl } from "./workbench.parts/workbench.part.el.js";
 import { Chat } from "../common/workbench.gemini/workbench.gemini.chat.js";
 
-export class Gemini extends CoreEl {
+export class Mira extends CoreEl {
   private _input!: HTMLInputElement;
   private _content!: HTMLDivElement;
   private _chatHistory: IChatMessage[] = [];
@@ -54,10 +54,6 @@ export class Gemini extends CoreEl {
 
             return `<pre><code class="hljs language-${language}">${highlightedCode}</code></pre>`;
           } catch (error) {
-            console.warn(
-              "Highlight.js failed, falling back to plain text:",
-              error
-            );
             return `<pre><code class="hljs">${escapeHtml(code)}</code></pre>`;
           }
         },
@@ -107,9 +103,7 @@ export class Gemini extends CoreEl {
     if (!message.isUser && message.content) {
       try {
         textEl.innerHTML = marked.parse(message.content) as string;
-        console.log("Markdown rendered successfully with highlight.js");
       } catch (error) {
-        console.error("Markdown parsing failed:", error);
         textEl.textContent = message.content;
       }
     } else {
@@ -124,7 +118,7 @@ export class Gemini extends CoreEl {
 
   private _createEl() {
     this._el = document.createElement("div");
-    this._el.className = "gemini";
+    this._el.className = "mira";
 
     this._content = document.createElement("div");
     this._content.className = "content scrollbar-container x-disable";
@@ -134,7 +128,7 @@ export class Gemini extends CoreEl {
 
     const _title = document.createElement("p");
     _title.className = "title";
-    _title.textContent = "Gemini";
+    _title.textContent = "Mira powered by Gemini";
 
     this._content.appendChild(_icon);
     this._content.appendChild(_title);
@@ -144,7 +138,7 @@ export class Gemini extends CoreEl {
 
     this._input = document.createElement("input");
     this._input.type = "text";
-    this._input.placeholder = "Ask Gemini anything...";
+    this._input.placeholder = "Ask Mira anything...";
 
     const _send = document.createElement("span");
     _send.className = "send";

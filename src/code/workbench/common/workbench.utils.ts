@@ -26,26 +26,24 @@ export const tokensToCssVariables: Record<IThemeColors, string> = {
   "workbench.editor.cursor.foreground": "--workbench-editor-cursor-foreground",
   "workbench.editor.line.highlight.background":
     "--workbench-editor-line-highlight-background",
-  "workbench.gemini.chatbox.active.border.foreground":
-    "--workbench-gemini-chatbox-active-border-foreground",
-  "workbench.gemini.chatbox.background":
-    "--workbench-gemini-chatbox-background",
-  "workbench.gemini.chatbox.border.foreground":
-    "--workbench-gemini-chatbox-border-foreground",
-  "workbench.gemini.chatbox.foreground":
-    "--workbench-gemini-chatbox-foreground",
-  "workbench.gemini.message.ai.background":
-    "--workbench-gemini-message-ai-background",
-  "workbench.gemini.message.ai.border.foreground":
-    "--workbench-gemini-message-ai-border-foreground",
-  "workbench.gemini.message.ai.foreground":
-    "--workbench-gemini-message-ai-foreground",
-  "workbench.gemini.message.user.background":
-    "--workbench-gemini-message-user-background",
-  "workbench.gemini.message.user.border.foreground":
-    "--workbench-gemini-message-user-border-foreground",
-  "workbench.gemini.message.user.foreground":
-    "--workbench-gemini-message-user-foreground",
+  "workbench.mira.chatbox.active.border.foreground":
+    "--workbench-mira-chatbox-active-border-foreground",
+  "workbench.mira.chatbox.background": "--workbench-mira-chatbox-background",
+  "workbench.mira.chatbox.border.foreground":
+    "--workbench-mira-chatbox-border-foreground",
+  "workbench.mira.chatbox.foreground": "--workbench-mira-chatbox-foreground",
+  "workbench.mira.message.ai.background":
+    "--workbench-mira-message-ai-background",
+  "workbench.mira.message.ai.border.foreground":
+    "--workbench-mira-message-ai-border-foreground",
+  "workbench.mira.message.ai.foreground":
+    "--workbench-mira-message-ai-foreground",
+  "workbench.mira.message.user.background":
+    "--workbench-mira-message-user-background",
+  "workbench.mira.message.user.border.foreground":
+    "--workbench-mira-message-user-border-foreground",
+  "workbench.mira.message.user.foreground":
+    "--workbench-mira-message-user-foreground",
   "workbench.tabs.background": "--workbench-tabs-background",
   "workbench.tabs.foreground": "--workbench-tabs-foreground",
   "workbench.tabs.icon.foreground": "--workbench-tabs-icon-foreground",

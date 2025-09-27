@@ -7,10 +7,7 @@ import { mainWindow } from "../../../main.js";
 import { _watch } from "./watcher.node.js";
 import { walkdir } from "../native/rust";
 
-export async function _get(
-  _path: string,
-  depth: number = 1
-): Promise<IFolderStructure> {
+export async function _get(_path: string, depth: number = 1) {
   const structure = walkdir(_path, depth);
 
   return structure;
@@ -37,7 +34,7 @@ function _update(
   return structure;
 }
 
-async function _refresh(): Promise<void> {
+async function _refresh() {
   try {
     const currentStructure = Storage.get("files-structure") as IFolderStructure;
 
@@ -113,13 +110,17 @@ function _getRoot(): string | null {
   return currentStructure.uri;
 }
 
-async function _init(): Promise<void> {
+async function _init() {
   await _refresh();
 
   const rootPath = _getRoot();
   if (rootPath) {
     _watch(rootPath);
   }
+
+  mainWindow.webContents.on("dom-ready", () => {
+    _refresh();
+  });
 }
 
 _init();

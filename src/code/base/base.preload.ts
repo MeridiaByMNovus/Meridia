@@ -1,7 +1,8 @@
-import { contextBridge, ipcRenderer } from "electron";
-import { Storage } from "./services/storage.service";
 import fs from "fs";
 import path from "path";
+import { contextBridge, ipcRenderer } from "electron";
+import { Storage } from "./services/storage.service.js";
+import { FetchCompletionItemParams } from "../platform/mira/editor.suggestions/types/internal.js";
 
 const storage = Storage;
 
@@ -68,7 +69,6 @@ export const fsBridge = {
 
       return watcher;
     } catch (error) {
-      console.error(`Failed to watch file ${_path}:`, error);
       throw error;
     }
   },
@@ -81,21 +81,16 @@ export const fsBridge = {
         activeWatchers.get(_path)?.close();
         activeWatchers.delete(_path);
       }
-    } catch (error) {
-      console.error(`Failed to unwatch file ${_path}:`, error);
-    }
+    } catch (error) {}
   },
 
   watch: (_path: string, options?: any) => {
     try {
-      const watcher = fs.watch(_path, options, (eventType, filename) => {
-        console.log(`File ${filename} changed: ${eventType}`);
-      });
+      const watcher = fs.watch(_path, options, (eventType, filename) => {});
 
       activeWatchers.set(_path, watcher);
       return watcher;
     } catch (error) {
-      console.error(`Failed to watch ${_path}:`, error);
       throw error;
     }
   },
@@ -106,9 +101,7 @@ export const fsBridge = {
         activeWatchers.get(_path)?.close();
         activeWatchers.delete(_path);
       }
-    } catch (error) {
-      console.error(`Failed to unwatch ${_path}:`, error);
-    }
+    } catch (error) {}
   },
 
   exists: (_path: string): boolean => {
@@ -186,14 +179,18 @@ export const ipcBridge = {
   },
 };
 
+export const miraBridge = {
+  requestCompletion: (params: FetchCompletionItemParams) => {
+    return ipcRenderer.invoke("mira-completion-request", params);
+  },
+};
+
 window.addEventListener("beforeunload", () => {
   activeWatchers.forEach((watcher, path) => {
     try {
       fs.unwatchFile(path);
       watcher.close();
-    } catch (error) {
-      console.error(`Failed to cleanup watcher for ${path}:`, error);
-    }
+    } catch (error) {}
   });
   activeWatchers.clear();
 });
@@ -203,3 +200,4 @@ contextBridge.exposeInMainWorld("fs", fsBridge);
 contextBridge.exposeInMainWorld("path", pathBridge);
 contextBridge.exposeInMainWorld("files", filesBridge);
 contextBridge.exposeInMainWorld("ipc", ipcBridge);
+contextBridge.exposeInMainWorld("mira", miraBridge);

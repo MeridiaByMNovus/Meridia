@@ -168,8 +168,6 @@ export class Terminal extends CoreEl {
   }
 
   private _openTerminal(tab: IDevPanelTab) {
-    console.log(`Opening terminal: ${tab.name} (${tab.id})`);
-
     const terminalArea = this._el?.querySelector(".terminal-area");
     if (terminalArea) {
       terminalArea.innerHTML = "";
@@ -188,9 +186,7 @@ export class Terminal extends CoreEl {
     }
   }
 
-  private _closeTerminal(tabId: string) {
-    console.log(`Closing terminal: ${tabId}`);
-  }
+  private _closeTerminal(tabId: string) {}
 
   public addTerminal(options?: Partial<IDevPanelTab>) {
     const newTab: IDevPanelTab = {

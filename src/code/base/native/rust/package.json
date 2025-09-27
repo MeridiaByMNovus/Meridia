@@ -1,7 +1,7 @@
 {
-  "name": "walkdir",
+  "name": "@meridia/native-rust",
   "version": "0.1.0",
-  "description": "A directory walker built in rust.",
+  "description": "Meridia native libraries built in Rust.",
   "main": "./lib/index.cjs",
   "scripts": {
     "test": "tsc &&cargo test",
