@@ -3,7 +3,7 @@ name = "native-rust"
 version = "0.1.0"
 license = "ISC"
 edition = "2021" 
-exclude = ["index.node"]
+exclude = ["rust.node"]
 
 [lib]
 crate-type = ["cdylib"]

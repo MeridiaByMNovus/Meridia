@@ -1,5 +1,5 @@
 import { ipcMain } from "electron";
-import { CompletionMira } from "../../platform/mira/editor.suggestions";
+import { CompletionMira } from "../../platform/mira/mira.suggestions";
 import { Storage } from "../services/storage.service";
 
 export const mira = new CompletionMira(Storage.get("mira-api-key"), {

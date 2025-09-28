@@ -88,7 +88,7 @@
   background-color: var(
     --workbench-scrollbar-thumb-hover-foreground
   ) !important;
-  height: 3px !important;
+  /* height: 3px !important; */
 }
 
 .ps__rail-y:hover > .ps__thumb-y,
@@ -98,7 +98,7 @@
   background-color: var(
     --workbench-scrollbar-thumb-hover-foreground
   ) !important;
-  width: 8px !important;
+  /* width: 8px !important; */
 }
 
 .ps__thumb-y:focus,

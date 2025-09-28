@@ -6,7 +6,7 @@ import {
   watch,
 } from "../common/workbench.store/workbench.store.selector.js";
 import { update_editor_tabs } from "../common/workbench.store/workbench.store.slice.js";
-import { getIcon } from "../common/workbench.utils.js";
+import { getFileIcon } from "../common/workbench.utils.js";
 import { IEditorTab } from "../workbench.types.js";
 import { closeIcon } from "./workbench.media/workbench.icons.js";
 import { CoreEl } from "./workbench.parts/workbench.part.el.js";
@@ -105,7 +105,7 @@ export class Editor extends CoreEl {
         icon.className = "icon";
 
         if (_tab.icon) icon.innerHTML = _tab.icon;
-        else icon.innerHTML = getIcon(_tab.name);
+        else icon.innerHTML = getFileIcon(_tab.name);
 
         const name = document.createElement("span");
         name.className = "name";

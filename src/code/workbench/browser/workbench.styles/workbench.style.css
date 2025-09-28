@@ -1,7 +1,8 @@
 @import url("./workbench.tabs.style.css");
 @import url("./workbench.files.style.css");
 @import url("./workbench.panel.style.css");
-@import url("./workbench.mira.style.css");
+@import url("./workbench.mira.chat.style.css");
+@import url("./workbench.mira.voice.style.css");
 @import url("./workbench.editor.style.css");
 @import url("./workbench.splitter.style.css");
 @import url("./workbench.titlebar.style.css");
@@ -42,6 +43,15 @@ a:hover {
 .code svg.default path {
   fill: var(--workbench-icon-foreground);
   stroke: var(--workbench-icon-foreground);
+}
+
+.code svg.markdown {
+  width: 20px !important;
+  height: auto;
+}
+
+.code svg.markdown path {
+  fill: var(--workbench-icon-foreground);
 }
 
 * {

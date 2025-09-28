@@ -7,7 +7,7 @@ import {
   update_editor_tabs,
   update_folder_structure,
 } from "../common/workbench.store/workbench.store.slice.js";
-import { getIcon } from "../common/workbench.utils.js";
+import { getFileIcon } from "../common/workbench.utils.js";
 import { IEditorTab, IFolderStructure } from "../workbench.types.js";
 import { chevronRightIcon } from "./workbench.media/workbench.icons.js";
 import { CoreEl } from "./workbench.parts/workbench.part.el.js";
@@ -216,7 +216,7 @@ export class Files extends CoreEl {
       const nodeId = _node.uri;
 
       if (_node.type === "file") {
-        _icon.innerHTML = getIcon(_node.name);
+        _icon.innerHTML = getFileIcon(_node.name);
       } else {
         const isExpanded = this._expandedFolders.has(nodeId);
         _icon.innerHTML = chevronRightIcon;
@@ -416,13 +416,9 @@ export class Files extends CoreEl {
     nodeType: "file" | "folder"
   ): Promise<boolean> {
     try {
-      console.log(`Adding node: ${nodeName} to parent: ${parentUri}`);
-
       const normalizedParentUri = parentUri.replace(/\\/g, "/");
 
       this._structure = this._createMutableCopy(this._structure);
-
-      console.log(this._structure);
 
       const parentNode = this._findNodeByUri(
         this._structure,

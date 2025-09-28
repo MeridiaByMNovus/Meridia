@@ -1,8 +1,10 @@
 import fs from "fs";
 import path from "path";
+import { spawn, SpawnOptionsWithoutStdio } from "child_process";
+import { PythonShell } from "python-shell";
 import { contextBridge, ipcRenderer } from "electron";
 import { Storage } from "./services/storage.service.js";
-import { FetchCompletionItemParams } from "../platform/mira/editor.suggestions/types/internal.js";
+import { FetchCompletionItemParams } from "../platform/mira/mira.suggestions/types/internal.js";
 
 const storage = Storage;
 
@@ -28,6 +30,9 @@ export const fsBridge = {
   readFile: (_path: string, encoding?: fs.EncodingOption) => {
     return fs.readFileSync(_path, { encoding: encoding as any }).toString();
   },
+  readFileBuffer: (_path: string, encoding?: fs.EncodingOption) => {
+    return fs.readFileSync(_path, { encoding: encoding as any });
+  },
   deleteFile: (_path: string) => {
     fs.rmSync(_path);
   },
@@ -38,9 +43,11 @@ export const fsBridge = {
     fs.mkdirSync(_path, { recursive: true });
   },
   deleteFolder: (_path: string) => {
-    fs.rmSync(_path, { recursive: true });
+    fs.rmSync(_path, { recursive: true, force: true });
   },
-
+  rename: (_path: string, _new: string) => {
+    fs.renameSync(_path, _new);
+  },
   watchFile: (
     _path: string,
     options: any,
@@ -146,9 +153,7 @@ export const fsBridge = {
 };
 
 export const pathBridge = {
-  __dirname: () => {
-    return __dirname;
-  },
+  __dirname: __dirname,
   dirname: (_path: string) => {
     return path.dirname(_path);
   },
@@ -157,6 +162,10 @@ export const pathBridge = {
   },
   join: (_paths: string[]) => {
     return path.join(..._paths);
+  },
+  sep: path.sep,
+  isAbsolute: (_path: string) => {
+    return path.isAbsolute(_path);
   },
 };
 
@@ -185,6 +194,83 @@ export const miraBridge = {
   },
 };
 
+export const pythonBridge = {
+  executeScript: (
+    scriptPath: string,
+    args: string[] = []
+  ): Promise<string[]> => {
+    return new Promise((resolve, reject) => {
+      const options = {
+        ...PythonShell.defaultOptions,
+        args: args,
+      };
+
+      const logs: string[] = [];
+      const pyshell = new PythonShell(scriptPath, options);
+
+      pyshell.on("message", (message) => {
+        logs.push(message);
+      });
+
+      pyshell.on("error", (err) => {
+        reject(err);
+      });
+
+      pyshell.end((err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(logs);
+        }
+      });
+    });
+  },
+
+  createStreamingShell: (scriptPath: string, args: string[] = []) => {
+    const options = {
+      mode: "text" as const,
+      pythonOptions: ["-u"],
+      args: args,
+    };
+
+    const pyshell = new PythonShell(scriptPath, options);
+
+    return {
+      shell: pyshell,
+      onMessage: (callback: (message: string) => void) => {
+        pyshell.on("message", callback);
+      },
+      onError: (callback: (error: Error) => void) => {
+        pyshell.on("error", callback);
+      },
+      onClose: (callback: () => void) => {
+        pyshell.on("close", callback);
+      },
+      terminate: () => {
+        pyshell.terminate();
+      },
+      kill: () => {
+        pyshell.kill();
+      },
+      send: (message: string) => {
+        pyshell.send(message);
+      },
+    };
+  },
+};
+
+export const childprocessBridge = {};
+
+export const spawnBridge = {
+  spawn: (
+    command: string,
+    args: string[] = [],
+    options: SpawnOptionsWithoutStdio = {}
+  ) => {
+    return spawn(command, args, options);
+  },
+};
+
 window.addEventListener("beforeunload", () => {
   activeWatchers.forEach((watcher, path) => {
     try {
@@ -201,3 +287,6 @@ contextBridge.exposeInMainWorld("path", pathBridge);
 contextBridge.exposeInMainWorld("files", filesBridge);
 contextBridge.exposeInMainWorld("ipc", ipcBridge);
 contextBridge.exposeInMainWorld("mira", miraBridge);
+contextBridge.exposeInMainWorld("python", pythonBridge);
+contextBridge.exposeInMainWorld("childprocess", childprocessBridge);
+contextBridge.exposeInMainWorld("spawn", spawnBridge);

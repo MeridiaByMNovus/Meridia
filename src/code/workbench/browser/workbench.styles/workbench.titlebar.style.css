@@ -101,28 +101,18 @@
   margin-bottom: 0;
 }
 
-/* FIXED: Proper CSS order - hover first, then active overrides */
 .code .titlebar .dropdown-item:hover {
   background: var(--workbench-titlebar-menu-item-hover-background);
 }
 
-/* Active state with higher specificity to override hover */
 .code .titlebar .dropdown-item.active {
-  background: var(
-    --workbench-titlebar-menu-item-active-background,
-    #0078d4
-  ) !important;
-  color: var(
-    --workbench-titlebar-menu-item-active-foreground,
-    #ffffff
-  ) !important;
+  background: var(--workbench-titlebar-menu-item-active-background) !important;
+  color: var(--workbench-titlebar-menu-item-active-foreground) !important;
 }
 
-/* Active hover state - when active item is hovered */
 .code .titlebar .dropdown-item.active:hover {
   background: var(
-    --workbench-titlebar-menu-item-active-hover-background,
-    #106ebe
+    --workbench-titlebar-menu-item-active-hover-background
   ) !important;
 }
 
@@ -157,12 +147,8 @@
   font-weight: 400;
 }
 
-/* Override label color for active items */
 .code .titlebar .dropdown-item.active .dropdown-item-label {
-  color: var(
-    --workbench-titlebar-menu-item-active-foreground,
-    #ffffff
-  ) !important;
+  color: var(--workbench-titlebar-menu-item-active-foreground) !important;
   font-weight: 500;
 }
 
@@ -171,12 +157,8 @@
   height: auto;
 }
 
-/* Override arrow color for active items */
 .code .titlebar .dropdown-item.active .dropdown-submenu-arrow svg {
-  fill: var(
-    --workbench-titlebar-menu-item-active-foreground,
-    #ffffff
-  ) !important;
+  fill: var(--workbench-titlebar-menu-item-active-foreground) !important;
 }
 
 .code .titlebar .dropdown-separator {
@@ -247,7 +229,7 @@
   gap: 10px;
 }
 
-.code .titlebar .right-panel-section .window-controls .circle {
+.code .titlebar .right-panel-section .window-controls .control {
   width: 18px;
   height: 18px;
   border: 2px solid var(--workbench-titlebar-window-controls-circle-foreground);

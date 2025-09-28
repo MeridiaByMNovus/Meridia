@@ -6,7 +6,10 @@ import {
   ipcBridge,
   miraBridge,
   pathBridge,
+  pythonBridge,
   storageBridge,
+  childprocessBridge,
+  spawnBridge,
 } from "../code/base/base.preload.js";
 
 declare global {
@@ -17,5 +20,8 @@ declare global {
     path: typeof pathBridge;
     files: typeof filesBridge;
     mira: typeof miraBridge;
+    python: typeof pythonBridge;
+    childprocess: typeof childprocessBridge;
+    spawn: typeof spawnBridge;
   }
 }

@@ -44,6 +44,12 @@ export const tokensToCssVariables: Record<IThemeColors, string> = {
     "--workbench-mira-message-user-border-foreground",
   "workbench.mira.message.user.foreground":
     "--workbench-mira-message-user-foreground",
+  "workbench.mira.voice.color.orange": "--workbench-mira-voice-color-orange",
+  "workbench.mira.voice.color.violet": "--workbench-mira-voice-color-violet",
+  "workbench.mira.voice.color.white": "--workbench-mira-voice-color-white",
+  "workbench.mira.voice.color.black": "--workbench-mira-voice-color-black",
+  "workbench.mira.voice.caption.active.background":
+    "--workbench-mira-voice-caption-active-background",
   "workbench.tabs.background": "--workbench-tabs-background",
   "workbench.tabs.foreground": "--workbench-tabs-foreground",
   "workbench.tabs.icon.foreground": "--workbench-tabs-icon-foreground",
@@ -109,16 +115,16 @@ export function parseTokensToCssVariables(
   return result;
 }
 
-export function getIcon(_name: string) {
+export function getFileIcon(_name: string) {
   const _ext = _name.split(".").pop() || "";
 
-  const _supported = ["ts", "js", "py", "html", "json"];
+  const _supported = ["ts", "js", "py", "html", "json", "mjs", "mts", "md"];
 
   let _iconPath: string;
 
   if (_supported.includes(_ext)) {
     _iconPath = window.path.join([
-      window.path.__dirname(),
+      window.path.__dirname,
       "..",
       "workbench",
       "browser",
@@ -128,7 +134,7 @@ export function getIcon(_name: string) {
     ]);
   } else {
     _iconPath = window.path.join([
-      window.path.__dirname(),
+      window.path.__dirname,
       "..",
       "workbench",
       "browser",
@@ -137,6 +143,22 @@ export function getIcon(_name: string) {
       `file.type.default.svg`,
     ]);
   }
+
+  const _content = window.fs.readFile(_iconPath);
+
+  return _content;
+}
+
+export function getIcon(_relativePath: string) {
+  let _iconPath = window.path.join([
+    window.path.__dirname,
+    "..",
+    "workbench",
+    "browser",
+    "workbench.media",
+    "icons",
+    _relativePath,
+  ]);
 
   const _content = window.fs.readFile(_iconPath);
 

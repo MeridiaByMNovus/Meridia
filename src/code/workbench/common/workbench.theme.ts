@@ -34,14 +34,12 @@ export class Theme {
 
     const _root = document.documentElement;
 
-    // Set regular theme colors
     for (const [key, value] of Object.entries(_theme.colors)) {
       if (!value) continue;
       const varKey = tokensToCssVariables[key as IThemeColors];
       if (varKey) _root.style.setProperty(varKey, value);
     }
 
-    // Set token colors for syntax highlighting
     if (_theme.tokenColors) {
       this._setTokenColors(_theme.tokenColors);
     }

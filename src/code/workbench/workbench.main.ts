@@ -7,3 +7,4 @@ import "./event/workbench.event.statusbar.js";
 import "./event/workbench.event.panel.options.js";
 import "./event/workbench.event.editor.js";
 import "./services/workbench.resources.js";
+import "../platform/mira/mira.workbench/workbench.mira.main.js";

@@ -1,13 +1,10 @@
-import { WebSocketServer } from "ws";
-import { spawn, ChildProcess } from "child_process";
-import { createWebSocketConnection, forward } from "vscode-ws-jsonrpc/server";
-import {
-  createConnection,
-  createServerProcess,
-} from "vscode-ws-jsonrpc/server";
 import * as http from "http";
 import * as fs from "fs";
 import * as path from "path";
+import os from "os";
+import { WebSocketServer } from "ws";
+import { createServerProcess, forward } from "vscode-ws-jsonrpc/server";
+import { createWebSocketConnection } from "vscode-ws-jsonrpc/server";
 import { Storage } from "./code/base/services/storage.service";
 
 export class HttpServer {
@@ -92,12 +89,19 @@ export function runPyrightLanguageServer() {
 
     const connection = createWebSocketConnection(socket);
 
+    const executablePath = path.join(
+      __dirname,
+      "pyright",
+      "langserver.index.js"
+    );
+
     const serverConnection = createServerProcess(
       "Pyright",
-      "pyright-langserver",
-      ["--stdio"],
+      "node",
+      [executablePath, "--stdio"],
       { stdio: ["pipe", "pipe", "pipe"] }
     );
+
     forward(connection, serverConnection!);
 
     webSocket.on("close", () => {

@@ -9,7 +9,7 @@
     "copy": "gulp copy",
     "copy:watch": "gulp watch",
     "start:electron": "electron build/main.js",
-    "dev": "npm run clean && concurrently -c blue,cyan,green -n BUILD,COPY,ELECTRON \"npm run build:watch\" \"npm run copy:watch\" \"npm run start:electron\"",
+    "dev": "npm run clean && npm run build && concurrently -c blue,cyan,green -n BUILD,COPY,ELECTRON \"npm run build:watch\" \"npm run copy:watch\" \"npm run start:electron\"",
     "package": "npm run clean && npm run build && npm run copy && electron-builder"
   },
   "keywords": [],
@@ -22,6 +22,7 @@
     "@mistralai/mistralai": "^1.10.0",
     "@neon-rs/load": "^0.1.82",
     "@reduxjs/toolkit": "^2.9.0",
+    "@types/express": "^5.0.3",
     "@xterm/xterm": "^5.5.0",
     "chokidar": "^4.0.3",
     "dotenv": "^17.2.2",
@@ -35,11 +36,15 @@
     "monaco-languages": "2.10.0",
     "node-pty": "^1.0.0",
     "perfect-scrollbar": "^1.5.6",
+    "pyright": "^1.1.405",
+    "python-shell": "^5.0.0",
+    "vscode-languageserver": "^9.0.1",
     "vscode-ws-jsonrpc": "^3.5.0",
     "ws": "^8.18.3"
   },
   "devDependencies": {
     "@neon-rs/cli": "^0.1.82",
+    "@rollup/plugin-commonjs": "^28.0.6",
     "@tsconfig/node20": "^20.1.4",
     "@types/node": "^20.11.16",
     "@types/ws": "^8.18.1",
@@ -50,6 +55,7 @@
     "esbuild": "^0.25.10",
     "fast-glob": "^3.3.3",
     "gulp": "^5.0.1",
+    "pkg": "^5.8.1",
     "rimraf": "^6.0.1",
     "typescript": "^5.9.2"
   }

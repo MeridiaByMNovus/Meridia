@@ -235,6 +235,7 @@ code.hljs {
   font-size: 18px;
   border-radius: 6px;
   margin: 20px 0;
+  font-family: "Inconsolata";
 }
 
 .code .mira .content .message.ai svg {

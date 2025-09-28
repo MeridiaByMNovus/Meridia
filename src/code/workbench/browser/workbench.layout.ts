@@ -11,7 +11,7 @@ import { Statusbar } from "./workbench.parts/workbench.part.status.js";
 import { DevPanel } from "./workbench.parts/workbench.part.dev.panel/workbench.part.dev.panel.el.js";
 import { Titlebar } from "./workbench.parts/workbench.part.titlebar.js";
 import { runIcon } from "./workbench.media/workbench.icons.js";
-import { Mira } from "./workbench.layout.mira.js";
+import { Mira } from "../../platform/mira/mira.workbench/browser/workbench.mira.layout.js";
 
 export class Layout {
   constructor() {

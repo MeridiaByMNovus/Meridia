@@ -1,8 +1,8 @@
 {
+  "$schema": "http://json.schemastore.org/electron-builder",
   "appId": "com.mnovus.meridia",
   "productName": "Meridia",
   "asar": false,
-  "asarUnpack": false,
   "extends": null,
   "directories": {
     "output": "dist/"
@@ -14,6 +14,7 @@
     "!**/*.map",
     "!src/**/*"
   ],
+  "extraMetadata": "build/main.js",
   "win": {
     "target": [
       {

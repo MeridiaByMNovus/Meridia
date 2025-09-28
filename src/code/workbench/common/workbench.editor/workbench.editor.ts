@@ -15,7 +15,7 @@ import { update_editor_tabs } from "../workbench.store/workbench.store.slice.js"
 import { select } from "../workbench.store/workbench.store.selector.js";
 import { getLanguage } from "../workbench.utils.js";
 import { registerTheme } from "./workbench.editor.theme.js";
-import { registerCompletion } from "../../../platform/mira/editor.suggestions/register.js";
+import { registerCompletion } from "../../../platform/mira/mira.suggestions/register.js";
 
 Object.assign(window, {
   MonacoEnvironment: {
@@ -116,9 +116,10 @@ export class Editor {
 
     this._visiblity(false);
 
-    this._setupCLient();
+    if (!this._languageClient) this._setupCLient();
+
     this._setupCursorTracking();
-    this._setupSaveAction();
+    this._saveAction();
   }
 
   private _visiblity(visible: boolean) {
@@ -130,7 +131,7 @@ export class Editor {
     }
   }
 
-  private _setupSaveAction() {
+  private _saveAction() {
     this._saveActionDisposable?.dispose();
     this._saveActionDisposable = this._editor.addAction({
       id: "workbench.save",
@@ -281,7 +282,7 @@ export class Editor {
       if (!this._tabs.find((t) => t.uri === tab.uri)) this._tabs.push(tab);
 
       model.onDidChangeContent(() => {
-        if (!this._isUpdatingFromExternal) this._updateTabState(tab.uri, true);
+        if (!this._isUpdatingFromExternal) this._update(tab.uri, true);
       });
 
       this._watch(tab.uri);
@@ -303,13 +304,13 @@ export class Editor {
       const watcher = window.fs.watchFile(
         uri,
         { persistent: true, interval: 1000 },
-        () => this._externalFileChange(uri)
+        () => this._external(uri)
       );
       this._watchers.set(uri, watcher);
     } catch {}
   }
 
-  private async _externalFileChange(uri: string) {
+  private async _external(uri: string) {
     const model = this._models.get(uri);
     if (!model) return;
 
@@ -331,17 +332,17 @@ export class Editor {
         if (currentSelection) this._editor.setSelection(currentSelection);
       }
 
-      this._updateTabState(uri, false);
+      this._update(uri, false);
     } catch {}
   }
 
-  private _updateTabState(uri: string, isTouched: boolean) {
+  private _update(uri: string, _touched: boolean) {
     this._tabs = this._tabs.map((tab) =>
-      tab.uri === uri ? { ...tab, is_touched: isTouched } : tab
+      tab.uri === uri ? { ...tab, is_touched: _touched } : tab
     );
 
     const updatedTabs = select((s) => s.main.editor_tabs).map((tab) =>
-      tab.uri === uri ? { ...tab, is_touched: isTouched } : tab
+      tab.uri === uri ? { ...tab, is_touched: _touched } : tab
     );
 
     dispatch(update_editor_tabs(updatedTabs));
@@ -353,11 +354,11 @@ export class Editor {
 
     try {
       await window.fs.createFile(uri, model.getValue());
-      this._updateTabState(uri, false);
+      this._update(uri, false);
     } catch {}
   }
 
-  _close(uri: string) {
+  public _close(uri: string) {
     const model = this._models.get(uri);
     if (!model) return;
 

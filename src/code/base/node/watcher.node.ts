@@ -11,7 +11,16 @@ export function _watch(rootPath: string) {
   watchRootPath = path.normalize(rootPath);
 
   fileWatcher = chokidar.watch(rootPath, {
-    ignored: [/node_modules/, /\.git/, /\.DS_Store/, /Thumbs\.db/],
+    ignored: [
+      /node_modules/,
+      /\.git/,
+      /\.DS_Store/,
+      /Thumbs\.db/,
+      /\/\.wine/,
+      /\/proc/,
+      (filePath) =>
+        filePath.includes("/proc") || filePath.includes(".wine/dosdevices"),
+    ],
     ignoreInitial: true,
     persistent: true,
     depth: 99,
@@ -37,7 +46,6 @@ export function _watch(rootPath: string) {
       nodeName: fileName,
       nodeType: "file",
     });
-    console.log(`File added: ${filePath} -> Parent: ${parentUri}`);
   });
 
   fileWatcher.on("addDir", async (dirPath) => {
@@ -56,7 +64,6 @@ export function _watch(rootPath: string) {
       nodeName: dirName,
       nodeType: "folder",
     });
-    console.log(`Directory added: ${dirPath} -> Parent: ${parentUri}`);
   });
 
   fileWatcher.on("unlink", async (filePath) => {
@@ -68,7 +75,6 @@ export function _watch(rootPath: string) {
     mainWindow.webContents.send("files-node-removed", {
       nodeUri: nodeUri.replace(/\\/g, "/"),
     });
-    console.log(`File removed: ${filePath} -> URI: ${nodeUri}`);
   });
 
   fileWatcher.on("unlinkDir", async (dirPath) => {
@@ -80,7 +86,6 @@ export function _watch(rootPath: string) {
     mainWindow.webContents.send("files-node-removed", {
       nodeUri: nodeUri.replace(/\\/g, "/"),
     });
-    console.log(`Directory removed: ${dirPath} -> URI: ${nodeUri}`);
   });
 
   fileWatcher.on("change", async (filePath) => {
@@ -92,7 +97,6 @@ export function _watch(rootPath: string) {
     mainWindow.webContents.send("files-node-changed", {
       nodeUri: nodeUri.replace(/\\/g, "/"),
     });
-    console.log(`File changed: ${filePath} -> URI: ${nodeUri}`);
   });
 }
 

@@ -117,10 +117,6 @@ async function _init() {
   if (rootPath) {
     _watch(rootPath);
   }
-
-  mainWindow.webContents.on("dom-ready", () => {
-    _refresh();
-  });
 }
 
 _init();

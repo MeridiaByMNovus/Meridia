@@ -92,13 +92,13 @@ export class Titlebar extends CoreEl {
     settings.innerHTML = settingsIcon;
 
     const minimize = document.createElement("div");
-    minimize.className = "circle";
+    minimize.className = "control";
 
     const maximize = document.createElement("div");
-    maximize.className = "circle";
+    maximize.className = "control";
 
     const close = document.createElement("div");
-    close.className = "circle";
+    close.className = "control";
 
     menuOptionsContainer.appendChild(settings);
 

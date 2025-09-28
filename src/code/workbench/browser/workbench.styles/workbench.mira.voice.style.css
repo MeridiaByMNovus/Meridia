@@ -1,0 +1,147 @@
+:root {
+  --workbench-mira-voice-rotation-duration: 6s;
+  --workbench-mira-voice-dynamic-border-radius: 55%;
+}
+
+.code .mira {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  overflow: hidden;
+}
+
+.code .mira .scale-1 {
+  scale: 0.66;
+  transform: rotate(240deg);
+}
+.code .mira .scale-2 {
+  scale: 0.53;
+  transform: rotate(80deg);
+}
+.code .mira .scale-3 {
+  scale: 0.16;
+  transform: rotate(30deg);
+}
+
+.code .mira .circle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 150px;
+  height: 150px;
+  border-radius: var(--workbench-mira-voice-dynamic-border-radius);
+  box-shadow: 0 0 20px 10px rgba(var(--workbench-mira-voice-color-orange), 0.05);
+  animation: rotateShape var(--workbench-mira-voice-rotation-duration) infinite
+    ease-in-out;
+}
+
+.code .mira .circle-1 {
+  background: radial-gradient(
+    circle,
+    rgba(var(--workbench-mira-voice-color-black), 0) 0%,
+    rgba(var(--workbench-mira-voice-color-black), 0) 67%,
+    rgba(var(--workbench-mira-voice-color-orange), 1) 73%,
+    rgba(var(--workbench-mira-voice-color-orange), 1) 100%
+  );
+}
+
+.code .mira .circle-2 {
+  background: radial-gradient(
+    circle,
+    rgba(var(--workbench-mira-voice-color-black), 0) 0%,
+    rgba(var(--workbench-mira-voice-color-black), 0) 67%,
+    rgba(var(--workbench-mira-voice-color-violet), 1) 75%,
+    rgba(var(--workbench-mira-voice-color-violet), 1) 100%
+  );
+  animation: rotateShape var(--workbench-mira-voice-rotation-duration) infinite
+    reverse ease-in-out;
+}
+
+.code .mira .circle-3 {
+  background: radial-gradient(
+    circle,
+    rgba(var(--workbench-mira-voice-color-black), 0) 0%,
+    rgba(var(--workbench-mira-voice-color-black), 0) 70%,
+    rgba(var(--workbench-mira-voice-color-white), 1) 73%,
+    rgba(var(--workbench-mira-voice-color-white), 1) 100%
+  );
+}
+
+@keyframes rotateShape {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg) scale(1);
+    border-radius: var(--workbench-mira-voice-dynamic-border-radius);
+  }
+  50% {
+    transform: translate(-50%, -50%) rotate(180deg) scale(1.05);
+    border-radius: 45% 55% 50% 50%;
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg) scale(1);
+    border-radius: var(--workbench-mira-voice-dynamic-border-radius);
+  }
+}
+
+.code .mira .gradient-circle {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    rgba(var(--workbench-mira-voice-color-orange), 1),
+    rgba(var(--workbench-mira-voice-color-violet), 1),
+    rgba(var(--workbench-mira-voice-color-white), 1),
+    rgba(var(--workbench-mira-voice-color-orange), 1)
+  );
+  animation: spin 10s infinite;
+  transform-origin: center;
+}
+
+.code .mira .transcription-text {
+  position: absolute;
+  bottom: 20px;
+  width: 90%;
+  max-width: 800px;
+  margin: 0 auto;
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--workbench-foreground);
+  font-size: 24px;
+  font-family: "Jetbrains Mono";
+  padding: 12px 18px;
+  border-radius: 8px;
+  text-align: center;
+  z-index: 101;
+  user-select: none;
+  pointer-events: none;
+}
+
+.code .mira .transcription-word.highlight {
+  color: var(--workbench-mira-voice-caption-active-background);
+  background: rgba(255, 120, 0, 0.15);
+  border-radius: 4px;
+}
+
+.code .mira .transcription-word {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  display: inline-block;
+  max-width: 100%;
+}
+
+.code .mira #transcriptionText {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  line-height: 1.4;
+}
+
+.cursor {
+  position: absolute;
+}
+
+.cursor svg {
+  width: 82px;
+  height: auto;
+}

@@ -7,7 +7,7 @@ import {
   sendIcon,
 } from "./workbench.media/workbench.icons.js";
 import { CoreEl } from "./workbench.parts/workbench.part.el.js";
-import { Chat } from "../common/workbench.gemini/workbench.gemini.chat.js";
+import { Chat } from "../common/workbench.mira/workbench.mira.chat.js";
 
 export class Mira extends CoreEl {
   private _input!: HTMLInputElement;
