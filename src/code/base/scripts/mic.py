@@ -107,7 +107,6 @@ def main():
     
     print(json.dumps({"status": "started", "model": "google-speech-recognition"}), flush=True)
     
-    # Adjust for ambient noise once at startup
     try:
         with mic as source:
             print(json.dumps({"status": "calibrating_microphone"}), flush=True)
