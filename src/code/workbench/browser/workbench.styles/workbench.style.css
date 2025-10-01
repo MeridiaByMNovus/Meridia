@@ -36,7 +36,8 @@ button {
 button,
 div,
 span,
-a:hover {
+a:hover,
+.hovered {
   transition: background 0.2s ease-in-out, color 0.2s ease-in-out;
 }
 
@@ -52,6 +53,16 @@ a:hover {
 
 .code svg.markdown path {
   fill: var(--workbench-icon-foreground);
+}
+
+.cursor {
+  position: absolute;
+  z-index: 99;
+}
+
+.cursor svg {
+  width: 60px;
+  height: auto;
 }
 
 * {

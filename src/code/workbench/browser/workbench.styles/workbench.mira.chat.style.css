@@ -209,7 +209,8 @@ code.hljs {
   border-radius: 4px;
 }
 
-.code .mira .chatbox span:hover {
+.code .mira .chatbox span:hover,
+.hovered {
   background: var(--workbench-hover-background);
 }
 

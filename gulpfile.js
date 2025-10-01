@@ -3,6 +3,7 @@ const { src, dest, watch, series, parallel } = require("gulp");
 const SOURCE_GLOBS = [
   "src/**/*.{html,css,json,svg,png,ico,py,ttf,otf,zip}",
   "!src/**/tsconfig.*",
+  "src/code/base/native/cpp/**/*",
 ];
 
 const MODELS_GLOBS = ["src/code/base/models/**/*", "!src/**/tsconfig.*"];

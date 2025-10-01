@@ -32,7 +32,7 @@ export class Chat {
         model: "gemini-2.0-flash-001",
         contents: currentContents,
         config: {
-          tools: _fileTools,
+          // tools: _fileTools,
         },
       });
 

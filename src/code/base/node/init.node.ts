@@ -9,22 +9,22 @@ const _extractVoicePath = path.join(
   "extract_text.py"
 );
 
-const options = {
+const _downloadPath = path.join(
+  __dirname,
+  "code",
+  "base",
+  "scripts",
+  "download.py"
+);
+
+const _voiceArgs = {
   ...PythonShell.defaultOptions,
   args: ["--preload", "preload.wav"],
 };
 
-const pyshell = new PythonShell(_extractVoicePath, options);
+const _downloadArgs = {
+  ...PythonShell.defaultOptions,
+};
 
-pyshell.on("stderr", function (stderr) {
-  console.log("Python output:", stderr);
-});
-
-pyshell.end(function (err, code, signal) {
-  if (err) {
-    console.error("Python script error:", err);
-  } else {
-    console.log("Python script finished with exit code:", code);
-    console.log("Exit signal:", signal);
-  }
-});
+const _voiceShell = new PythonShell(_extractVoicePath, _voiceArgs);
+const _downloadShell = new PythonShell(_downloadPath, _downloadArgs);

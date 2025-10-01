@@ -22,7 +22,8 @@
   cursor: pointer;
 }
 
-.code .files .empty-state .open-folder:hover {
+.code .files .empty-state .open-folder:hover,
+.hovered {
   background: var(--workbench-secondary-button-hover-background);
 }
 
@@ -79,7 +80,8 @@
   opacity: 1;
 }
 
-.code .files .tree .node:hover {
+.code .files .tree .node:hover,
+.hovered {
   opacity: 1;
 }
 

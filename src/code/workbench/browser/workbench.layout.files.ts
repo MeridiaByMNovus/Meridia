@@ -209,6 +209,7 @@ export class Files extends CoreEl {
     nodes.forEach((_node) => {
       const _nodeEl = document.createElement("div");
       _nodeEl.className = "node";
+      _nodeEl.dataset.nodeId = _node.uri;
 
       const _icon = document.createElement("span");
       _icon.className = "icon";

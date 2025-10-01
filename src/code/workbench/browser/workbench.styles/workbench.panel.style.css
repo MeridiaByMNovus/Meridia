@@ -63,7 +63,8 @@
   outline: 2px solid var(--workbench-panel-options-active-border-foreground);
 }
 
-.code .panel.command-panel span:not(.active):hover {
+.code .panel.command-panel span:not(.active):hover,
+.hovered {
   background: var(--workbench-panel-options-hover-background);
 }
 

@@ -4,30 +4,63 @@ import json
 import queue
 import sounddevice as sd
 import numpy as np
-import speech_recognition as sr
 import tempfile
 import wave
 from pathlib import Path
 import threading
 import time
+import subprocess
 
-# Initialize Speech Recognition
-print(json.dumps({"status": "initializing_speech_recognition"}), flush=True)
-r = sr.Recognizer()
-mic = sr.Microphone()
+def get_app_data_path():
+    if sys.platform == "win32":
+        return Path(os.getenv("APPDATA")) / "Meridia" / "User" / "mira" / "models"
+    else:
+        return Path(os.getenv("HOME")) / ".config" / "Meridia" / "User" / "mira" / "models"
 
-# Optimize for fast response
-r.energy_threshold = 300
-r.dynamic_energy_threshold = True
-r.pause_threshold = 0.8  # Quick response
-r.phrase_threshold = 0.3
-r.non_speaking_duration = 0.5
+def get_whisper_paths(model_size="tiny"):
+    """Get platform-specific whisper.cpp paths with downloaded model"""
+    script_dir = Path(__file__).parent.resolve()
+    app_data = get_app_data_path()
+    
+    # Platform-specific whisper binary paths
+    if sys.platform == "win32":
+        platform_dir = "win32"
+        executable = "whisper-cli.exe"
+    else:
+        platform_dir = "linux"
+        executable = "whisper-cli"
+    
+    # Use whisper-cli from your project
+    whisper_dir = (script_dir / ".." / "native" / "cpp" / "whisper.cpp" / platform_dir).resolve()
+    whisper_path = whisper_dir / executable
+    
+    model_filename = "ggml-tiny.bin"
+    model_path = app_data / model_filename
+    
+    # Fallback to project directory if not in app data
+    if not model_path.exists():
+        fallback_model_dir = (script_dir / ".." / "native" / "cpp" / "whisper.cpp").resolve()
+        model_path = fallback_model_dir / model_filename
+    
+    return str(whisper_path), str(model_path), str(whisper_dir)
 
-print(json.dumps({"status": "loaded", "model": "google-speech-recognition"}), flush=True)
+print(json.dumps({"status": "initializing_whisper"}), flush=True)
+
+# Check whisper.cpp availability
+try:
+    whisper_path, model_path, whisper_dir = get_whisper_paths("tiny")
+    if not os.path.exists(whisper_path):
+        raise FileNotFoundError(f"whisper-cli not found at: {whisper_path}")
+    if not os.path.exists(model_path):
+        raise FileNotFoundError(f"Model not found at: {model_path}")
+    print(json.dumps({"status": "loaded", "model": "whisper-cpp-tiny"}), flush=True)
+except Exception as e:
+    print(json.dumps({"error": f"Whisper setup failed: {str(e)}"}), flush=True)
+    sys.exit(1)
 
 # Audio configuration
 samplerate = 16000
-chunk_duration = 1  # Process audio every 1 second (faster than Whisper's 3)
+chunk_duration = 2  # Process every 2 seconds for better accuracy with accents
 recording_buffer = []
 is_recording = True
 
@@ -41,8 +74,72 @@ def audio_callback(indata, frames, time, status):
     except Exception as e:
         print(json.dumps({"error": f"Audio processing error: {str(e)}"}), flush=True)
 
+def transcribe_with_whisper(audio_file):
+    """Transcribe audio file using whisper.cpp"""
+    try:
+        whisper_path, model_path, whisper_dir = get_whisper_paths("tiny")
+        
+        # Create temporary output file
+        with tempfile.NamedTemporaryFile(mode='w', suffix='', delete=False) as temp_file:
+            output_file = temp_file.name
+        
+        cmd = [
+            whisper_path,
+            '-m', model_path,
+            '-f', audio_file,
+            '--max-len', '0',
+            '--output-json',
+            '--output-file', output_file,         
+        ]
+        
+        # Set up environment
+        env = os.environ.copy()
+        if sys.platform != "win32":
+            env['LD_LIBRARY_PATH'] = whisper_dir + ':' + env.get('LD_LIBRARY_PATH', '')
+        
+        # Run whisper.cpp with timeout for real-time
+        result = subprocess.run(
+            cmd,
+            cwd=whisper_dir,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=8  # 8 second timeout for small model
+        )
+        
+        if result.returncode != 0:
+            return None
+        
+        # Read JSON output
+        json_file = output_file + '.json'
+        if not os.path.exists(json_file):
+            return None
+        
+        with open(json_file, 'r', encoding='utf-8') as f:
+            whisper_result = json.load(f)
+        
+        # Clean up temp files
+        try:
+            os.unlink(output_file)
+            os.unlink(json_file)
+        except:
+            pass
+        
+        # Extract text from whisper result
+        text_parts = []
+        if 'transcription' in whisper_result:
+            for segment in whisper_result['transcription']:
+                if 'text' in segment and segment['text'].strip():
+                    text_parts.append(segment['text'].strip())
+        
+        return ' '.join(text_parts).strip() if text_parts else None
+        
+    except Exception as e:
+        print(json.dumps({"error": f"Whisper transcription error: {str(e)}"}), flush=True)
+        return None
+
 def process_audio_chunks():
-    """Process audio chunks with SpeechRecognition"""
+    """Process audio chunks with whisper.cpp"""
     global recording_buffer, is_recording
     
     while is_recording:
@@ -51,19 +148,20 @@ def process_audio_chunks():
         if len(recording_buffer) == 0:
             continue
             
-        # Get current audio chunk
+        # Get current chunk
         chunk = np.array(recording_buffer)
         recording_buffer = []  # Clear buffer
         
-        if len(chunk) < samplerate * 0.5:  # Skip very short chunks (less than 0.5 seconds)
+        # Skip if chunk is too short (minimum 1 second for good accent recognition)
+        if len(chunk) < samplerate * 1.0:  
             continue
             
         try:
-            # Save chunk to temporary WAV file
+            # Create temporary audio file
             with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as f:
                 temp_file = f.name
             
-            # Convert to 16-bit and save
+            # Convert to 16-bit WAV
             audio_int16 = (chunk * 32767).astype(np.int16)
             
             with wave.open(temp_file, 'wb') as wav_file:
@@ -72,50 +170,36 @@ def process_audio_chunks():
                 wav_file.setframerate(samplerate)
                 wav_file.writeframes(audio_int16.tobytes())
             
-            # Transcribe with SpeechRecognition (MUCH FASTER)
+            # Transcribe with whisper.cpp
             start_time = time.time()
-            
-            with sr.AudioFile(temp_file) as audio_file:
-                audio_data = r.record(audio_file)
-                text = r.recognize_google(audio_data).strip()
-            
-            process_time = (time.time() - start_time) * 1000  # Convert to ms
-            
-            if text:
-                # Create compatible output with timing info
-                output = {
-                    "text": text,
-                    "result": [],  # SpeechRecognition doesn't provide word-level timestamps
-                    "processing_time_ms": round(process_time),
-                    "confidence": "high"  # Google API generally has high confidence
-                }
-                print(json.dumps(output), flush=True)
+            text = transcribe_with_whisper(temp_file)
+            process_time = (time.time() - start_time) * 1000
             
             # Clean up temp file
             os.unlink(temp_file)
             
-        except sr.UnknownValueError:
-            # No clear speech detected - don't output anything
-            pass
-        except sr.RequestError as e:
-            print(json.dumps({"error": f"Network error: {str(e)}"}), flush=True)
+            if text and len(text.strip()) > 0:
+                # Same output format as original
+                output = {
+                    "text": text,
+                    "result": [],  # Keep compatibility with original format
+                    "processing_time_ms": round(process_time),
+                    "confidence": "high"
+                }
+                print(json.dumps(output), flush=True)
+            
         except Exception as e:
             print(json.dumps({"error": f"Transcription error: {str(e)}"}), flush=True)
 
 def main():
     global is_recording
     
-    print(json.dumps({"status": "started", "model": "google-speech-recognition"}), flush=True)
+    print(json.dumps({"status": "started", "model": "whisper-cpp-small"}), flush=True)
     
-    try:
-        with mic as source:
-            print(json.dumps({"status": "calibrating_microphone"}), flush=True)
-            r.adjust_for_ambient_noise(source, duration=1)
-            print(json.dumps({"status": "calibration_complete"}), flush=True)
-    except Exception as e:
-        print(json.dumps({"error": f"Microphone calibration failed: {str(e)}"}), flush=True)
+    # No microphone calibration needed for whisper.cpp
+    print(json.dumps({"status": "calibration_complete"}), flush=True)
     
-    # Start processing thread
+    # Start audio processing thread
     processing_thread = threading.Thread(target=process_audio_chunks, daemon=True)
     processing_thread.start()
     
@@ -130,7 +214,7 @@ def main():
         ):
             print(json.dumps({"status": "listening"}), flush=True)
             while True:
-                time.sleep(0.1)  # Keep main thread alive
+                time.sleep(0.1)  
                         
     except KeyboardInterrupt:
         is_recording = False

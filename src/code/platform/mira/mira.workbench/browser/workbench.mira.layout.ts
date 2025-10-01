@@ -13,6 +13,10 @@ export class Mira extends CoreEl {
     this._el = document.createElement("div");
     this._el.className = "mira";
 
+    // const _cursor = document.createElement("span");
+    // _cursor.innerHTML = getIcon("cursor/cursor.svg");
+    // _cursor.className = "cursor";
+
     const scale = document.createElement("div");
     scale.className = "scale-0";
 
@@ -34,9 +38,11 @@ export class Mira extends CoreEl {
     this._el.appendChild(transcriptionText);
     this._el.appendChild(scale);
 
+    // document.body.appendChild(_cursor);
+
     setTimeout(async () => {
       // _mic._start();
-      // _voice.say("Welcome to meridia");
+      // _voice.say("Welcome to Meridia, A new world of programming.");
     }, 100);
   }
 }

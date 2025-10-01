@@ -19,7 +19,8 @@
   cursor: pointer;
 }
 
-.code .statusbar .item-section span:hover {
+.code .statusbar .item-section span:hover,
+.hovered {
   background: var(--workbench-statusbar-item-hover-background);
 }
 
@@ -27,7 +28,8 @@
   cursor: pointer;
 }
 
-.code .statusbar .breadcrumb-container .breadcrumb-item:hover {
+.code .statusbar .breadcrumb-container .breadcrumb-item:hover,
+.hovered {
   color: var(--workbench-foreground);
 }
 
