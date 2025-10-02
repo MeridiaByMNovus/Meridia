@@ -1,7 +1,7 @@
 import { ipcMain } from "electron";
+import { mainWindow } from "../../../main";
 import * as os from "os";
 import * as pty from "node-pty";
-import { mainWindow } from "../../../main";
 
 const terminals = new Map<string, pty.IPty>();
 
@@ -54,12 +54,32 @@ setTimeout(() => {
   );
 
   ipcMain.handle("pty-write", (event, id: string, data: string) => {
-    const term = terminals.get(id);
-    if (term) {
+    return new Promise<boolean>((resolve) => {
+      const term = terminals.get(id);
+      if (!term) {
+        resolve(false);
+        return;
+      }
+
+      const onData = (output: string) => {
+        if (
+          output.includes("$") ||
+          output.includes(">") ||
+          output.includes("#")
+        ) {
+          resolve(true);
+        }
+      };
+
+      const disposable = term.onData(onData);
+
       term.write(data);
-      return true;
-    }
-    return false;
+
+      setTimeout(() => {
+        disposable.dispose();
+        resolve(true);
+      }, 5000);
+    });
   });
 
   ipcMain.handle("pty-kill", (event, id: string) => {
@@ -70,5 +90,26 @@ setTimeout(() => {
       return true;
     }
     return false;
+  });
+
+  ipcMain.handle("pty-run-command", (event, id: string, command: string) => {
+    return new Promise<{ success: boolean; error?: string }>((resolve) => {
+      const term = terminals.get(id);
+      if (!term) {
+        resolve({ success: false, error: "Terminal not found" });
+        return;
+      }
+
+      try {
+        term.write(command + "\r");
+
+        resolve({ success: true });
+      } catch (error) {
+        resolve({
+          success: false,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    });
   });
 }, 100);

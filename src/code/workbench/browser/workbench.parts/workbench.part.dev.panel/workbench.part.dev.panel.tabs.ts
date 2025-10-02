@@ -2,6 +2,7 @@ import PerfectScrollbar from "perfect-scrollbar";
 import { IDevTab } from "../../../workbench.types.js";
 import {
   eillipsisIcon,
+  runIcon,
   terminalIcon,
 } from "../../workbench.media/workbench.icons.js";
 import { CoreEl } from "../workbench.part.el.js";
@@ -9,18 +10,25 @@ import { Panel } from "../workbench.part.panel.js";
 import { DevPanel } from "./workbench.part.dev.panel.el.js";
 import { Terminal } from "./workbench.part.terminal.js";
 import { registerStandalone } from "../../../common/workbench.standalone.js";
+import { Run } from "./workbench.part.dev.run.js";
 
 export class DevPanelTabs extends CoreEl {
   private _tabs: IDevTab[] = [
     {
       id: `terminal`,
       name: "Terminal",
-      active: true,
+      active: false,
       icon: terminalIcon,
+    },
+    {
+      id: `run`,
+      name: "Run",
+      active: true,
+      icon: runIcon,
     },
   ];
   private _contentEl: HTMLElement;
-  private _panels: Map<string, Terminal> = new Map();
+  private _panels: Map<string, any> = new Map();
 
   constructor(contentEl: HTMLElement, private _devPanel: DevPanel) {
     super();
@@ -104,8 +112,9 @@ export class DevPanelTabs extends CoreEl {
       if (tab.id === "terminal") {
         panel = new Terminal();
         registerStandalone("terminal", panel);
-      } else if (tab.id === "console") {
-        panel = this._createConsolePanel();
+      } else if (tab.id === "run") {
+        panel = new Run();
+        registerStandalone("run", panel);
       } else {
         panel = new Terminal();
       }

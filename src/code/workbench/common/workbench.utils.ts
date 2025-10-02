@@ -70,6 +70,8 @@ export const tokensToCssVariables: Record<IThemeColors, string> = {
   "workbench.terminal.foreground": "--workbench-terminal-foreground",
   "workbench.terminal.cursor.foreground":
     "--workbench-terminal-cursor-foreground",
+  "workbench.terminal.selection.background":
+    "--workbench-terminal-selection-background",
   "workbench.panel.background": "--workbench-panel-background",
   "workbench.panel.options.hover.background":
     "--workbench-panel-options-hover-background",
@@ -118,7 +120,27 @@ export function parseTokensToCssVariables(
 export function getFileIcon(_name: string) {
   const _ext = _name.split(".").pop() || "";
 
-  const _supported = ["ts", "js", "py", "html", "json", "mjs", "mts", "md"];
+  const _supported = [
+    "ts",
+    "js",
+    "py",
+    "html",
+    "json",
+    "mjs",
+    "mts",
+    "cjs",
+    "cts",
+    "md",
+    "gitignore",
+    "otf",
+    "ttf",
+    "svg",
+    "xls",
+    "xlsx",
+    "toml",
+    "d",
+    "rs",
+  ];
 
   let _iconPath: string;
 

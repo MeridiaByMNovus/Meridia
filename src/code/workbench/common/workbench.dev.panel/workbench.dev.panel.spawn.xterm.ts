@@ -8,6 +8,11 @@ const ipcRenderer = window.ipc;
 
 class XtermManager {
   _terminals = new Map<string, IXTermInstance>();
+  private _runningCommands = new Map<
+    string,
+    { pid?: number; isRunning: boolean }
+  >();
+  private _completionDetected = new Map<string, boolean>();
 
   async _spawn(id: string, options?: any): Promise<HTMLElement> {
     if (this._terminals.has(id)) {
@@ -39,10 +44,17 @@ class XtermManager {
     await ipcRenderer.invoke("pty-spawn", id, term.cols, term.rows);
 
     const onPtyData = (_event: any, data: string) => {
-      if (data.includes("\x1b[H\x1b[2J") || data.includes("\x1b[2J")) {
+      // Filter out execution completion markers and everything after
+      let filteredData = this._filterExecutionMarkers(id, data);
+
+      if (
+        filteredData.includes("\x1b[H\x1b[2J") ||
+        filteredData.includes("\x1b[2J")
+      ) {
         term.clear();
-      } else {
-        term.write(data);
+      } else if (filteredData.length > 0) {
+        // Only write if there's actual data left after filtering
+        term.write(filteredData);
       }
     };
     ipcRenderer.on(`pty-data-${id}`, onPtyData);
@@ -53,7 +65,6 @@ class XtermManager {
 
     term.onResize(({ cols, rows }) => {
       ipcRenderer.invoke("pty-resize", id, cols, rows);
-
       this._update();
     });
 
@@ -63,6 +74,9 @@ class XtermManager {
         background: _theme.getColor("workbench.terminal.background"),
         foreground: _theme.getColor("workbench.terminal.foreground"),
         cursor: _theme.getColor("workbench.terminal.cursor.foreground"),
+        selectionBackground: _theme.getColor(
+          "workbench.terminal.selection.background"
+        ),
       };
       this._update();
       this._update();
@@ -76,6 +90,54 @@ class XtermManager {
     });
 
     return _container;
+  }
+
+  // Filter out execution completion markers and everything after them
+  private _filterExecutionMarkers(id: string, data: string): string {
+    // Check if completion was already detected for this terminal
+    if (this._completionDetected.get(id)) {
+      return ""; // Block all further output after completion
+    }
+
+    // Check if this data chunk contains a completion marker
+    const executionMarkerRegex =
+      /__EXECUTION_COMPLETE_[a-f0-9]{8}__[A-Z_]+(_\d+)?/;
+    const hasMarker =
+      executionMarkerRegex.test(data) ||
+      data.includes("__EXECUTION_COMPLETE_") ||
+      data.includes("__SUCCESS") ||
+      data.includes("__ERROR") ||
+      data.includes("__INTERRUPTED") ||
+      data.includes("__EXCEPTION");
+
+    if (hasMarker) {
+      // Mark completion as detected for this terminal
+      this._completionDetected.set(id, true);
+
+      // Split by lines and find where the marker appears
+      const lines = data.split("\n");
+      const filteredLines = [];
+
+      for (const line of lines) {
+        // Stop processing once we hit a completion marker line
+        if (
+          line.match(executionMarkerRegex) ||
+          line.includes("__EXECUTION_COMPLETE_") ||
+          line.includes("__SUCCESS") ||
+          line.includes("__ERROR") ||
+          line.includes("__INTERRUPTED") ||
+          line.includes("__EXCEPTION")
+        ) {
+          break; // Stop here - don't include this line or any after it
+        }
+        filteredLines.push(line);
+      }
+
+      return filteredLines.join("\n");
+    }
+
+    // No marker found, return original data
+    return data;
   }
 
   _get(id: string): HTMLElement | null {
@@ -94,6 +156,7 @@ class XtermManager {
     _instance.term.dispose();
     _instance._container.remove();
     this._terminals.delete(id);
+    this._completionDetected.delete(id);
 
     ipcRenderer.invoke("pty-kill", id);
   }
@@ -120,10 +183,186 @@ class XtermManager {
           "px";
         instance._container.style.height = _height;
         instance._container.style.width = _width;
-      } catch (e) {
-        console.warn(`Failed to fit terminal ${id}`, e);
+      } catch (e) {}
+    }
+  }
+
+  async _run(id: string, command: string): Promise<boolean> {
+    try {
+      // Reset completion detection for new command
+      this._completionDetected.set(id, false);
+      this._runningCommands.set(id, { isRunning: true });
+
+      const instance = this._terminals.get(id);
+      if (!instance?.term) {
+        this._runningCommands.delete(id);
+        return false;
+      }
+
+      instance.term.clear();
+
+      instance.term.options.disableStdin = false;
+
+      const commandCompleted = this._wait(id);
+      const result = await ipcRenderer.invoke("pty-run-command", id, command);
+
+      if (!result.success) {
+        this._runningCommands.delete(id);
+        this._completionDetected.delete(id);
+        instance.term.write(`\r\nError: ${result.error}\r\n`);
+        instance.term.options.disableStdin = true;
+        return false;
+      }
+
+      const wasSuccessful = await commandCompleted;
+
+      instance.term.options.disableStdin = true;
+      this._runningCommands.delete(id);
+
+      return wasSuccessful;
+    } catch (error) {
+      this._runningCommands.delete(id);
+      this._completionDetected.delete(id);
+
+      const instance = this._terminals.get(id);
+      if (instance?.term) {
+        instance.term.write(`\r\nError: ${error}\r\n`);
+        instance.term.options.disableStdin = true;
+      }
+
+      return false;
+    }
+  }
+
+  private _wait(id: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      const instance = this._terminals.get(id);
+      if (!instance?.term) {
+        resolve(false);
+        return;
+      }
+
+      let dataBuffer = "";
+      let timeoutId: NodeJS.Timeout;
+      let resolved = false;
+
+      // Listen to raw PTY data (before filtering) for completion detection
+      const ptyDataListener = (event: any, data: string) => {
+        if (resolved) return;
+
+        dataBuffer += data;
+
+        const hasCompletionMarker = dataBuffer.includes(
+          "__EXECUTION_COMPLETE_"
+        );
+
+        if (hasCompletionMarker) {
+          const lines = dataBuffer.split("\n");
+          const completionLine = lines.find((line) =>
+            line.includes("__EXECUTION_COMPLETE_")
+          );
+
+          if (completionLine) {
+            cleanup();
+            const wasSuccessful = completionLine.includes("SUCCESS");
+            resolved = true;
+            resolve(wasSuccessful);
+            return;
+          }
+        }
+
+        if (
+          dataBuffer.includes("__SUCCESS") ||
+          dataBuffer.includes("SUCCESS")
+        ) {
+          cleanup();
+          resolved = true;
+          resolve(true);
+          return;
+        }
+
+        if (
+          dataBuffer.includes("__ERROR") ||
+          dataBuffer.includes("__INTERRUPTED") ||
+          dataBuffer.includes("__EXCEPTION")
+        ) {
+          cleanup();
+          resolved = true;
+          resolve(false);
+          return;
+        }
+      };
+
+      const cleanup = () => {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+        ipcRenderer.removeListener(`pty-data-${id}`, ptyDataListener);
+      };
+
+      ipcRenderer.on(`pty-data-${id}`, ptyDataListener);
+
+      timeoutId = setTimeout(() => {
+        if (!resolved) {
+          cleanup();
+          resolved = true;
+          resolve(false);
+        }
+      }, 60000);
+    });
+  }
+
+  async _stop(id: string): Promise<boolean> {
+    const commandInfo = this._runningCommands.get(id);
+    if (!commandInfo || !commandInfo.isRunning) {
+      return false;
+    }
+
+    const term = this._terminals.get(id)?.term;
+
+    if (term) {
+      try {
+        this._runningCommands.set(id, { ...commandInfo, isRunning: false });
+        this._completionDetected.delete(id);
+
+        term.options.disableStdin = true;
+
+        return true;
+      } catch (error) {
+        return false;
+      }
+    } else {
+      return false;
+    }
+  }
+
+  _isRunning(id: string): boolean {
+    const commandInfo = this._runningCommands.get(id);
+    return commandInfo?.isRunning || false;
+  }
+
+  _getRunningCommands(): string[] {
+    const running: string[] = [];
+    for (const [id, info] of this._runningCommands.entries()) {
+      if (info.isRunning) {
+        running.push(id);
       }
     }
+    return running;
+  }
+
+  _clearRunningStatus(id: string): void {
+    this._runningCommands.delete(id);
+    this._completionDetected.delete(id);
+  }
+
+  _setRunningStatus(id: string, isRunning: boolean, pid?: number): void {
+    const current = this._runningCommands.get(id) || { isRunning: false };
+    this._runningCommands.set(id, {
+      ...current,
+      isRunning,
+      pid: pid || current.pid!,
+    });
   }
 }
 

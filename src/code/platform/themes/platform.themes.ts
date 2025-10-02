@@ -70,6 +70,7 @@ export const Light: ITheme = {
     "workbench.terminal.background": "#ffffff",
     "workbench.terminal.foreground": "#1e1e1e",
     "workbench.terminal.cursor.foreground": "#1e1e1e",
+    "workbench.terminal.selection.background": "#f0f8ff",
     "workbench.mira.voice.color.violet": "102, 51, 153",
     "workbench.mira.voice.color.orange": "255, 120, 0",
     "workbench.mira.voice.color.black": "0, 0, 0",

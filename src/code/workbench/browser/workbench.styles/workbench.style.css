@@ -40,6 +40,26 @@
   fill: var(--workbench-icon-foreground);
 }
 
+.code svg.font path {
+  fill: var(--workbench-icon-foreground);
+}
+
+.code svg.git path {
+  fill: var(--workbench-icon-foreground);
+}
+
+.code svg.toml path {
+  fill: var(--workbench-icon-foreground);
+}
+
+.code svg.rs path {
+  stroke: var(--workbench-icon-foreground);
+}
+
+.code svg.binary path {
+  stroke: var(--workbench-icon-foreground);
+}
+
 .cursor {
   position: absolute;
   z-index: 99;

@@ -345,11 +345,11 @@ export class Editor {
       tab.uri === uri ? { ...tab, is_touched: _touched } : tab
     );
 
-    const updatedTabs = select((s) => s.main.editor_tabs).map((tab) =>
+    const _updated = select((s) => s.main.editor_tabs).map((tab) =>
       tab.uri === uri ? { ...tab, is_touched: _touched } : tab
     );
 
-    dispatch(update_editor_tabs(updatedTabs));
+    dispatch(update_editor_tabs(_updated));
   }
 
   private async _save(uri: string) {

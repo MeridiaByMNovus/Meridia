@@ -1,4 +1,3 @@
-import "../common/workbench.init.js";
 import { registerStandalone } from "../common/workbench.standalone.js";
 import { changePanelOptionsWidth } from "../event/workbench.event.panel.options.js";
 import { Editor as EditorLayout } from "./workbench.layout.editor.js";
@@ -15,6 +14,7 @@ import { Mira } from "../../platform/mira/mira.workbench/browser/workbench.mira.
 import { _xtermManager } from "../common/workbench.dev.panel/workbench.dev.panel.spawn.xterm.js";
 import { runCommand } from "../common/workbench.command.js";
 import { select } from "../common/workbench.store/workbench.store.selector.js";
+import "../common/workbench.init.js";
 
 export class Layout {
   constructor() {
@@ -72,8 +72,7 @@ export class Layout {
       const _tabs = select((s) => s.main.editor_tabs);
       const _active = _tabs.find((t) => t.active);
 
-      if (_active)
-        runCommand("workbench.editor.run", [`python ${_active.uri}`]);
+      if (_active) runCommand("workbench.editor.run", [_active.uri]);
     };
 
     const middlePanelOptions = new PanelOptions(

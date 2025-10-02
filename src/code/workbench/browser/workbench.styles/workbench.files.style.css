@@ -27,6 +27,12 @@
   background: var(--workbench-secondary-button-hover-background);
 }
 
+.code .files .empty-state p {
+  font-family: "Inconsolata";
+  text-wrap: wrap;
+  text-align: center;
+}
+
 .code .files .tree {
   display: flex;
   flex-direction: column;

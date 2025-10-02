@@ -111,6 +111,7 @@ export const ThemeColors = [
   "workbench.terminal.background",
   "workbench.terminal.foreground",
   "workbench.terminal.cursor.foreground",
+  "workbench.terminal.selection.background",
   "workbench.statusbar.foreground",
   "workbench.statusbar.item.hover.background",
 ] as const;

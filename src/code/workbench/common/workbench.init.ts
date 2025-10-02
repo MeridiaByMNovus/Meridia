@@ -1,3 +1,4 @@
+import { Run } from "../browser/workbench.parts/workbench.part.dev.panel/workbench.part.dev.run.js";
 import { Terminal } from "../browser/workbench.parts/workbench.part.dev.panel/workbench.part.terminal.js";
 import { mount } from "../event/workbench.event.editor.js";
 import { setPanelVisibilty } from "../event/workbench.event.panel.js";
@@ -32,13 +33,13 @@ setTimeout(() => {
   mount();
   changePanelOptionsWidth();
 
-  addCommand("workbench.editor.run", (_command: string) => {
-    const _terminal = getStandalone("terminal") as Terminal;
-    const _active = _terminal._getActive();
+  addCommand("workbench.editor.run", (_path: string) => {
+    const _run = getStandalone("run") as Run;
+    _run.runFile(_path);
+  });
 
-    if (_active) {
-      const _id = _active.id;
-      window.ipc.invoke("pty-write", _id, _command + "\r");
-    }
+  addCommand("workbench.editor.stop", (_path: string) => {
+    const _run = getStandalone("run") as Run;
+    _run.stopFile(_path);
   });
 }, 100);
