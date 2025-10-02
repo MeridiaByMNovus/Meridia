@@ -1,11 +1,12 @@
 import { app, BrowserWindow } from "electron";
-import { HttpServer, runPyrightLanguageServer } from "./server.js";
+import { HttpServer } from "./server.js";
 import dotenv from "dotenv";
 import path from "path";
 import "./code/base/common/base.file.create.js";
 import "./code/base/node/files.node.js";
 import "./code/base/node/mira.node.js";
 import "./code/base/node/init.node.js";
+import "./code/base/common/editor/editor.main.js";
 
 dotenv.config();
 
@@ -19,8 +20,6 @@ if (process.env.NODE_ENV === "development") {
   PORT = httpServer._port;
   httpServer._serve();
 }
-
-runPyrightLanguageServer();
 
 export const PRELOAD_PATH = path.join(
   __dirname,

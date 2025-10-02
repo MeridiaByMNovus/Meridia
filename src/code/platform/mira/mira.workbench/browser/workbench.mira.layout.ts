@@ -41,7 +41,7 @@ export class Mira extends CoreEl {
     this._el.appendChild(scale);
 
     setTimeout(async () => {
-      _mic._start();
+      // _mic._start();
     }, 100);
   }
 }

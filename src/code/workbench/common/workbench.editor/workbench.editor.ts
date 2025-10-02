@@ -17,6 +17,10 @@ import { getLanguage } from "../workbench.utils.js";
 import { registerTheme } from "./workbench.editor.theme.js";
 import { registerCompletion } from "../../../platform/mira/mira.suggestions/register.js";
 
+const fs = window.fs;
+const path = window.path;
+const python = window.python;
+
 Object.assign(window, {
   MonacoEnvironment: {
     getWorker(_moduleId: string, label: string) {
@@ -273,7 +277,7 @@ export class Editor {
       model =
         monaco.editor.getModel(uri) ||
         monaco.editor.createModel(
-          await window.fs.readFile(tab.uri),
+          await fs.readFile(tab.uri),
           getLanguage(tab.uri),
           uri
         );
@@ -301,7 +305,7 @@ export class Editor {
     if (this._watchers.has(uri)) return;
 
     try {
-      const watcher = window.fs.watchFile(
+      const watcher = fs.watchFile(
         uri,
         { persistent: true, interval: 1000 },
         () => this._external(uri)
@@ -317,7 +321,7 @@ export class Editor {
     try {
       const [newContent, currentPosition, currentSelection] = await Promise.all(
         [
-          window.fs.readFile(uri),
+          fs.readFile(uri),
           Promise.resolve(this._editor.getPosition()),
           Promise.resolve(this._editor.getSelection()),
         ]
@@ -353,7 +357,10 @@ export class Editor {
     if (!model) return;
 
     try {
-      await window.fs.createFile(uri, model.getValue());
+      await python.executeScript(
+        path.join([path.__dirname, "scripts", "format.py"]),
+        [uri]
+      );
       this._update(uri, false);
     } catch {}
   }
@@ -365,7 +372,7 @@ export class Editor {
     const watcher = this._watchers.get(uri);
     if (watcher) {
       try {
-        window.fs.unwatchFile(uri);
+        fs.unwatchFile(uri);
       } catch {}
       this._watchers.delete(uri);
     }
@@ -396,7 +403,7 @@ export class Editor {
 
     this._watchers.forEach((_, uri) => {
       try {
-        window.fs.unwatchFile(uri);
+        fs.unwatchFile(uri);
       } catch {}
     });
     this._watchers.clear();
