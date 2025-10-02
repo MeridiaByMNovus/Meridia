@@ -1,29 +1,32 @@
 import PerfectScrollbar from "perfect-scrollbar";
-import { IDevPanelTab } from "../../../workbench.types.js";
+import { IDevTab } from "../../../workbench.types.js";
 import {
-  collapseIcon,
-  consoleIcon,
   eillipsisIcon,
-  expandIcon,
-  runIcon,
   terminalIcon,
 } from "../../workbench.media/workbench.icons.js";
 import { CoreEl } from "../workbench.part.el.js";
 import { Panel } from "../workbench.part.panel.js";
 import { DevPanel } from "./workbench.part.dev.panel.el.js";
 import { Terminal } from "./workbench.part.terminal.js";
+import { registerStandalone } from "../../../common/workbench.standalone.js";
 
 export class DevPanelTabs extends CoreEl {
-  private _tabs: IDevPanelTab[] = [];
+  private _tabs: IDevTab[] = [
+    {
+      id: `terminal`,
+      name: "Terminal",
+      active: true,
+      icon: terminalIcon,
+    },
+  ];
   private _contentEl: HTMLElement;
   private _panels: Map<string, Terminal> = new Map();
-  private _isCollapsed: boolean = false;
 
   constructor(contentEl: HTMLElement, private _devPanel: DevPanel) {
     super();
+
     this._contentEl = contentEl;
     this._createEl();
-    this.initializeTabs();
   }
 
   private _createEl() {
@@ -86,86 +89,13 @@ export class DevPanelTabs extends CoreEl {
 
       tabEl.appendChild(icon);
 
-      if (!this._isCollapsed) {
-        tabEl.appendChild(name);
-        tabEl.appendChild(closeButton);
-      }
-
       tabsContainer.appendChild(tabEl);
     });
 
-    const _devPanel = this._devPanel;
-
-    const collapse = document.createElement("span");
-    collapse.className = "collapse";
-    collapse.innerHTML = _devPanel._isCollapsed ? collapseIcon : expandIcon;
-
-    collapse!.onclick = () => {
-      _devPanel._toggle();
-    };
-
     this._el!.appendChild(tabsContainer);
-    this._el!.appendChild(collapse);
   }
 
-  public initializeTabs() {
-    this._tabs = [];
-
-    const sampleTabs: IDevPanelTab[] = [
-      {
-        id: `terminal`,
-        name: "Terminal",
-        active: true,
-        cwd: "/home/user/projects/meridia",
-        shell: "bash",
-        icon: terminalIcon,
-      },
-      {
-        id: `console`,
-        name: "Console",
-        active: false,
-        cwd: "/home/user/projects/meridia",
-        shell: "bash",
-        icon: consoleIcon,
-      },
-      {
-        id: `run`,
-        name: "Run",
-        active: false,
-        cwd: "/home/user/projects/meridia",
-        shell: "bash",
-        icon: runIcon,
-      },
-    ];
-
-    this._tabs = sampleTabs;
-    this._renderTabs();
-  }
-
-  public toggleCollapse() {
-    this._isCollapsed = !this._isCollapsed;
-    this._renderTabs();
-  }
-
-  public collapse() {
-    if (!this._isCollapsed) {
-      this._isCollapsed = true;
-      this._renderTabs();
-    }
-  }
-
-  public expand() {
-    if (this._isCollapsed) {
-      this._isCollapsed = false;
-      this._renderTabs();
-    }
-  }
-
-  public isCollapsed(): boolean {
-    return this._isCollapsed;
-  }
-
-  private _openPanel(tab: IDevPanelTab) {
+  private _openPanel(tab: IDevTab) {
     this._contentEl.innerHTML = "";
 
     let panel = this._panels.get(tab.id);
@@ -173,6 +103,7 @@ export class DevPanelTabs extends CoreEl {
     if (!panel) {
       if (tab.id === "terminal") {
         panel = new Terminal();
+        registerStandalone("terminal", panel);
       } else if (tab.id === "console") {
         panel = this._createConsolePanel();
       } else {

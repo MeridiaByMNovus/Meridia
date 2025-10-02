@@ -165,7 +165,7 @@ export const Dark: ITheme = {
     "workbench.mira.chatbox.border.foreground": "#37383a",
     "workbench.mira.chatbox.active.border.foreground": "#0e5098",
     "workbench.mira.voice.caption.active.background": "#ff7800",
-    "workbench.editor.line.highlight.background": "#152a44",
+    "workbench.editor.line.highlight.background": "#152639",
     "workbench.titlebar.background": "#090909",
     "workbench.titlebar.foreground": "#fffff1",
     "workbench.titlebar.item.hover.background": "#363739",

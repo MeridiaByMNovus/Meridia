@@ -1,4 +1,5 @@
 .code .tabs {
+  position: relative;
   display: flex;
   align-items: center;
   padding: 10px;
@@ -121,4 +122,34 @@
   color: var(--workbench-tabs-active-foreground);
   outline: 2px solid var(--workbench-tabs-active-border-foreground);
   font-weight: 500;
+}
+
+.code .tabs .extra {
+  position: sticky;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  background: var(--workbench-tabs-background);
+}
+
+.code .tabs .extra span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.code .tabs .extra span:hover {
+  background: var(--workbench-tabs-active-background);
+  color: var(--workbench-tabs-active-foreground);
+}
+
+.code .tabs .extra span svg {
+  width: 18px;
+  height: auto;
 }

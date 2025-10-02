@@ -30,7 +30,8 @@ _scrollbarEl.forEach((_el) => {
         mutation.type === "childList" ||
         (mutation.type === "attributes" &&
           mutation.attributeName === "style" &&
-          (mutation.target as HTMLElement).style.height !== undefined)
+          ((mutation.target as HTMLElement).style.height !== undefined ||
+            (mutation.target as HTMLElement).style.width !== undefined))
     );
 
     if (hasRelevantChanges) {

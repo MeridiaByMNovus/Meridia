@@ -12,6 +12,9 @@ import { DevPanel } from "./workbench.parts/workbench.part.dev.panel/workbench.p
 import { Titlebar } from "./workbench.parts/workbench.part.titlebar.js";
 import { runIcon } from "./workbench.media/workbench.icons.js";
 import { Mira } from "../../platform/mira/mira.workbench/browser/workbench.mira.layout.js";
+import { _xtermManager } from "../common/workbench.dev.panel/workbench.dev.panel.spawn.xterm.js";
+import { runCommand } from "../common/workbench.command.js";
+import { select } from "../common/workbench.store/workbench.store.selector.js";
 
 export class Layout {
   constructor() {
@@ -65,6 +68,14 @@ export class Layout {
       runIcon
     ).getDomElement()!;
 
+    editorOption.onclick = () => {
+      const _tabs = select((s) => s.main.editor_tabs);
+      const _active = _tabs.find((t) => t.active);
+
+      if (_active)
+        runCommand("workbench.editor.run", [`python ${_active.uri}`]);
+    };
+
     const middlePanelOptions = new PanelOptions(
       [editorOption],
       null as any,
@@ -97,7 +108,10 @@ export class Layout {
     const splitterVertical = new Splitter(
       [topPanel, bottomPanel],
       "vertical",
-      [60, 40]
+      [60, 40],
+      () => {
+        _xtermManager._update();
+      }
     );
 
     registerStandalone("panel-splitter-vertical", splitterVertical);
@@ -110,6 +124,7 @@ export class Layout {
       [20, 60, 20],
       () => {
         changePanelOptionsWidth();
+        _xtermManager._update();
       }
     );
 

@@ -179,13 +179,26 @@ export const filesBridge = {
 };
 
 export const ipcBridge = {
-  on: (channel: string, callback: Function) => {
-    ipcRenderer.on(channel, (event, ...args) => callback(...args));
+  send: (channel: any, ...args: any) => ipcRenderer.send(channel, ...args),
+
+  invoke: async (channel: any, ...args: any) => {
+    try {
+      return await ipcRenderer.invoke(channel, ...args);
+    } catch (e) {
+      return false;
+    }
   },
 
-  removeAllListeners: (channel: string) => {
-    ipcRenderer.removeAllListeners(channel);
-  },
+  on: (channel: any, func: any) =>
+    ipcRenderer.on(channel, (event, ...args) => func(event, ...args)),
+
+  once: (channel: any, func: any) =>
+    ipcRenderer.once(channel, (event, ...args) => func(event, ...args)),
+
+  removeAllListeners: (channel: any) => ipcRenderer.removeAllListeners(channel),
+
+  removeListener: (channel: any, listener: any) =>
+    ipcRenderer.removeListener(channel, listener),
 };
 
 export const miraBridge = {

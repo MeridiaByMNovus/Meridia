@@ -1,0 +1,4 @@
+.xterm .xterm-scroll-area::-webkit-scrollbar,
+.xterm .xterm-viewport::-webkit-scrollbar {
+  display: none !important;
+}

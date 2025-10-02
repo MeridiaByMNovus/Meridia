@@ -6,6 +6,7 @@ import "./code/base/common/base.file.create.js";
 import "./code/base/node/files.node.js";
 import "./code/base/node/mira.node.js";
 import "./code/base/node/init.node.js";
+import "./code/base/node/pty.node.js";
 import "./code/base/common/editor/editor.main.js";
 
 dotenv.config();

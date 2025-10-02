@@ -1,11 +1,16 @@
+import { Terminal } from "../browser/workbench.parts/workbench.part.dev.panel/workbench.part.terminal.js";
 import { mount } from "../event/workbench.event.editor.js";
 import { setPanelVisibilty } from "../event/workbench.event.panel.js";
 import { changePanelOptionsWidth } from "../event/workbench.event.panel.options.js";
+import { addCommand } from "./workbench.command.js";
+import { _xtermManager } from "./workbench.dev.panel/workbench.dev.panel.spawn.xterm.js";
+import { getStandalone } from "./workbench.standalone.js";
 import { watch } from "./workbench.store/workbench.store.selector.js";
 
 const resizeObserver = new ResizeObserver((entries) => {
   for (const entry of entries) {
     changePanelOptionsWidth();
+    _xtermManager._update();
   }
 });
 
@@ -26,4 +31,14 @@ watch(
 setTimeout(() => {
   mount();
   changePanelOptionsWidth();
+
+  addCommand("workbench.editor.run", (_command: string) => {
+    const _terminal = getStandalone("terminal") as Terminal;
+    const _active = _terminal._getActive();
+
+    if (_active) {
+      const _id = _active.id;
+      window.ipc.invoke("pty-write", _id, _command + "\r");
+    }
+  });
 }, 100);

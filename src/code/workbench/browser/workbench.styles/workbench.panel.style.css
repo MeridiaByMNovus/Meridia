@@ -35,14 +35,6 @@
   height: 20px;
 }
 
-.code .panel.command-panel .left-panel-options {
-  border-right: 2px solid var(--workbench-border-foreground);
-}
-
-.code .panel.command-panel .right-panel-options {
-  border-left: 2px solid var(--workbench-border-foreground);
-}
-
 .code .panel.command-panel span {
   display: flex;
   align-items: center;

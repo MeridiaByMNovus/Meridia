@@ -28,54 +28,9 @@ export class DevPanel extends CoreEl {
 
     this._tabs = new DevPanelTabs(this._content, this);
 
-    this._splitter = new Splitter(
-      [this._content, this._tabs.getDomElement()!],
-      "horizontal",
-      [70, 30]
-    );
-    this._splitter.getDomElement()!.classList.add("height");
-
-    this._el.appendChild(this._splitter.getDomElement()!);
-
-    if (this._isCollapsed) this._collapse();
-    else this._expand();
-
-    registerStandalone("dev-panel-splitter", this._splitter);
-  }
-
-  public _collapse() {
-    this._el!.innerHTML = "";
-    this._el!.classList.add("collapsed");
-    this._el?.appendChild(this._content);
-    this._el?.appendChild(this._tabs.getDomElement()!);
+    this._el.classList.add("collapsed");
+    this._el.appendChild(this._content);
+    this._el.appendChild(this._tabs.getDomElement()!);
     this._content.style.width = "calc(100% - 70px)";
-    this._tabs.collapse();
-    this._isCollapsed = true;
-    window.storage.store("dev-panel-tabs-is-collapsed", true);
-  }
-
-  public _expand() {
-    this._el!.innerHTML = "";
-    this._el!.classList.remove("collapsed");
-    const _splitter = new Splitter(
-      [this._content, this._tabs.getDomElement()!],
-      "horizontal",
-      [70, 30]
-    );
-    _splitter.getDomElement()!.classList.add("height");
-    this._el?.appendChild(_splitter.getDomElement()!);
-    this._tabs.expand();
-    this._isCollapsed = false;
-    window.storage.store("dev-panel-tabs-is-collapsed", false);
-  }
-
-  public _toggle() {
-    if (this._isCollapsed) {
-      this._expand();
-    } else {
-      this._collapse();
-    }
-
-    window.storage.store("dev-panel-tabs-is-collapsed", this._isCollapsed);
   }
 }

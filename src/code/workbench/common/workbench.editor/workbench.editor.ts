@@ -357,6 +357,7 @@ export class Editor {
     if (!model) return;
 
     try {
+      fs.createFile(uri, model.getValue());
       await python.executeScript(
         path.join([path.__dirname, "scripts", "format.py"]),
         [uri]

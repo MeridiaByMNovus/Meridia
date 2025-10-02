@@ -7,6 +7,9 @@ const _kind = _theme.getActiveTheme().kind;
 const _background = _theme.getColor("workbench.editor.background");
 const _foreground = _theme.getColor("workbench.editor.foreground");
 const _cursor = _theme.getColor("workbench.editor.cursor.foreground");
+const _lineHighlight = _theme.getColor(
+  "workbench.editor.line.highlight.background"
+);
 const _tokens = _theme.getActiveTheme().tokenColors!;
 
 export function registerTheme(_monaco: any) {
@@ -87,6 +90,8 @@ export function registerTheme(_monaco: any) {
       "editor.background": _background,
       "editor.foreground": _foreground,
       "editorCursor.foreground": _cursor,
+      "editor.lineHighlightBorder": _background,
+      "editor.lineHighlightBackground": _lineHighlight,
     },
   } as monaco.editor.IStandaloneThemeData);
 }

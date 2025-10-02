@@ -1,15 +1,16 @@
 @import url("./workbench.tabs.style.css");
 @import url("./workbench.files.style.css");
+@import url("./workbench.fonts.style.css");
 @import url("./workbench.panel.style.css");
-@import url("./workbench.mira.chat.style.css");
-@import url("./workbench.mira.voice.style.css");
+@import url("./workbench.xterm.style.css");
 @import url("./workbench.editor.style.css");
 @import url("./workbench.splitter.style.css");
 @import url("./workbench.titlebar.style.css");
+@import url("./workbench.mira.chat.style.css");
 @import url("./workbench.statusbar.style.css");
 @import url("./workbench.dev.panel.style.css");
 @import url("./workbench.scrollbar.style.css");
-@import url("./workbench.fonts.style.css");
+@import url("./workbench.mira.voice.style.css");
 
 :root {
   --workbench-secondary-button-hover-background: color-mix(
@@ -19,26 +20,10 @@
   );
 }
 
-p,
-h1,
-h2,
-h3,
-h4,
-h5,
-h6,
-button {
-  color: var(--workbench-foreground);
+.code {
+  height: 100vh;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-button,
-div,
-span,
-a:hover,
-.hovered {
-  transition: background 0.2s ease-in-out, color 0.2s ease-in-out;
+  font-family: "Inconsolata";
 }
 
 .code svg.default path {
@@ -80,10 +65,26 @@ body {
   overflow: hidden;
 }
 
-.code {
-  height: 100vh;
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+button {
+  color: var(--workbench-foreground);
   overflow: hidden;
-  font-family: "Inconsolata";
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+button,
+div,
+span,
+a:hover,
+.hovered {
+  transition: background 0.2s ease-in-out, color 0.2s ease-in-out;
 }
 
 h1 {

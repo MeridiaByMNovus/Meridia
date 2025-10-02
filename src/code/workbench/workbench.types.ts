@@ -1,3 +1,7 @@
+import PerfectScrollbar from "perfect-scrollbar";
+import { Terminal as XTerm } from "@xterm/xterm";
+import { FitAddon } from "xterm-addon-fit";
+
 export interface ITheme {
   name: string;
   kind: "light" | "dark";
@@ -141,14 +145,26 @@ export interface IEditorTab {
   active: boolean;
 }
 
+export interface IDevTab {
+  id: string;
+  name: string;
+  active: boolean;
+  icon?: string;
+}
+
 export interface IDevPanelTab {
   id: string;
   name: string;
   active: boolean;
   cwd: string;
-  shell: string;
   pid?: number;
-  icon?: string;
+}
+
+export interface IXTermInstance {
+  term: XTerm;
+  _container: HTMLElement;
+  _fitAddon: FitAddon;
+  _ptyDataListener: Function;
 }
 
 export interface IMainState {
