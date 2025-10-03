@@ -9,3 +9,8 @@ import "./event/workbench.event.panel.options.js";
 import "./event/workbench.event.editor.js";
 import "./services/workbench.resources.js";
 import "../platform/mira/mira.workbench/workbench.mira.main.js";
+
+const python = window.python;
+const path = window.path;
+
+python.executeScript(path.join([path.__dirname, "scripts", "download.py"]));
