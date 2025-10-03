@@ -1,5 +1,6 @@
 import "./browser/workbench.web.js";
 import "./common/workbench.theme.js";
+import "./common/workbench.command.register.js";
 import "./common/workbench.editor/workbench.editor.js";
 import "./common/workbench.scrollbar.js";
 import "./common/workbench.uistate.js";

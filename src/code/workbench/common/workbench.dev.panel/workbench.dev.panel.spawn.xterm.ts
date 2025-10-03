@@ -14,7 +14,7 @@ class XtermManager {
   >();
   private _completionDetected = new Map<string, boolean>();
 
-  async _spawn(id: string, options?: any): Promise<HTMLElement> {
+  async _spawn(id: string, cwd: string): Promise<HTMLElement> {
     if (this._terminals.has(id)) {
       return this._terminals.get(id)!._container;
     }
@@ -29,7 +29,6 @@ class XtermManager {
     _container.style.padding = "12px";
 
     const term = new XTerm({
-      ...options,
       scrollback: 1000,
       fontFamily: "Jetbrains Mono",
       fontSize: 18,
@@ -41,11 +40,10 @@ class XtermManager {
 
     fitAddon.fit();
 
-    await ipcRenderer.invoke("pty-spawn", id, term.cols, term.rows);
+    await ipcRenderer.invoke("pty-spawn", id, term.cols, term.rows, cwd);
 
     const onPtyData = (_event: any, data: string) => {
-      // Filter out execution completion markers and everything after
-      let filteredData = this._filterExecutionMarkers(id, data);
+      let filteredData = this._filter(id, data);
 
       if (
         filteredData.includes("\x1b[H\x1b[2J") ||
@@ -53,7 +51,6 @@ class XtermManager {
       ) {
         term.clear();
       } else if (filteredData.length > 0) {
-        // Only write if there's actual data left after filtering
         term.write(filteredData);
       }
     };
@@ -92,14 +89,11 @@ class XtermManager {
     return _container;
   }
 
-  // Filter out execution completion markers and everything after them
-  private _filterExecutionMarkers(id: string, data: string): string {
-    // Check if completion was already detected for this terminal
+  private _filter(id: string, data: string): string {
     if (this._completionDetected.get(id)) {
-      return ""; // Block all further output after completion
+      return "";
     }
 
-    // Check if this data chunk contains a completion marker
     const executionMarkerRegex =
       /__EXECUTION_COMPLETE_[a-f0-9]{8}__[A-Z_]+(_\d+)?/;
     const hasMarker =
@@ -111,15 +105,12 @@ class XtermManager {
       data.includes("__EXCEPTION");
 
     if (hasMarker) {
-      // Mark completion as detected for this terminal
       this._completionDetected.set(id, true);
 
-      // Split by lines and find where the marker appears
       const lines = data.split("\n");
       const filteredLines = [];
 
       for (const line of lines) {
-        // Stop processing once we hit a completion marker line
         if (
           line.match(executionMarkerRegex) ||
           line.includes("__EXECUTION_COMPLETE_") ||
@@ -128,7 +119,7 @@ class XtermManager {
           line.includes("__INTERRUPTED") ||
           line.includes("__EXCEPTION")
         ) {
-          break; // Stop here - don't include this line or any after it
+          break;
         }
         filteredLines.push(line);
       }
@@ -136,16 +127,11 @@ class XtermManager {
       return filteredLines.join("\n");
     }
 
-    // No marker found, return original data
     return data;
   }
 
   _get(id: string): HTMLElement | null {
     return this._terminals.get(id)?._container || null;
-  }
-
-  _getTerm(id: string) {
-    return this._terminals.get(id) || null;
   }
 
   _dispose(id: string) {
@@ -189,7 +175,6 @@ class XtermManager {
 
   async _run(id: string, command: string): Promise<boolean> {
     try {
-      // Reset completion detection for new command
       this._completionDetected.set(id, false);
       this._runningCommands.set(id, { isRunning: true });
 
@@ -219,6 +204,8 @@ class XtermManager {
       instance.term.options.disableStdin = true;
       this._runningCommands.delete(id);
 
+      instance.term.write("\r\nExit code 1\r\n");
+
       return wasSuccessful;
     } catch (error) {
       this._runningCommands.delete(id);
@@ -246,7 +233,6 @@ class XtermManager {
       let timeoutId: NodeJS.Timeout;
       let resolved = false;
 
-      // Listen to raw PTY data (before filtering) for completion detection
       const ptyDataListener = (event: any, data: string) => {
         if (resolved) return;
 
@@ -334,35 +320,6 @@ class XtermManager {
     } else {
       return false;
     }
-  }
-
-  _isRunning(id: string): boolean {
-    const commandInfo = this._runningCommands.get(id);
-    return commandInfo?.isRunning || false;
-  }
-
-  _getRunningCommands(): string[] {
-    const running: string[] = [];
-    for (const [id, info] of this._runningCommands.entries()) {
-      if (info.isRunning) {
-        running.push(id);
-      }
-    }
-    return running;
-  }
-
-  _clearRunningStatus(id: string): void {
-    this._runningCommands.delete(id);
-    this._completionDetected.delete(id);
-  }
-
-  _setRunningStatus(id: string, isRunning: boolean, pid?: number): void {
-    const current = this._runningCommands.get(id) || { isRunning: false };
-    this._runningCommands.set(id, {
-      ...current,
-      isRunning,
-      pid: pid || current.pid!,
-    });
   }
 }
 

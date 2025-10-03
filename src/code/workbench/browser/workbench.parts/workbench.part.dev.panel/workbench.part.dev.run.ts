@@ -13,7 +13,8 @@ export class Run extends CoreEl {
   constructor() {
     super();
     this._createEl();
-    this._initializeSampleTabs();
+
+    this._render();
   }
 
   private _createEl() {
@@ -31,12 +32,6 @@ export class Run extends CoreEl {
 
     this._el.appendChild(tabs);
     this._el.appendChild(runArea);
-  }
-
-  private _initializeSampleTabs() {
-    this._tabs = [];
-    this._nextId = 1;
-    this._render();
   }
 
   private _render() {
@@ -91,7 +86,8 @@ export class Run extends CoreEl {
     runArea.innerHTML = "";
 
     const container =
-      _xtermManager._get(tab.id) || (await _xtermManager._spawn(tab.id));
+      _xtermManager._get(tab.id) ||
+      (await _xtermManager._spawn(tab.id, tab.cwd));
 
     runArea.appendChild(container!);
 
@@ -102,7 +98,6 @@ export class Run extends CoreEl {
     }
 
     if (termInstance) {
-      console.log(termInstance._container);
       const scrollAreaElem = termInstance._container.querySelector(
         ".xterm-viewport"
       ) as HTMLElement;
@@ -173,7 +168,7 @@ export class Run extends CoreEl {
     this._render();
   }
 
-  public async runFile(filePath: string) {
+  public async _run(filePath: string) {
     const norm = filePath.replace(/\\/g, "/");
     const tabId = `run:${norm}`;
     const existing = this._tabs.find((t) => t.id === tabId);
@@ -195,7 +190,7 @@ export class Run extends CoreEl {
     if (!runArea) return;
     runArea.innerHTML = "";
     const container =
-      _xtermManager._get(tabId) || (await _xtermManager._spawn(tabId));
+      _xtermManager._get(tabId) || (await _xtermManager._spawn(tabId, ""));
     runArea.appendChild(container!);
 
     const command = `python ${path.join([
@@ -205,10 +200,10 @@ export class Run extends CoreEl {
     ])} ${filePath}`;
 
     await _xtermManager._run(tabId, command);
-    this._setStatus(tabId, "running");
+    this._set(tabId, "running");
   }
 
-  public async stopFile(filePath: string) {
+  public async _stop(filePath: string) {
     const norm = filePath.replace(/\\/g, "/");
     const tabId = `run:${norm}`;
     const tab = this._tabs.find((t) => t.id === tabId);
@@ -218,10 +213,10 @@ export class Run extends CoreEl {
 
     await _xtermManager._stop(tabId);
     termInstance?.term?.write(`Exit code 1.\r\n`);
-    this._setStatus(tabId, "stopped");
+    this._set(tabId, "stopped");
   }
 
-  private _setStatus(tabId: string, status: "running" | "stopped") {
+  private _set(tabId: string, status: "running" | "stopped") {
     this._tabs = this._tabs.map((t) =>
       t.id === tabId ? { ...t, meta: { ...(t as any).meta, status } } : t
     );

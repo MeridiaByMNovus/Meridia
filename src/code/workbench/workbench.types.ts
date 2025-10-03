@@ -158,7 +158,6 @@ export interface IDevPanelTab {
   name: string;
   active: boolean;
   cwd: string;
-  pid?: number;
 }
 
 export interface IXTermInstance {
@@ -197,4 +196,10 @@ export interface IChatMessage {
 export interface IMiraResponse {
   response: string;
   error?: string;
+}
+
+export interface TreeOperation {
+  success: boolean;
+  error?: string;
+  data?: any;
 }

@@ -12,6 +12,8 @@ import { Terminal } from "./workbench.part.terminal.js";
 import { registerStandalone } from "../../../common/workbench.standalone.js";
 import { Run } from "./workbench.part.dev.run.js";
 
+const storage = window.storage;
+
 export class DevPanelTabs extends CoreEl {
   private _tabs: IDevTab[] = [
     {
@@ -43,10 +45,13 @@ export class DevPanelTabs extends CoreEl {
     this._el.style.height = "100%";
     this._el.style.width = "fit-content";
 
-    this._renderTabs();
+    const _tabs = storage.get("dev-panel-tabs");
+    if (_tabs) this._tabs = _tabs;
+
+    this._render();
   }
 
-  private _renderTabs() {
+  private _render() {
     const existingTabsContainer = this._el!.querySelector(".tabs");
     const existingCollapseIcon = this._el!.querySelector(".collapse");
     if (existingTabsContainer) {
@@ -63,8 +68,10 @@ export class DevPanelTabs extends CoreEl {
 
     const activeTab = this._tabs.find((t) => t.active);
     if (activeTab) {
-      this._openPanel(activeTab);
+      this._open(activeTab);
     }
+
+    storage.store("dev-panel-tabs", this._tabs);
 
     this._tabs.forEach((tab) => {
       const tabEl = document.createElement("div");
@@ -80,7 +87,7 @@ export class DevPanelTabs extends CoreEl {
           active: t.id === tab.id,
         }));
 
-        this._renderTabs();
+        this._render();
       };
 
       const icon = document.createElement("span");
@@ -103,7 +110,7 @@ export class DevPanelTabs extends CoreEl {
     this._el!.appendChild(tabsContainer);
   }
 
-  private _openPanel(tab: IDevTab) {
+  private _open(tab: IDevTab) {
     this._contentEl.innerHTML = "";
 
     let panel = this._panels.get(tab.id);
@@ -125,9 +132,24 @@ export class DevPanelTabs extends CoreEl {
     this._contentEl.appendChild(panel.getDomElement()!);
   }
 
-  private _createConsolePanel(): Terminal {
-    const consolePanel = new Terminal();
+  public _set(tabId: string): boolean {
+    const targetTab = this._tabs.find((tab) => tab.id === tabId);
 
-    return consolePanel;
+    if (!targetTab) {
+      return false;
+    }
+
+    if (targetTab.active) {
+      return true;
+    }
+
+    this._tabs = this._tabs.map((tab) => ({
+      ...tab,
+      active: tab.id === tabId,
+    }));
+
+    this._render();
+
+    return true;
   }
 }

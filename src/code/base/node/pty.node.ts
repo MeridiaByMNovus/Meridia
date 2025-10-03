@@ -15,7 +15,7 @@ function getShell(): string {
 setTimeout(() => {
   ipcMain.handle(
     "pty-spawn",
-    (event, id: string, cols: number, rows: number) => {
+    (event, id: string, cols: number, rows: number, cwd: string) => {
       if (terminals.has(id)) {
         terminals.get(id)!.kill();
         terminals.delete(id);
@@ -27,7 +27,7 @@ setTimeout(() => {
         name: "xterm-color",
         cols,
         rows,
-        cwd: os.homedir(),
+        cwd: cwd !== "" ? cwd : os.homedir(),
         env: process.env,
       });
 
@@ -44,12 +44,12 @@ setTimeout(() => {
     "pty-resize",
     (event, id: string, cols: number, rows: number) => {
       const term = terminals.get(id);
-      // if (term) {
-      //   term.resize(cols, rows);
-      //   return true;
-      // }
-      // return false;
-      return true;
+      if (term) {
+        term.resize(cols, rows);
+        return true;
+      } else {
+        return false;
+      }
     }
   );
 
@@ -92,24 +92,29 @@ setTimeout(() => {
     return false;
   });
 
-  ipcMain.handle("pty-run-command", (event, id: string, command: string) => {
-    return new Promise<{ success: boolean; error?: string }>((resolve) => {
-      const term = terminals.get(id);
-      if (!term) {
-        resolve({ success: false, error: "Terminal not found" });
-        return;
-      }
+  ipcMain.handle(
+    "pty-run-command",
+    (event, id: string, command: string, cwd: string) => {
+      return new Promise<{ success: boolean; error?: string }>((resolve) => {
+        const term = terminals.get(id);
+        if (!term) {
+          resolve({ success: false, error: "Terminal not found" });
+          return;
+        }
 
-      try {
-        term.write(command + "\r");
+        try {
+          setTimeout(() => {
+            term.write(command + "\r");
+          }, 200);
 
-        resolve({ success: true });
-      } catch (error) {
-        resolve({
-          success: false,
-          error: error instanceof Error ? error.message : String(error),
-        });
-      }
-    });
-  });
+          resolve({ success: true });
+        } catch (error) {
+          resolve({
+            success: false,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      });
+    }
+  );
 }, 100);

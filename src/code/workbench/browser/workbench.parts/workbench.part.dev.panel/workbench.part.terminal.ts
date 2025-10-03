@@ -7,15 +7,34 @@ import {
 import { CoreEl } from "../workbench.part.el.js";
 import { _xtermManager } from "../../../common/workbench.dev.panel/workbench.dev.panel.spawn.xterm.js";
 import PerfectScrollbar from "perfect-scrollbar";
+import { select } from "../../../common/workbench.store/workbench.store.selector.js";
+
+const storage = window.storage;
 
 export class Terminal extends CoreEl {
   private _tabs: IDevPanelTab[] = [];
+  private _uri = select((s) => s.main.folder_structure).uri ?? "";
   private _nextId = 1;
 
   constructor() {
     super();
     this._createEl();
-    this._initializeSampleTabs();
+
+    const tabs = storage.get("terminal-tabs");
+
+    if (tabs) this._tabs = tabs;
+    else {
+      this._tabs = [
+        {
+          id: `terminal-${crypto.randomUUID()}`,
+          name: "Terminal",
+          active: true,
+          cwd: this._uri,
+        },
+      ];
+    }
+
+    this._render();
   }
 
   private _createEl() {
@@ -35,29 +54,6 @@ export class Terminal extends CoreEl {
     this._el.appendChild(terminalArea);
   }
 
-  private _initializeSampleTabs() {
-    this._tabs = [];
-    this._nextId = 1;
-
-    const sampleTabs: IDevPanelTab[] = [
-      {
-        id: `terminal-${this._nextId++}`,
-        name: "bash - main",
-        active: true,
-        cwd: "/home/user/projects/meridia",
-      },
-      {
-        id: `terminal-${this._nextId++}`,
-        name: "npm dev",
-        active: false,
-        cwd: "/home/user/projects/meridia",
-      },
-    ];
-
-    this._tabs = sampleTabs;
-    this._render();
-  }
-
   private _render() {
     const tabsContainer = this._el?.querySelector(".tabs");
     if (!tabsContainer) return;
@@ -66,6 +62,8 @@ export class Terminal extends CoreEl {
     extra.className = "extra";
 
     tabsContainer.innerHTML = "";
+
+    storage.store("terminal-tabs", this._tabs);
 
     this._tabs.forEach((tab) => {
       const tabEl = document.createElement("div");
@@ -125,7 +123,8 @@ export class Terminal extends CoreEl {
     terminalArea.innerHTML = "";
 
     const container =
-      _xtermManager._get(tab.id) || (await _xtermManager._spawn(tab.id));
+      _xtermManager._get(tab.id) ||
+      (await _xtermManager._spawn(tab.id, tab.cwd));
 
     terminalArea.appendChild(container!);
 
@@ -136,7 +135,6 @@ export class Terminal extends CoreEl {
     }
 
     if (termInstance) {
-      console.log(termInstance._container);
       const scrollAreaElem = termInstance._container.querySelector(
         ".xterm-viewport"
       ) as HTMLElement;
@@ -199,12 +197,12 @@ export class Terminal extends CoreEl {
     this._render();
   }
 
-  public _add(options?: Partial<IDevPanelTab>) {
+  private _add() {
     const newTab: IDevPanelTab = {
       id: `terminal-${this._nextId++}`,
-      name: options?.name || `Terminal ${this._nextId - 1}`,
+      name: `Terminal ${this._nextId - 1}`,
       active: true,
-      cwd: options?.cwd || "/",
+      cwd: this._uri,
     };
 
     this._tabs = this._tabs.map((t) => ({ ...t, active: false }));

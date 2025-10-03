@@ -84,7 +84,7 @@ def get_python_command():
     Get the appropriate Python command for the current platform
     """
     # Try to find python command in PATH
-    python_commands = ["python3", "python", "py"]
+    python_commands = ["python3", "python"]
     
     for cmd in python_commands:
         if shutil.which(cmd):

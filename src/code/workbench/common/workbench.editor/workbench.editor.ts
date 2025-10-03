@@ -358,10 +358,12 @@ export class Editor {
 
     try {
       fs.createFile(uri, model.getValue());
-      await python.executeScript(
-        path.join([path.__dirname, "scripts", "format.py"]),
-        [uri]
-      );
+      if (uri.endsWith(".py"))
+        await python.executeScript(
+          path.join([path.__dirname, "scripts", "format.py"]),
+          [uri]
+        );
+
       this._update(uri, false);
     } catch {}
   }

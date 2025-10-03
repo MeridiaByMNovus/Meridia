@@ -32,14 +32,4 @@ watch(
 setTimeout(() => {
   mount();
   changePanelOptionsWidth();
-
-  addCommand("workbench.editor.run", (_path: string) => {
-    const _run = getStandalone("run") as Run;
-    _run.runFile(_path);
-  });
-
-  addCommand("workbench.editor.stop", (_path: string) => {
-    const _run = getStandalone("run") as Run;
-    _run.stopFile(_path);
-  });
 }, 100);

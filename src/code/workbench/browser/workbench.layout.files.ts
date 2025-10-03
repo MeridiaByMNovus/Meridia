@@ -1,6 +1,5 @@
-import { Editor } from "../common/workbench.editor/workbench.editor.js";
+import { TreeManager } from "../common/workbench.files/workbench.files.tree.manager.js";
 import { _generateUUID } from "../common/workbench.files/workbench.files.utils.js";
-import { getStandalone } from "../common/workbench.standalone.js";
 import { dispatch, store } from "../common/workbench.store/workbench.store.js";
 import { select } from "../common/workbench.store/workbench.store.selector.js";
 import {
@@ -8,11 +7,16 @@ import {
   update_folder_structure,
 } from "../common/workbench.store/workbench.store.slice.js";
 import { getFileIcon } from "../common/workbench.utils.js";
-import { IEditorTab, IFolderStructure } from "../workbench.types.js";
+import {
+  IEditorTab,
+  IFolderStructure,
+  TreeOperation,
+} from "../workbench.types.js";
 import { chevronRightIcon } from "./workbench.media/workbench.icons.js";
 import { CoreEl } from "./workbench.parts/workbench.part.el.js";
 
 export class Files extends CoreEl {
+  private treeManager: TreeManager;
   private _structure: IFolderStructure;
   private _expandedFolders: Set<string> = new Set();
   private _loadedFolders: Set<string> = new Set();
@@ -42,6 +46,12 @@ export class Files extends CoreEl {
       }
     }
 
+    this.treeManager = new TreeManager(
+      this._structure,
+      this._expandedFolders,
+      this._loadedFolders
+    );
+
     this._createEl();
     this._restore();
     this._changeLinst();
@@ -69,20 +79,63 @@ export class Files extends CoreEl {
   private _changeLinst(): void {
     window.ipc.on(
       "files-node-added",
-      (data: {
-        parentUri: string;
-        nodeName: string;
-        nodeType: "file" | "folder";
-      }) => {
+      (
+        event: any,
+        data: {
+          parentUri: string;
+          nodeName: string;
+          nodeType: "file" | "folder";
+        }
+      ) => {
+        if (!data || !data.parentUri || !data.nodeName || !data.nodeType) {
+          console.error("Invalid IPC data for files-node-added:", data);
+          return;
+        }
         this.addNode(data.parentUri, data.nodeName, data.nodeType);
       }
     );
 
-    window.ipc.on("files-node-removed", (data: { nodeUri: string }) => {
-      this.removeNode(data.nodeUri);
-    });
+    window.ipc.on(
+      "files-node-removed",
+      (event: any, data: { nodeUri: string }) => {
+        if (!data || !data.nodeUri) {
+          console.error("Invalid IPC data for files-node-removed:", data);
+          return;
+        }
+        this.removeNode(data.nodeUri);
+      }
+    );
 
-    window.ipc.on("files-node-changed", (data: { nodeUri: string }) => {});
+    window.ipc.on(
+      "files-node-renamed",
+      (event: any, data: { nodeUri: string; newName: string }) => {
+        if (!data || !data.nodeUri || !data.newName) {
+          console.error("Invalid IPC data for files-node-renamed:", data);
+          return;
+        }
+        this.renameNode(data.nodeUri, data.newName);
+      }
+    );
+
+    window.ipc.on(
+      "files-node-moved",
+      (event: any, data: { sourceUri: string; targetParentUri: string }) => {
+        if (!data || !data.sourceUri || !data.targetParentUri) {
+          console.error("Invalid IPC data for files-node-moved:", data);
+          return;
+        }
+        this.moveNode(data.sourceUri, data.targetParentUri);
+      }
+    );
+
+    window.ipc.on(
+      "files-node-changed",
+      (event: any, data: { nodeUri: string }) => {
+        if (data && data.nodeUri) {
+          console.log("File changed:", data.nodeUri);
+        }
+      }
+    );
   }
 
   private async _restore() {
@@ -111,8 +164,15 @@ export class Files extends CoreEl {
           this._structure = this._createMutableCopy(result.structure);
           this._loadedFolders.add(folderUri);
           window.storage.store("files-structure", this._structure);
+
+          this.treeManager = new TreeManager(
+            this._structure,
+            this._expandedFolders,
+            this._loadedFolders
+          );
         }
       } catch (error) {
+        console.error("Error loading folder contents:", error);
         this._expandedFolders.delete(folderUri);
         window.storage.store(
           "files-expanded-folder",
@@ -126,7 +186,7 @@ export class Files extends CoreEl {
     this._el = document.createElement("div");
     this._el.className = "files scrollbar-container x-disable";
 
-    if (!this._structure.isRoot) {
+    if (!this._structure || !this._structure.isRoot) {
       this._createEmptyState();
     } else {
       this._createTreeView();
@@ -157,7 +217,9 @@ export class Files extends CoreEl {
     const _tree = document.createElement("div");
     _tree.className = "tree";
 
-    this._renderNodes(this._structure.children, _tree);
+    if (this._structure.children && this._structure.children.length > 0) {
+      this._renderNodes(this._structure.children, _tree);
+    }
     this._el!.appendChild(_tree);
   }
 
@@ -206,7 +268,16 @@ export class Files extends CoreEl {
   }
 
   private _renderNodes(nodes: IFolderStructure[], container: HTMLElement) {
+    if (!Array.isArray(nodes)) {
+      return;
+    }
+
     nodes.forEach((_node) => {
+      if (!_node || !_node.name || !_node.uri) {
+        console.warn("Invalid node structure:", _node);
+        return;
+      }
+
       const _nodeEl = document.createElement("div");
       _nodeEl.className = "node";
       _nodeEl.dataset.nodeId = _node.uri;
@@ -291,6 +362,12 @@ export class Files extends CoreEl {
         this._structure = this._createMutableCopy(result.structure);
         window.storage.store("files-structure", this._structure);
         this._loadedFolders.add(folderUri);
+
+        this.treeManager = new TreeManager(
+          this._structure,
+          this._expandedFolders,
+          this._loadedFolders
+        );
 
         const updatedNode = this._findNodeByUri(this._structure, folderUri);
 
@@ -379,11 +456,15 @@ export class Files extends CoreEl {
     node: IFolderStructure,
     targetUri: string
   ): IFolderStructure | null {
+    if (!node || !targetUri) {
+      return null;
+    }
+
     if (node.uri === targetUri) {
       return node;
     }
 
-    if (node.children) {
+    if (node.children && Array.isArray(node.children)) {
       for (const child of node.children) {
         const found = this._findNodeByUri(child, targetUri);
         if (found) {
@@ -396,7 +477,11 @@ export class Files extends CoreEl {
   }
 
   private _refreshTree() {
-    this._el!.innerHTML = "";
+    if (!this._el) {
+      return;
+    }
+
+    this._el.innerHTML = "";
 
     if (
       !this._structure ||
@@ -411,263 +496,108 @@ export class Files extends CoreEl {
     dispatch(update_folder_structure(this._structure));
   }
 
+  private _syncWithTreeManager() {
+    this._structure = this.treeManager.getStructure();
+    this._expandedFolders = this.treeManager.getExpandedFolders();
+    this._loadedFolders = this.treeManager.getLoadedFolders();
+    this._refreshTree();
+  }
+
   public async addNode(
     parentUri: string,
     nodeName: string,
     nodeType: "file" | "folder"
   ): Promise<boolean> {
-    try {
-      const normalizedParentUri = parentUri.replace(/\\/g, "/");
+    const result: TreeOperation = this.treeManager.addNode(
+      parentUri,
+      nodeName,
+      nodeType
+    );
 
-      this._structure = this._createMutableCopy(this._structure);
-
-      const parentNode = this._findNodeByUri(
-        this._structure,
-        normalizedParentUri
-      );
-
-      if (!parentNode || parentNode.type !== "folder") {
-        console.error(
-          `Parent node not found or not a folder: ${normalizedParentUri}`
-        );
-        return false;
-      }
-
-      const newNode: IFolderStructure = {
-        name: nodeName,
-        uri: `${normalizedParentUri}/${nodeName}`,
-        type: nodeType,
-        children: nodeType === "folder" ? [] : undefined!,
-        isRoot: false,
-      };
-
-      if (!parentNode.children) {
-        parentNode.children = [];
-      }
-
-      const existingNode = parentNode.children.find(
-        (child) => child.name === nodeName
-      );
-      if (existingNode) {
-        console.log(
-          `Node ${nodeName} already exists in parent ${normalizedParentUri}`
-        );
-        return true;
-      }
-
-      parentNode.children.push(newNode);
-      this._sortChildren(parentNode.children);
-
-      window.storage.store("files-structure", this._structure);
-      dispatch(update_folder_structure(this._structure));
-
-      this._refreshTree();
-
-      console.log(
-        `Successfully added node: ${nodeName} to ${normalizedParentUri}`
-      );
-      return true;
-    } catch (error) {
-      console.error("Error adding node:", error);
-      return false;
+    if (result.success) {
+      this._syncWithTreeManager();
+      console.log(`Successfully added node: ${nodeName} to ${parentUri}`);
+    } else {
+      console.error(`Error adding node: ${result.error}`);
     }
+
+    return result.success;
   }
 
   public async removeNode(nodeUri: string): Promise<boolean> {
-    try {
-      const _tabs = select((s) => s.main.editor_tabs);
-      const _tab = _tabs.find((t) => t.uri === nodeUri);
+    const result: TreeOperation = this.treeManager.removeNode(nodeUri);
 
-      if (_tab) {
-        const _updated = _tabs.filter((t) => t.uri !== _tab.uri);
-        const _editor = getStandalone("editor") as Editor;
-        dispatch(update_editor_tabs(_updated));
-        _editor._close(_tab.uri);
-      }
-
-      this._structure = this._createMutableCopy(this._structure);
-
-      const result = this._removeNodeFromStructure(this._structure, nodeUri);
-      if (result) {
-        this._expandedFolders.delete(nodeUri);
-        this._loadedFolders.delete(nodeUri);
-
-        window.storage.store("files-structure", this._structure);
-        window.storage.store(
-          "files-expanded-folder",
-          Array.from(this._expandedFolders)
-        );
-
-        dispatch(update_folder_structure(this._structure));
-        this._refreshTree();
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.error("Error removing node:", error);
-      return false;
+    if (result.success) {
+      this._syncWithTreeManager();
+      console.log(`Successfully removed node: ${nodeUri}`);
+    } else {
+      console.error(`Error removing node: ${result.error}`);
     }
+
+    return result.success;
   }
 
   public async renameNode(nodeUri: string, newName: string): Promise<boolean> {
-    try {
-      this._structure = this._createMutableCopy(this._structure);
+    const result: TreeOperation = this.treeManager.renameNode(nodeUri, newName);
 
-      const _tabs = select((s) => s.main.editor_tabs);
-
-      if (_tabs && Array.isArray(_tabs)) {
-        const updatedTabs = _tabs.map((tab) => {
-          if (tab.uri === nodeUri) {
-            const pathParts = tab.uri.split("/");
-            pathParts[pathParts.length - 1] = newName;
-            const newUri = pathParts.join("/");
-
-            return {
-              ...tab,
-              name: newName,
-              uri: newUri,
-            };
-          }
-          return tab;
-        });
-
-        dispatch(update_editor_tabs(updatedTabs));
-      }
-
-      const node = this._findNodeByUri(this._structure, nodeUri);
-      if (!node) {
-        return false;
-      }
-
-      const oldName = node.name;
-      node.name = newName;
-
-      const pathParts = node.uri.split("/");
-      pathParts[pathParts.length - 1] = newName;
-      const newUri = pathParts.join("/");
-
-      this._updateNodeUri(node, node.uri, newUri);
-
-      if (this._expandedFolders.has(nodeUri)) {
-        this._expandedFolders.delete(nodeUri);
-        this._expandedFolders.add(newUri);
-      }
-
-      if (this._loadedFolders.has(nodeUri)) {
-        this._loadedFolders.delete(nodeUri);
-        this._loadedFolders.add(newUri);
-      }
-
-      window.storage.store("files-structure", this._structure);
-      window.storage.store(
-        "files-expanded-folder",
-        Array.from(this._expandedFolders)
-      );
-
-      dispatch(update_folder_structure(this._structure));
-      this._refreshTree();
-      return true;
-    } catch (error) {
-      console.error("Error renaming node:", error);
-      return false;
+    if (result.success) {
+      this._syncWithTreeManager();
+      console.log(`Successfully renamed node from ${nodeUri} to ${newName}`);
+    } else {
+      console.error(`Error renaming node: ${result.error}`);
     }
+
+    return result.success;
   }
 
   public async moveNode(
     sourceUri: string,
     targetParentUri: string
   ): Promise<boolean> {
-    try {
-      this._structure = this._createMutableCopy(this._structure);
+    const result: TreeOperation = this.treeManager.moveNode(
+      sourceUri,
+      targetParentUri
+    );
 
-      const sourceNode = this._findNodeByUri(this._structure, sourceUri);
-      const targetParent = this._findNodeByUri(
-        this._structure,
-        targetParentUri
+    if (result.success) {
+      this._syncWithTreeManager();
+      console.log(
+        `Successfully moved node from ${sourceUri} to ${targetParentUri}`
       );
-
-      if (!sourceNode || !targetParent || targetParent.type !== "folder") {
-        return false;
-      }
-
-      if (!this._removeNodeFromStructure(this._structure, sourceUri)) {
-        return false;
-      }
-
-      const newUri = `${targetParentUri}/${sourceNode.name}`;
-      this._updateNodeUri(sourceNode, sourceUri, newUri);
-
-      if (!targetParent.children) {
-        targetParent.children = [];
-      }
-      targetParent.children.push(sourceNode);
-      this._sortChildren(targetParent.children);
-
-      if (this._expandedFolders.has(sourceUri)) {
-        this._expandedFolders.delete(sourceUri);
-        this._expandedFolders.add(newUri);
-      }
-      if (this._loadedFolders.has(sourceUri)) {
-        this._loadedFolders.delete(sourceUri);
-        this._loadedFolders.add(newUri);
-      }
-
-      window.storage.store("files-structure", this._structure);
-      window.storage.store(
-        "files-expanded-folder",
-        Array.from(this._expandedFolders)
-      );
-
-      dispatch(update_folder_structure(this._structure));
-      this._refreshTree();
-      return true;
-    } catch (error) {
-      console.error("Error moving node:", error);
-      return false;
+    } else {
+      console.error(`Error moving node: ${result.error}`);
     }
+
+    return result.success;
   }
 
-  private _removeNodeFromStructure(
-    node: IFolderStructure,
-    targetUri: string
-  ): boolean {
-    if (!node.children) return false;
-
-    for (let i = 0; i < node.children.length; i++) {
-      if (node.children[i]!.uri === targetUri) {
-        node.children.splice(i, 1);
-        return true;
-      }
-
-      if (this._removeNodeFromStructure(node.children[i]!, targetUri)) {
-        return true;
-      }
-    }
-    return false;
+  public getStructure(): IFolderStructure {
+    return this.treeManager.getStructure();
   }
 
-  private _updateNodeUri(
-    node: IFolderStructure,
-    oldUri: string,
-    newUri: string
-  ): void {
-    node.uri = newUri;
-
-    if (node.children) {
-      node.children.forEach((child) => {
-        const childOldUri = child.uri;
-        const childNewUri = child.uri.replace(oldUri, newUri);
-        this._updateNodeUri(child, childOldUri, childNewUri);
-      });
-    }
+  public refreshTree(): void {
+    this._refreshTree();
   }
 
-  private _sortChildren(children: IFolderStructure[]): void {
-    children.sort((a, b) => {
-      if (a.type === b.type) {
-        return a.name.localeCompare(b.name);
-      }
-      return a.type === "folder" ? -1 : 1;
-    });
+  public isNodeExpanded(nodeUri: string): boolean {
+    return this._expandedFolders.has(nodeUri);
+  }
+
+  public expandNode(nodeUri: string): void {
+    this._expandedFolders.add(nodeUri);
+    window.storage.store(
+      "files-expanded-folder",
+      Array.from(this._expandedFolders)
+    );
+    this._refreshTree();
+  }
+
+  public collapseNode(nodeUri: string): void {
+    this._expandedFolders.delete(nodeUri);
+    window.storage.store(
+      "files-expanded-folder",
+      Array.from(this._expandedFolders)
+    );
+    this._refreshTree();
   }
 }

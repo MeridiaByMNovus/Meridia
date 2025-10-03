@@ -4,5 +4,5 @@
 }
 
 .code .editor .editor-area {
-  height: 100%;
+  height: calc(100% - 60px);
 }

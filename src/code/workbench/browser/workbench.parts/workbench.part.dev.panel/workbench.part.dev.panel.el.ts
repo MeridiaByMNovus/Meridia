@@ -27,6 +27,7 @@ export class DevPanel extends CoreEl {
       "panel content scrollbar-container x-disable y-disable";
 
     this._tabs = new DevPanelTabs(this._content, this);
+    registerStandalone("dev-panel-tabs", this._tabs);
 
     this._el.classList.add("collapsed");
     this._el.appendChild(this._content);
