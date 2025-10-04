@@ -1,0 +1,44 @@
+name: Build Meridia Windows
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Rebuild native modules for Electron Windows (adjust electron version)
+        run: npx electron-rebuild -v -f --arch=x64 --platform=win32 --electron-version=38.1.2
+
+      - name: Build project
+        run: npm run build
+
+      - name: Copy assets
+        run: npm run copy
+
+      - name: Package with electron-builder (optional)
+        run: npm run package
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: meridia-windows-build
+          path: |
+            build/
+            dist/
+            # add other output folders
