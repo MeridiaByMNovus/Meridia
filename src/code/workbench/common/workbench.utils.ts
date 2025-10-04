@@ -183,6 +183,9 @@ export function getFileIcon(_name: string) {
     "css",
     "sh",
     "d.ts",
+    "docx",
+    "doc",
+    "pdf",
   ];
 
   let _iconPath: string;
