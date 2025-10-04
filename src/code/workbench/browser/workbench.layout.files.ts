@@ -1,6 +1,6 @@
 import { TreeManager } from "../common/workbench.files/workbench.files.tree.manager.js";
 import { _generateUUID } from "../common/workbench.files/workbench.files.utils.js";
-import { dispatch, store } from "../common/workbench.store/workbench.store.js";
+import { dispatch } from "../common/workbench.store/workbench.store.js";
 import { select } from "../common/workbench.store/workbench.store.selector.js";
 import {
   update_editor_tabs,
@@ -27,11 +27,11 @@ export class Files extends CoreEl {
     const _expanded = window.storage.get("files-expanded-folder");
     let _structure = window.storage.get("files-structure");
 
+    dispatch(update_folder_structure(_structure));
+
     if (_structure) {
       this._structure = this._createMutableCopy(_structure);
     }
-
-    dispatch(update_folder_structure(this._structure));
 
     if (_expanded && Array.isArray(_expanded)) {
       this._expandedFolders = new Set(_expanded);

@@ -21,14 +21,14 @@
   "dependencies": {
     "@codingame/monaco-jsonrpc": "^0.3.1",
     "@google/genai": "^1.20.0",
-    "@mistralai/mistralai": "^1.10.0",
     "@neon-rs/load": "^0.1.82",
+    "@mistralai/mistralai": "^1.10.0",
     "@reduxjs/toolkit": "^2.9.0",
+    "@xterm/addon-fit": "^0.10.0",
     "@xterm/xterm": "^5.5.0",
     "chokidar": "^4.0.3",
     "dotenv": "^17.2.2",
     "express": "^5.1.0",
-    "get-pty-output": "^0.8.2",
     "highlight.js": "^11.11.1",
     "marked": "^16.3.0",
     "monaco-editor": "^0.29.0",
@@ -40,8 +40,7 @@
     "python-shell": "^5.0.0",
     "vscode-languageserver": "^9.0.1",
     "vscode-ws-jsonrpc": "^3.5.0",
-    "ws": "^8.18.3",
-    "xterm-addon-fit": "^0.8.0"
+    "ws": "^8.18.3"
   },
   "devDependencies": {
     "@neon-rs/cli": "^0.1.82",

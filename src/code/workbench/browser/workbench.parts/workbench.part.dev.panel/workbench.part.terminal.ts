@@ -8,17 +8,20 @@ import { CoreEl } from "../workbench.part.el.js";
 import { _xtermManager } from "../../../common/workbench.dev.panel/workbench.dev.panel.spawn.xterm.js";
 import PerfectScrollbar from "perfect-scrollbar";
 import { select } from "../../../common/workbench.store/workbench.store.selector.js";
+import { registerStandalone } from "../../../common/workbench.standalone.js";
 
 const storage = window.storage;
 
 export class Terminal extends CoreEl {
   private _tabs: IDevPanelTab[] = [];
-  private _uri = select((s) => s.main.folder_structure).uri ?? "";
+  private _uri!: string;
   private _nextId = 1;
 
   constructor() {
     super();
     this._createEl();
+
+    this._uri = select((s) => s.main.folder_structure).uri;
 
     const tabs = storage.get("terminal-tabs");
 
@@ -29,7 +32,6 @@ export class Terminal extends CoreEl {
           id: `terminal-${crypto.randomUUID()}`,
           name: "Terminal",
           active: true,
-          cwd: this._uri,
         },
       ];
     }
@@ -124,7 +126,7 @@ export class Terminal extends CoreEl {
 
     const container =
       _xtermManager._get(tab.id) ||
-      (await _xtermManager._spawn(tab.id, tab.cwd));
+      (await _xtermManager._spawn(tab.id, this._uri));
 
     terminalArea.appendChild(container!);
 
@@ -202,7 +204,6 @@ export class Terminal extends CoreEl {
       id: `terminal-${this._nextId++}`,
       name: `Terminal ${this._nextId - 1}`,
       active: true,
-      cwd: this._uri,
     };
 
     this._tabs = this._tabs.map((t) => ({ ...t, active: false }));
@@ -224,3 +225,6 @@ export class Terminal extends CoreEl {
     this._render();
   }
 }
+
+export const _terminal = new Terminal();
+registerStandalone("terminal", _terminal);

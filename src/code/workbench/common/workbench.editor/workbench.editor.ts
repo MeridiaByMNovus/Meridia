@@ -352,7 +352,7 @@ export class Editor {
     dispatch(update_editor_tabs(_updated));
   }
 
-  private async _save(uri: string) {
+  async _save(uri: string) {
     const model = this._models.get(uri);
     if (!model) return;
 

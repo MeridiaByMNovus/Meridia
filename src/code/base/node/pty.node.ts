@@ -15,13 +15,20 @@ function getShell(): string {
 setTimeout(() => {
   ipcMain.handle(
     "pty-spawn",
-    (event, id: string, cols: number, rows: number, cwd: string) => {
+    (
+      event,
+      id: string,
+      cols: number,
+      rows: number,
+      cwd: string,
+      _shell?: string
+    ) => {
       if (terminals.has(id)) {
         terminals.get(id)!.kill();
         terminals.delete(id);
       }
 
-      const shell = getShell();
+      const shell = _shell ?? getShell();
 
       const ptyProcess = pty.spawn(shell, [], {
         name: "xterm-color",

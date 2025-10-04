@@ -59,19 +59,27 @@ export class Splitter extends CoreEl {
       this._direction === "horizontal"
         ? "splitter-horizontal"
         : "splitter-vertical";
+
     this._el.style.display = "flex";
     this._el.style.flexDirection =
       this._direction === "horizontal" ? "row" : "column";
     this._el.style.width = "100%";
+    this._el.style.boxSizing = "border-box";
+    this._el.style.padding = "0";
+    this._el.style.margin = "0";
+    this._el.style.border = "none";
     this._el.innerHTML = "";
 
     for (let i = 0; i < this._panels.length; i++) {
       const panel = this._panels[i];
       if (!panel) return;
+
       panel.style.flexShrink = "0";
       panel.style.overflow = "auto";
       panel.style.minWidth = "0";
       panel.style.minHeight = "0";
+      panel.style.boxSizing = "border-box";
+
       this._el.appendChild(panel);
 
       if (i < this._panels.length - 1) {
@@ -84,6 +92,7 @@ export class Splitter extends CoreEl {
           this._direction === "horizontal" ? "col-resize" : "row-resize";
         gutter.style.flexShrink = "0";
         gutter.style.userSelect = "none";
+        gutter.style.boxSizing = "border-box";
 
         if (this._direction === "horizontal") {
           gutter.style.width = "10px";
@@ -208,9 +217,11 @@ export class Splitter extends CoreEl {
 
         if (this._direction === "horizontal") {
           panel.style.width = `${size}%`;
+          panel.style.height = "100%";
           panel.style.display = "";
         } else {
           panel.style.height = `${size}%`;
+          panel.style.width = "100%";
           panel.style.display = "";
         }
       } else {

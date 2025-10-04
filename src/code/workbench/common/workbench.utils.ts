@@ -1,4 +1,4 @@
-import { IThemeColors, ThemeColors, ITokenColors } from "../workbench.types.js";
+import { IThemeColors, ThemeColors } from "../workbench.types.js";
 
 export const tokensToCssVariables: Record<IThemeColors, string> = {
   "workbench.background": "--workbench-background",
@@ -72,6 +72,22 @@ export const tokensToCssVariables: Record<IThemeColors, string> = {
     "--workbench-terminal-cursor-foreground",
   "workbench.terminal.selection.background":
     "--workbench-terminal-selection-background",
+  "workbench.terminal.black": "--workbench-terminal-color0",
+  "workbench.terminal.red": "--workbench-terminal-color1",
+  "workbench.terminal.green": "--workbench-terminal-color2",
+  "workbench.terminal.yellow": "--workbench-terminal-color3",
+  "workbench.terminal.blue": "--workbench-terminal-color4",
+  "workbench.terminal.magenta": "--workbench-terminal-color5",
+  "workbench.terminal.cyan": "--workbench-terminal-color6",
+  "workbench.terminal.white": "--workbench-terminal-color7",
+  "workbench.terminal.bright.black": "--workbench-terminal-color8",
+  "workbench.terminal.bright.red": "--workbench-terminal-color9",
+  "workbench.terminal.bright.green": "--workbench-terminal-color10",
+  "workbench.terminal.bright.yellow": "--workbench-terminal-color11",
+  "workbench.terminal.bright.blue": "--workbench-terminal-color12",
+  "workbench.terminal.bright.magenta": "--workbench-terminal-color13",
+  "workbench.terminal.bright.cyan": "--workbench-terminal-color14",
+  "workbench.terminal.bright.white": "--workbench-terminal-color15",
   "workbench.panel.background": "--workbench-panel-background",
   "workbench.panel.options.hover.background":
     "--workbench-panel-options-hover-background",
@@ -118,7 +134,21 @@ export function parseTokensToCssVariables(
 }
 
 export function getFileIcon(_name: string) {
-  const _ext = _name.split(".").pop() || "";
+  const dotCount = (_name.match(/\./g) || []).length;
+
+  let _ext;
+
+  const specificPatterns = [".d.ts"];
+  const hasSpecificPattern = specificPatterns.some((pattern) =>
+    _name.endsWith(pattern)
+  );
+
+  if (dotCount >= 2 && hasSpecificPattern) {
+    const firstDotIndex = _name.indexOf(".");
+    _ext = _name.substring(firstDotIndex + 1).toLowerCase();
+  } else {
+    _ext = (_name.split(".").pop() || _name).toLowerCase();
+  }
 
   const _supported = [
     "ts",
@@ -132,6 +162,7 @@ export function getFileIcon(_name: string) {
     "cts",
     "md",
     "gitignore",
+    "gitattributes",
     "otf",
     "ttf",
     "svg",
@@ -140,6 +171,18 @@ export function getFileIcon(_name: string) {
     "toml",
     "d",
     "rs",
+    "iss",
+    "license",
+    "prettierrc",
+    "prettierignore",
+    "env",
+    "png",
+    "jpg",
+    "jpeg",
+    "ico",
+    "css",
+    "sh",
+    "d.ts",
   ];
 
   let _iconPath: string;

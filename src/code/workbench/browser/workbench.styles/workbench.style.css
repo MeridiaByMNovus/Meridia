@@ -40,6 +40,19 @@
   fill: var(--workbench-icon-foreground);
 }
 
+.code svg.license path {
+  fill: var(--workbench-icon-foreground);
+}
+
+.code svg.terminal rect,
+.code svg.terminal path {
+  stroke: var(--workbench-icon-foreground);
+}
+
+.code svg.image path {
+  fill: var(--workbench-icon-foreground);
+}
+
 .code svg.font path {
   fill: var(--workbench-icon-foreground);
 }

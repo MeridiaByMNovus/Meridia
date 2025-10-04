@@ -1,4 +1,4 @@
-import { FitAddon } from "xterm-addon-fit";
+import { FitAddon } from "@xterm/addon-fit";
 import { Terminal as XTerm } from "@xterm/xterm";
 import { IXTermInstance } from "../../workbench.types.js";
 import { getStandalone } from "../workbench.standalone.js";
@@ -13,8 +13,9 @@ class XtermManager {
     { pid?: number; isRunning: boolean }
   >();
   private _completionDetected = new Map<string, boolean>();
+  private _fitDebounceTimer: any = null;
 
-  async _spawn(id: string, cwd: string): Promise<HTMLElement> {
+  async _spawn(id: string, cwd?: string, shell?: string): Promise<HTMLElement> {
     if (this._terminals.has(id)) {
       return this._terminals.get(id)!._container;
     }
@@ -40,7 +41,7 @@ class XtermManager {
 
     fitAddon.fit();
 
-    await ipcRenderer.invoke("pty-spawn", id, term.cols, term.rows, cwd);
+    await ipcRenderer.invoke("pty-spawn", id, term.cols, term.rows, cwd, shell);
 
     const onPtyData = (_event: any, data: string) => {
       let filteredData = this._filter(id, data);
@@ -74,6 +75,22 @@ class XtermManager {
         selectionBackground: _theme.getColor(
           "workbench.terminal.selection.background"
         ),
+        black: _theme.getColor("workbench.terminal.black"),
+        red: _theme.getColor("workbench.terminal.red"),
+        green: _theme.getColor("workbench.terminal.green"),
+        yellow: _theme.getColor("workbench.terminal.yellow"),
+        blue: _theme.getColor("workbench.terminal.blue"),
+        magenta: _theme.getColor("workbench.terminal.magenta"),
+        cyan: _theme.getColor("workbench.terminal.cyan"),
+        white: _theme.getColor("workbench.terminal.white"),
+        brightBlack: _theme.getColor("workbench.terminal.bright.black"),
+        brightRed: _theme.getColor("workbench.terminal.bright.red"),
+        brightGreen: _theme.getColor("workbench.terminal.bright.green"),
+        brightYellow: _theme.getColor("workbench.terminal.bright.yellow"),
+        brightBlue: _theme.getColor("workbench.terminal.bright.blue"),
+        brightMagenta: _theme.getColor("workbench.terminal.bright.magenta"),
+        brightCyan: _theme.getColor("workbench.terminal.bright.cyan"),
+        brightWhite: _theme.getColor("workbench.terminal.bright.white"),
       };
       this._update();
       this._update();
@@ -87,6 +104,37 @@ class XtermManager {
     });
 
     return _container;
+  }
+
+  _updateTheme() {
+    const _theme = getStandalone("theme") as Theme;
+
+    for (const [id, instance] of this._terminals) {
+      instance.term.options.theme = {
+        background: _theme.getColor("workbench.terminal.background"),
+        foreground: _theme.getColor("workbench.terminal.foreground"),
+        cursor: _theme.getColor("workbench.terminal.cursor.foreground"),
+        selectionBackground: _theme.getColor(
+          "workbench.terminal.selection.background"
+        ),
+        black: _theme.getColor("workbench.terminal.black"),
+        red: _theme.getColor("workbench.terminal.red"),
+        green: _theme.getColor("workbench.terminal.green"),
+        yellow: _theme.getColor("workbench.terminal.yellow"),
+        blue: _theme.getColor("workbench.terminal.blue"),
+        magenta: _theme.getColor("workbench.terminal.magenta"),
+        cyan: _theme.getColor("workbench.terminal.cyan"),
+        white: _theme.getColor("workbench.terminal.white"),
+        brightBlack: _theme.getColor("workbench.terminal.bright.black"),
+        brightRed: _theme.getColor("workbench.terminal.bright.red"),
+        brightGreen: _theme.getColor("workbench.terminal.bright.green"),
+        brightYellow: _theme.getColor("workbench.terminal.bright.yellow"),
+        brightBlue: _theme.getColor("workbench.terminal.bright.blue"),
+        brightMagenta: _theme.getColor("workbench.terminal.bright.magenta"),
+        brightCyan: _theme.getColor("workbench.terminal.bright.cyan"),
+        brightWhite: _theme.getColor("workbench.terminal.bright.white"),
+      };
+    }
   }
 
   private _filter(id: string, data: string): string {
@@ -154,23 +202,31 @@ class XtermManager {
   }
 
   _update() {
-    for (const [id, instance] of this._terminals) {
-      try {
-        instance._fitAddon.fit();
-        const _height =
-          instance._container.parentElement!.parentElement!.parentElement!
-            .clientHeight -
-          85 +
-          "px";
-        const _width =
-          instance._container.parentElement!.parentElement!.parentElement!
-            .clientWidth -
-          10 +
-          "px";
-        instance._container.style.height = _height;
-        instance._container.style.width = _width;
-      } catch (e) {}
+    if (this._fitDebounceTimer) {
+      clearTimeout(this._fitDebounceTimer);
     }
+
+    this._fitDebounceTimer = setTimeout(() => {
+      for (const [id, instance] of this._terminals) {
+        try {
+          instance._fitAddon.fit();
+
+          const _height =
+            instance._container.parentElement!.parentElement!.parentElement!
+              .clientHeight -
+            85 +
+            "px";
+          const _width =
+            instance._container.parentElement!.parentElement!.parentElement!
+              .clientWidth -
+            10 +
+            "px";
+
+          instance._container.style.height = _height;
+          instance._container.style.width = _width;
+        } catch (e) {}
+      }
+    }, 100);
   }
 
   async _run(id: string, command: string): Promise<boolean> {

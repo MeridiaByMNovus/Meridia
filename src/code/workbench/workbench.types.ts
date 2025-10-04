@@ -1,6 +1,5 @@
-import PerfectScrollbar from "perfect-scrollbar";
 import { Terminal as XTerm } from "@xterm/xterm";
-import { FitAddon } from "xterm-addon-fit";
+import { FitAddon } from "@xterm/addon-fit";
 
 export interface ITheme {
   name: string;
@@ -112,6 +111,23 @@ export const ThemeColors = [
   "workbench.terminal.foreground",
   "workbench.terminal.cursor.foreground",
   "workbench.terminal.selection.background",
+
+  "workbench.terminal.black",
+  "workbench.terminal.red",
+  "workbench.terminal.green",
+  "workbench.terminal.yellow",
+  "workbench.terminal.blue",
+  "workbench.terminal.magenta",
+  "workbench.terminal.cyan",
+  "workbench.terminal.white",
+  "workbench.terminal.bright.black",
+  "workbench.terminal.bright.red",
+  "workbench.terminal.bright.green",
+  "workbench.terminal.bright.yellow",
+  "workbench.terminal.bright.blue",
+  "workbench.terminal.bright.magenta",
+  "workbench.terminal.bright.cyan",
+  "workbench.terminal.bright.white",
   "workbench.statusbar.foreground",
   "workbench.statusbar.item.hover.background",
 ] as const;
@@ -157,7 +173,6 @@ export interface IDevPanelTab {
   id: string;
   name: string;
   active: boolean;
-  cwd: string;
 }
 
 export interface IXTermInstance {
@@ -202,4 +217,17 @@ export interface TreeOperation {
   success: boolean;
   error?: string;
   data?: any;
+}
+
+export interface IScrollbarState {
+  id?: string | undefined;
+  className: string;
+  scrollTop: number;
+  scrollLeft: number;
+  config: {
+    suppressScrollX: boolean;
+    suppressScrollY: boolean;
+  };
+  innerHTML: string;
+  attributes: Record<string, string>;
 }

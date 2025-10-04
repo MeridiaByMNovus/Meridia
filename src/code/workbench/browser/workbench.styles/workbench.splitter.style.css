@@ -1,6 +1,6 @@
 .splitter-horizontal {
   display: flex;
-  width: 100%;
+  width: calc(100% - 10px) !important;
   height: calc(100vh - 140px);
 }
 

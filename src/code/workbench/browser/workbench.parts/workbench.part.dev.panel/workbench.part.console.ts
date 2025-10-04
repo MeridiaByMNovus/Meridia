@@ -1,26 +1,45 @@
-import PerfectScrollbar from "perfect-scrollbar";
 import { IDevPanelTab } from "../../../workbench.types.js";
-import { closeIcon, runIcon } from "../../workbench.media/workbench.icons.js";
+import {
+  addIcon,
+  closeIcon,
+  consoleIcon,
+} from "../../workbench.media/workbench.icons.js";
 import { CoreEl } from "../workbench.part.el.js";
 import { _xtermManager } from "../../../common/workbench.dev.panel/workbench.dev.panel.spawn.xterm.js";
+import PerfectScrollbar from "perfect-scrollbar";
+import { select } from "../../../common/workbench.store/workbench.store.selector.js";
 import { registerStandalone } from "../../../common/workbench.standalone.js";
 
-const path = window.path;
+const storage = window.storage;
 
-export class Run extends CoreEl {
+export class Console extends CoreEl {
   private _tabs: IDevPanelTab[] = [];
+  private _uri = select((s) => s.main.folder_structure).uri ?? "";
   private _nextId = 1;
 
   constructor() {
     super();
     this._createEl();
 
+    const tabs = storage.get("console-tabs");
+
+    if (tabs) this._tabs = tabs;
+    else {
+      this._tabs = [
+        {
+          id: `console-${crypto.randomUUID()}`,
+          name: "Console",
+          active: true,
+        },
+      ];
+    }
+
     this._render();
   }
 
   private _createEl() {
     this._el = document.createElement("div");
-    this._el.className = "run-container";
+    this._el.className = "console-container";
 
     const tabs = document.createElement("div");
     tabs.className = "tabs scrollbar-container y-disable";
@@ -28,18 +47,23 @@ export class Run extends CoreEl {
     const extra = document.createElement("div");
     extra.className = "extra";
 
-    const runArea = document.createElement("div");
-    runArea.className = "run-area";
+    const consoleArea = document.createElement("div");
+    consoleArea.className = "console-area";
 
     this._el.appendChild(tabs);
-    this._el.appendChild(runArea);
+    this._el.appendChild(consoleArea);
   }
 
   private _render() {
     const tabsContainer = this._el?.querySelector(".tabs");
     if (!tabsContainer) return;
 
+    const extra = document.createElement("div");
+    extra.className = "extra";
+
     tabsContainer.innerHTML = "";
+
+    storage.store("console-tabs", this._tabs);
 
     this._tabs.forEach((tab) => {
       const tabEl = document.createElement("div");
@@ -53,7 +77,7 @@ export class Run extends CoreEl {
 
       const icon = document.createElement("span");
       icon.className = "icon";
-      icon.innerHTML = runIcon;
+      icon.innerHTML = consoleIcon;
 
       const name = document.createElement("span");
       name.className = "name";
@@ -74,22 +98,35 @@ export class Run extends CoreEl {
       tabsContainer.appendChild(tabEl);
     });
 
+    const add = document.createElement("span");
+    add.innerHTML = addIcon;
+
+    add.onclick = () => {
+      const newTab = this._add();
+      this._switch(newTab.id);
+    };
+
+    extra.appendChild(add);
+
     const activeTab = this._tabs.find((t) => t.active);
     if (activeTab) {
       this._open(activeTab);
     }
+
+    tabsContainer.appendChild(extra);
   }
 
   private async _open(tab: IDevPanelTab) {
-    const runArea = this._el?.querySelector(".run-area");
-    if (!runArea) return;
+    const consoleArea = this._el?.querySelector(".console-area");
+    if (!consoleArea) return;
 
-    runArea.innerHTML = "";
+    consoleArea.innerHTML = "";
 
     const container =
-      _xtermManager._get(tab.id) || (await _xtermManager._spawn(tab.id));
+      _xtermManager._get(tab.id) ||
+      (await _xtermManager._spawn(tab.id, "", "python"));
 
-    runArea.appendChild(container!);
+    consoleArea.appendChild(container!);
 
     const termInstance = _xtermManager._terminals.get(tab.id);
     const term = termInstance?.term;
@@ -160,69 +197,32 @@ export class Run extends CoreEl {
     this._render();
   }
 
-  private _switch(tabId: string) {
+  private _add() {
+    const newTab: IDevPanelTab = {
+      id: `console-${this._nextId++}`,
+      name: `Console ${this._nextId - 1}`,
+      active: true,
+    };
+
+    this._tabs = this._tabs.map((t) => ({ ...t, active: false }));
+    this._tabs.push(newTab);
+
+    this._render();
+    return newTab;
+  }
+
+  public _getActive() {
+    return this._tabs.find((t) => t.active);
+  }
+
+  public _switch(tabId: string) {
     this._tabs = this._tabs.map((t) => ({
       ...t,
       active: t.id === tabId,
     }));
     this._render();
   }
-
-  public async _run(filePath: string) {
-    const norm = filePath.replace(/\\/g, "/");
-    const tabId = `run:${norm}`;
-    const existing = this._tabs.find((t) => t.id === tabId);
-
-    if (!existing) {
-      const tab: IDevPanelTab = {
-        id: tabId,
-        name: `${window.path.basename(norm)}`,
-        active: false,
-        meta: { filePath: norm, status: "stopped" },
-      } as any;
-      this._tabs.push(tab);
-    }
-
-    this._tabs = this._tabs.map((t) => ({ ...t, active: t.id === tabId }));
-    this._render();
-
-    const runArea = this._el?.querySelector(".run-area") as HTMLElement | null;
-    if (!runArea) return;
-    runArea.innerHTML = "";
-    const container =
-      _xtermManager._get(tabId) || (await _xtermManager._spawn(tabId, ""));
-    runArea.appendChild(container!);
-
-    const command = `python ${path.join([
-      path.__dirname,
-      "scripts",
-      "run_script.py",
-    ])} ${filePath}`;
-
-    await _xtermManager._run(tabId, command);
-    this._set(tabId, "running");
-  }
-
-  public async _stop(filePath: string) {
-    const norm = filePath.replace(/\\/g, "/");
-    const tabId = `run:${norm}`;
-    const tab = this._tabs.find((t) => t.id === tabId);
-    if (!tab) return;
-
-    const termInstance = _xtermManager._terminals.get(tabId);
-
-    await _xtermManager._stop(tabId);
-    termInstance?.term?.write(`Exit code 1.\r\n`);
-    this._set(tabId, "stopped");
-  }
-
-  private _set(tabId: string, status: "running" | "stopped") {
-    this._tabs = this._tabs.map((t) =>
-      t.id === tabId ? { ...t, meta: { ...(t as any).meta, status } } : t
-    );
-    this._render();
-  }
 }
 
-export const _run = new Run();
-registerStandalone("run", _run);
+export const _console = new Console();
+registerStandalone("console", _console);
