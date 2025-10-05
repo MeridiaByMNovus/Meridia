@@ -160,6 +160,9 @@ export const pathBridge = {
   basename: (_path: string) => {
     return path.basename(_path);
   },
+  resolve: (_path: string[]) => {
+    return path.resolve(..._path);
+  },
   join: (_paths: string[]) => {
     return path.join(..._paths);
   },
@@ -284,6 +287,24 @@ export const spawnBridge = {
   },
 };
 
+export const editorBridge = {
+  getFsSuggestions: (currentPath: string) => {
+    try {
+      const resolvedPath = path.resolve(currentPath || ".");
+      const items = fs.readdirSync(resolvedPath, { withFileTypes: true });
+
+      return items.map((item) => ({
+        name: item.name,
+        isDirectory: item.isDirectory(),
+        path: path.join(resolvedPath, item.name),
+      }));
+    } catch (error) {
+      console.error("Error reading directory:", error);
+      return [];
+    }
+  },
+};
+
 window.addEventListener("beforeunload", () => {
   activeWatchers.forEach((watcher, path) => {
     try {
@@ -303,3 +324,4 @@ contextBridge.exposeInMainWorld("mira", miraBridge);
 contextBridge.exposeInMainWorld("python", pythonBridge);
 contextBridge.exposeInMainWorld("childprocess", childprocessBridge);
 contextBridge.exposeInMainWorld("spawn", spawnBridge);
+contextBridge.exposeInMainWorld("editor", editorBridge);

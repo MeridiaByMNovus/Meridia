@@ -1,4 +1,5 @@
 import * as monaco from "monaco-editor";
+import "./workbench.monaco.icons.js";
 import "monaco-languages";
 import {
   CloseAction,
@@ -16,6 +17,7 @@ import { select } from "../workbench.store/workbench.store.selector.js";
 import { getLanguage } from "../workbench.utils.js";
 import { registerTheme } from "./workbench.editor.theme.js";
 import { registerCompletion } from "../../../platform/mira/mira.suggestions/register.js";
+import { registerFsSuggestion } from "./workbench.editor.utils.js";
 
 const fs = window.fs;
 const path = window.path;
@@ -44,53 +46,77 @@ MonacoServices.install(monaco as any);
 export class Editor {
   private _tabs: IEditorTab[] = [];
   public _editor!: monaco.editor.IStandaloneCodeEditor;
-  private _editorLayout = document.querySelector(".editor-area") as HTMLElement;
-  private _languageClient?: MonacoLanguageClient;
+  private _layout = document.querySelector(".editor-area") as HTMLElement;
+  private _client?: MonacoLanguageClient;
   private _models = new Map<string, monaco.editor.ITextModel>();
   private _watchers = new Map<string, any>();
-  private _isUpdatingFromExternal = false;
+  private _updating = false;
   private _saveActionDisposable?: monaco.IDisposable;
-  private _isEditorMounted = false;
+  private _mounted = false;
+
+  private _registeredProviders = new Map<string, monaco.IDisposable>();
+  private _isProvidersRegistered = false;
 
   constructor() {
     registerTheme(monaco);
+    this._registerProviders();
     this._hoverProvider();
   }
 
+  private _registerProviders() {
+    if (this._isProvidersRegistered) return;
+
+    try {
+      const fsProvider = registerFsSuggestion(monaco);
+      if (fsProvider) {
+        this._registeredProviders.set("fs-suggestion", fsProvider);
+      }
+
+      this._isProvidersRegistered = true;
+    } catch (error) {
+      console.warn("Failed to register providers:", error);
+    }
+  }
+
   private _hoverProvider() {
-    monaco.languages.registerHoverProvider("python", {
-      provideHover: (model, position) => {
-        const word = model.getWordAtPosition(position);
-        if (!word) return null;
+    if (!this._registeredProviders.has("hover-provider")) {
+      const hoverProvider = monaco.languages.registerHoverProvider("python", {
+        provideHover: (model, position) => {
+          const word = model.getWordAtPosition(position);
+          if (!word) return null;
 
-        const lineText = model.getLineContent(position.lineNumber);
-        const beforeWord = lineText.substring(0, word.startColumn - 1);
-        const afterWord = lineText.substring(word.endColumn - 1);
+          const lineText = model.getLineContent(position.lineNumber);
+          const beforeWord = lineText.substring(0, word.startColumn - 1);
+          const afterWord = lineText.substring(word.endColumn - 1);
 
-        return {
-          range: new monaco.Range(
-            position.lineNumber,
-            word.startColumn,
-            position.lineNumber,
-            word.endColumn
-          ),
-          contents: [
-            { value: `**Symbol**: ${word.word}` },
-            {
-              value: `**Position**: Line ${position.lineNumber}, Column ${position.column}`,
-            },
-            { value: `**Context**: ${beforeWord}**${word.word}**${afterWord}` },
-            { value: `**Language**: Python` },
-          ],
-        };
-      },
-    });
+          return {
+            range: new monaco.Range(
+              position.lineNumber,
+              word.startColumn,
+              position.lineNumber,
+              word.endColumn
+            ),
+            contents: [
+              { value: `**Symbol**: ${word.word}` },
+              {
+                value: `**Position**: Line ${position.lineNumber}, Column ${position.column}`,
+              },
+              {
+                value: `**Context**: ${beforeWord}**${word.word}**${afterWord}`,
+              },
+              { value: `**Language**: Python` },
+            ],
+          };
+        },
+      });
+
+      this._registeredProviders.set("hover-provider", hoverProvider);
+    }
   }
 
   private _ensure() {
     const editorElement = document.querySelector(".monaco-editor");
-    const needsMount =
-      !this._editor || !this._isEditorMounted || !editorElement;
+    const needsMount = !this._editor || !this._mounted || !editorElement;
 
     if (needsMount) {
       this._mount();
@@ -105,7 +131,7 @@ export class Editor {
       } catch (e) {}
     }
 
-    this._editor = monaco.editor.create(this._editorLayout, {
+    this._editor = monaco.editor.create(this._layout, {
       theme: "meridia-theme",
       automaticLayout: true,
       fontSize: 20,
@@ -116,11 +142,10 @@ export class Editor {
       renderWhitespace: "none",
     });
 
-    this._isEditorMounted = true;
-
+    this._mounted = true;
     this._visiblity(false);
 
-    if (!this._languageClient) this._setupCLient();
+    if (!this._client) this._setupCLient();
 
     this._setupCursorTracking();
     this._saveAction();
@@ -175,7 +200,7 @@ export class Editor {
       listen({
         webSocket,
         onConnection: (connection) => {
-          this._languageClient = new MonacoLanguageClient({
+          this._client = new MonacoLanguageClient({
             name: "Pyright Language Client",
             clientOptions: {
               documentSelector: ["python"],
@@ -204,7 +229,7 @@ export class Editor {
             },
           });
 
-          this._languageClient
+          this._client
             .onReady()
             .then(() => {
               this._editor.updateOptions({ readOnly: false });
@@ -214,7 +239,7 @@ export class Editor {
             });
 
           try {
-            const disposable = this._languageClient.start();
+            const disposable = this._client.start();
             connection.onClose(() => disposable.dispose());
           } catch (error) {}
         },
@@ -228,10 +253,10 @@ export class Editor {
     model: monaco.editor.ITextModel,
     lineNumber: number
   ) {
-    if (!this._languageClient) return null;
+    if (!this._client) return null;
 
     try {
-      const symbols = (await this._languageClient.sendRequest(
+      const symbols = (await this._client.sendRequest(
         "textDocument/documentSymbol",
         {
           textDocument: { uri: model.uri.toString() },
@@ -267,7 +292,6 @@ export class Editor {
 
   async _open(tab: IEditorTab) {
     this._ensure();
-
     this._visiblity(true);
 
     let model = this._models.get(tab.uri);
@@ -286,16 +310,11 @@ export class Editor {
       if (!this._tabs.find((t) => t.uri === tab.uri)) this._tabs.push(tab);
 
       model.onDidChangeContent(() => {
-        if (!this._isUpdatingFromExternal) this._update(tab.uri, true);
+        if (!this._updating) this._update(tab.uri, true);
       });
 
       this._watch(tab.uri);
     }
-
-    registerCompletion(monaco, this._editor, {
-      language: getLanguage(tab.uri),
-      filename: tab.name,
-    });
 
     this._editor.setModel(model);
     this._editor.focus();
@@ -327,9 +346,9 @@ export class Editor {
         ]
       );
 
-      this._isUpdatingFromExternal = true;
+      this._updating = true;
       model.setValue(newContent);
-      this._isUpdatingFromExternal = false;
+      this._updating = false;
 
       if (currentPosition && this._editor.getModel() === model) {
         this._editor.setPosition(currentPosition);
@@ -401,6 +420,16 @@ export class Editor {
   }
 
   dispose() {
+    this._registeredProviders.forEach((disposable) => {
+      try {
+        disposable.dispose();
+      } catch (error) {
+        console.warn("Error disposing provider:", error);
+      }
+    });
+    this._registeredProviders.clear();
+    this._isProvidersRegistered = false;
+
     this._models.forEach((model) => model.dispose());
     this._models.clear();
 
@@ -420,7 +449,7 @@ export class Editor {
     }
 
     this._tabs = [];
-    this._isEditorMounted = false;
+    this._mounted = false;
   }
 }
 

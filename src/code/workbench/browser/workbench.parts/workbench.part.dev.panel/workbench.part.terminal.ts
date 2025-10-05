@@ -14,14 +14,11 @@ const storage = window.storage;
 
 export class Terminal extends CoreEl {
   private _tabs: IDevPanelTab[] = [];
-  private _uri!: string;
   private _nextId = 1;
 
   constructor() {
     super();
     this._createEl();
-
-    this._uri = select((s) => s.main.folder_structure).uri;
 
     const tabs = storage.get("terminal-tabs");
 
@@ -125,8 +122,7 @@ export class Terminal extends CoreEl {
     terminalArea.innerHTML = "";
 
     const container =
-      _xtermManager._get(tab.id) ||
-      (await _xtermManager._spawn(tab.id, this._uri));
+      _xtermManager._get(tab.id) || (await _xtermManager._spawn(tab.id));
 
     terminalArea.appendChild(container!);
 
@@ -201,8 +197,8 @@ export class Terminal extends CoreEl {
 
   private _add() {
     const newTab: IDevPanelTab = {
-      id: `terminal-${this._nextId++}`,
-      name: `Terminal ${this._nextId - 1}`,
+      id: `terminal-${crypto.randomUUID()}`,
+      name: `Terminal ${this._nextId++ + 1}`,
       active: true,
     };
 

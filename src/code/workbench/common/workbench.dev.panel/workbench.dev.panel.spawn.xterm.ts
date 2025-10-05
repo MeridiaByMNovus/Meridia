@@ -3,6 +3,8 @@ import { Terminal as XTerm } from "@xterm/xterm";
 import { IXTermInstance } from "../../workbench.types.js";
 import { getStandalone } from "../workbench.standalone.js";
 import { Theme } from "../workbench.theme.js";
+import { debounce } from "lodash";
+import { select } from "../workbench.store/workbench.store.selector.js";
 
 const ipcRenderer = window.ipc;
 
@@ -13,9 +15,8 @@ class XtermManager {
     { pid?: number; isRunning: boolean }
   >();
   private _completionDetected = new Map<string, boolean>();
-  private _fitDebounceTimer: any = null;
 
-  async _spawn(id: string, cwd?: string, shell?: string): Promise<HTMLElement> {
+  async _spawn(id: string, shell?: string): Promise<HTMLElement> {
     if (this._terminals.has(id)) {
       return this._terminals.get(id)!._container;
     }
@@ -40,6 +41,10 @@ class XtermManager {
     term.loadAddon(fitAddon);
 
     fitAddon.fit();
+
+    const structure = select((s) => s.main.folder_structure);
+
+    const cwd = structure ? structure.uri : "";
 
     await ipcRenderer.invoke("pty-spawn", id, term.cols, term.rows, cwd, shell);
 
@@ -202,11 +207,7 @@ class XtermManager {
   }
 
   _update() {
-    if (this._fitDebounceTimer) {
-      clearTimeout(this._fitDebounceTimer);
-    }
-
-    this._fitDebounceTimer = setTimeout(() => {
+    setTimeout(() => {
       for (const [id, instance] of this._terminals) {
         try {
           instance._fitAddon.fit();
@@ -226,10 +227,10 @@ class XtermManager {
           instance._container.style.width = _width;
         } catch (e) {}
       }
-    }, 100);
+    }, 10);
   }
 
-  async _run(id: string, command: string): Promise<boolean> {
+  async _run(id: string, command: string, _path: string): Promise<boolean> {
     try {
       this._completionDetected.set(id, false);
       this._runningCommands.set(id, { isRunning: true });
@@ -245,7 +246,12 @@ class XtermManager {
       instance.term.options.disableStdin = false;
 
       const commandCompleted = this._wait(id);
-      const result = await ipcRenderer.invoke("pty-run-command", id, command);
+      const result = await ipcRenderer.invoke(
+        "pty-run-command",
+        id,
+        command,
+        _path
+      );
 
       if (!result.success) {
         this._runningCommands.delete(id);

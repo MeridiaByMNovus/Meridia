@@ -124,7 +124,7 @@ export class Console extends CoreEl {
 
     const container =
       _xtermManager._get(tab.id) ||
-      (await _xtermManager._spawn(tab.id, "", "python"));
+      (await _xtermManager._spawn(tab.id, "python"));
 
     consoleArea.appendChild(container!);
 

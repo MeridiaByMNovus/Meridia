@@ -190,7 +190,7 @@ export class Run extends CoreEl {
     if (!runArea) return;
     runArea.innerHTML = "";
     const container =
-      _xtermManager._get(tabId) || (await _xtermManager._spawn(tabId, ""));
+      _xtermManager._get(tabId) || (await _xtermManager._spawn(tabId));
     runArea.appendChild(container!);
 
     const command = `python ${path.join([
@@ -199,7 +199,7 @@ export class Run extends CoreEl {
       "run_script.py",
     ])} ${filePath}`;
 
-    await _xtermManager._run(tabId, command);
+    await _xtermManager._run(tabId, command, path.dirname(filePath));
     this._set(tabId, "running");
   }
 

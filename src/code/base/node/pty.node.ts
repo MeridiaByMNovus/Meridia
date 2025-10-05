@@ -111,7 +111,9 @@ setTimeout(() => {
 
         try {
           setTimeout(() => {
-            term.write(command + "\r");
+            term.write(`cd ${cwd}` + "\r");
+            term.write("\x1b[2J\x1b[H");
+            term.write(command + "\r" + "\n" + "\n");
           }, 200);
 
           resolve({ success: true });

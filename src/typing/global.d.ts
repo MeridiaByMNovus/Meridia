@@ -10,6 +10,7 @@ import {
   storageBridge,
   childprocessBridge,
   spawnBridge,
+  editorBridge,
 } from "../code/base/base.preload.js";
 
 declare global {
@@ -23,5 +24,6 @@ declare global {
     python: typeof pythonBridge;
     childprocess: typeof childprocessBridge;
     spawn: typeof spawnBridge;
+    editor: typeof editorBridge;
   }
 }
