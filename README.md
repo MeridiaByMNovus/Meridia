@@ -45,6 +45,6 @@ NODE_ENV=development
 
 ## Installation
 
-Download the latest release for your operating system from the [Releases](https://github.com/MeridiaByMNovus/Meridia/releases) page.
+Under development
 
-![Logo](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/th5xamgrr6se0x5ro4g6.png)
+<!-- ![Logo](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/th5xamgrr6se0x5ro4g6.png) -->
