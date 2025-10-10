@@ -7,3 +7,7 @@
 .code .editor .editor-area {
   height: calc(100% - 56px);
 }
+
+.monaco-editor .suggest-widget {
+  z-index: 2147483647 !important; /* Maximum z-index value */
+}

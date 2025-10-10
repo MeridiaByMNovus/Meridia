@@ -16,6 +16,7 @@ import { update_editor_tabs } from "../workbench.store/workbench.store.slice.js"
 import { select } from "../workbench.store/workbench.store.selector.js";
 import { getLanguage } from "../workbench.utils.js";
 import { registerTheme } from "./workbench.editor.theme.js";
+import { registerCompletion } from "../../../platform/mira/mira.suggestions/register.js";
 import { registerFsSuggestion } from "./workbench.editor.utils.js";
 
 const fs = window.fs;
@@ -44,7 +45,6 @@ MonacoServices.install(monaco as any);
 
 export class Editor {
   private _tabs: IEditorTab[] = [];
-  private _workspace = select((s) => s.main.folder_structure).uri ?? "";
   public _editor!: monaco.editor.IStandaloneCodeEditor;
   private _layout = document.querySelector(".editor-area") as HTMLElement;
   private _client?: MonacoLanguageClient;
@@ -53,10 +53,8 @@ export class Editor {
   private _updating = false;
   private _saveActionDisposable?: monaco.IDisposable;
   private _mounted = false;
-  private _saving = new Set<string>();
+
   private _registeredProviders = new Map<string, monaco.IDisposable>();
-  private _currentLanguage?: string;
-  private _isPythonClientActive = false;
   private _isProvidersRegistered = false;
 
   constructor() {
@@ -80,7 +78,7 @@ export class Editor {
 
       this._isProvidersRegistered = true;
     } catch (error) {
-      
+      console.warn("Failed to register providers:", error);
     }
   }
 
@@ -137,12 +135,6 @@ export class Editor {
       } catch (e) {}
     }
 
-    const _data = { userId: Date.now() };
-    const _event = new CustomEvent("workbench.editor.on.open", {
-      detail: _data,
-    });
-    document.dispatchEvent(_event);
-
     this._editor = monaco.editor.create(this._layout, {
       theme: "meridia-theme",
       automaticLayout: true,
@@ -151,6 +143,8 @@ export class Editor {
       cursorBlinking: "smooth",
       cursorSmoothCaretAnimation: true,
       minimap: { enabled: false },
+      renderWhitespace: "none",
+      fixedOverflowWidgets: true,
     });
 
     this._mounted = true;
@@ -162,7 +156,7 @@ export class Editor {
     this._saveAction();
   }
 
-  public _visiblity(visible: boolean) {
+  private _visiblity(visible: boolean) {
     const editorElement = document.querySelector(
       ".monaco-editor"
     ) as HTMLDivElement;
@@ -219,21 +213,14 @@ export class Editor {
                 error: () => ErrorAction.Continue,
                 closed: () => CloseAction.DoNotRestart,
               },
-              workspaceFolder: {
-                index: 0,
-                name: path.dirname(this._workspace),
-                uri: `file:///${this._workspace}`,
-              },
               initializationOptions: {
                 settings: {
                   python: {
                     pythonPath: "/usr/bin/python",
                     analysis: {
-                      useLibraryCodeForTypes: true,
                       autoSearchPaths: true,
-                      diagnosticMode: "workspace",
-                      autoImportCompletions: true,
-                      typeCheckingMode: "basic",
+                      useLibraryCodeForTypes: true,
+                      diagnosticMode: "openFilesOnly",
                     },
                   },
                 },
@@ -267,40 +254,14 @@ export class Editor {
     }
   }
 
-  private async _closeClient() {
-    if (this._client && this._isPythonClientActive) {
-      try {
-        await this._client.stop();
-        this._client = undefined as any;
-        this._isPythonClientActive = false;
-      } catch (error) {
-        console.warn("Error shutting down Python client:", error);
-      }
-    }
-  }
-
-  private async _switch(newLanguage: string) {
-    if (this._currentLanguage === newLanguage) return;
-
-    const oldLanguage = this._currentLanguage;
-    this._currentLanguage = newLanguage;
-
-    if (newLanguage === "python") {
-      if (!this._isPythonClientActive) {
-      }
-    } else if (oldLanguage === "python" && newLanguage !== "python") {
-      await this._closeClient();
-    }
-
-    console.log(`Language switched from ${oldLanguage} to ${newLanguage}`);
-  }
-
   private async _getDocumentSymbols(
     model: monaco.editor.ITextModel,
     lineNumber: number
   ) {
+    if (!this._client) return null;
+
     try {
-      const symbols = (await this._client!.sendRequest(
+      const symbols = (await this._client.sendRequest(
         "textDocument/documentSymbol",
         {
           textDocument: { uri: model.uri.toString() },
@@ -338,33 +299,23 @@ export class Editor {
     this._ensure();
     this._visiblity(true);
 
-<<<<<<< HEAD
-    const _data = { userId: Date.now() };
-    const _event = new CustomEvent("workbench.editor.on.open.file", {
-      detail: _data,
-    });
-    document.dispatchEvent(_event);
-
-    let model = this._models.get(tab.uri);
-
-    if (!model) {
-      const uri = monaco.Uri.file(tab.uri);
-      const language = getLanguage(tab.uri);
-
-=======
     const key = this._normalizePath(tab.uri);
     let model = this._models.get(key);
 
     if (!model) {
       const uri = monaco.Uri.file(tab.uri);
-      
->>>>>>> refs/remotes/origin/main
+      console.log(uri, tab.uri);
       model =
         monaco.editor.getModel(uri) ||
-        monaco.editor.createModel(await fs.readFile(tab.uri), language, uri);
+        monaco.editor.createModel(
+          await fs.readFile(tab.uri),
+          getLanguage(tab.uri),
+          uri
+        );
 
       this._models.set(key, model);
-      if (!this._tabs.find((t) => this._normalizePath(t.uri) === key)) this._tabs.push(tab);
+      if (!this._tabs.find((t) => this._normalizePath(t.uri) === key))
+        this._tabs.push(tab);
 
       model.onDidChangeContent(() => {
         if (!this._updating) this._update(tab.uri, true);
@@ -372,9 +323,6 @@ export class Editor {
 
       this._watch(tab.uri);
     }
-
-    const newLanguage = getLanguage(tab.uri);
-    await this._switch(newLanguage);
 
     this._editor.setModel(model);
     this._editor.focus();
@@ -395,45 +343,27 @@ export class Editor {
     } catch {}
   }
 
-<<<<<<< HEAD
-  private async _external(uri: string) {
-    if (this._saving.has(uri)) {
-      return;
-    }
-
-    const model = this._models.get(uri);
-=======
   private async _external(uriString: string) {
     const key = this._normalizePath(uriString);
     const model = this._models.get(key);
->>>>>>> refs/remotes/origin/main
     if (!model) return;
 
     try {
-      const [newContent, currentPosition, currentSelection] = await Promise.all([
-        fs.readFile(uriString),
-        Promise.resolve(this._editor.getPosition()),
-        Promise.resolve(this._editor.getSelection()),
-      ]);
-
-      if (model.getValue() === newContent) return;
+      const [newContent, currentPosition, currentSelection] = await Promise.all(
+        [
+          fs.readFile(uriString),
+          Promise.resolve(this._editor.getPosition()),
+          Promise.resolve(this._editor.getSelection()),
+        ]
+      );
 
       this._updating = true;
-
-      const fullRange = model.getFullModelRange();
-      const editOperation = {
-        range: fullRange,
-        text: newContent,
-        forceMoveMarkers: false,
-      };
-
-      model.pushEditOperations([], [editOperation], () => null);
+      model.setValue(newContent);
       this._updating = false;
 
       if (currentPosition && this._editor.getModel() === model) {
         this._editor.setPosition(currentPosition);
         if (currentSelection) this._editor.setSelection(currentSelection);
-        this._editor.focus();
       }
 
       this._update(uriString, false);
@@ -442,12 +372,16 @@ export class Editor {
 
   private _update(uriString: string, _touched: boolean) {
     this._tabs = this._tabs.map((tab) =>
-      this._normalizePath(tab.uri) === this._normalizePath(uriString) ? { ...tab, is_touched: _touched } : tab
+      this._normalizePath(tab.uri) === this._normalizePath(uriString)
+        ? { ...tab, is_touched: _touched }
+        : tab
     );
 
-    
+    console.log(path.normalize(uriString), this._tabs);
     const _updated = select((s) => s.main.editor_tabs).map((tab) =>
-      this._normalizePath(tab.uri) === this._normalizePath(uriString) ? { ...tab, is_touched: _touched } : tab
+      this._normalizePath(tab.uri) === this._normalizePath(uriString)
+        ? { ...tab, is_touched: _touched }
+        : tab
     );
 
     dispatch(update_editor_tabs(_updated));
@@ -457,58 +391,25 @@ export class Editor {
     const key = this._normalizePath(uriString);
     const model = this._models.get(key);
     if (!model) {
-      
+      console.warn(
+        "Model not found for save key",
+        key,
+        "original uri",
+        uriString
+      );
       return;
     }
 
-    
+    console.log("saving", model, uriString, this._models);
 
     try {
-<<<<<<< HEAD
-      this._saving.add(uri);
-
-      this._editor.updateOptions({ readOnly: true });
-
-      fs.createFile(uri, model.getValue());
-
-      if (uri.endsWith(".py")) {
-=======
       fs.createFile(uriString, model.getValue());
       if (uriString.endsWith(".py"))
->>>>>>> refs/remotes/origin/main
         await python.executeScript(
           path.join([path.__dirname, "scripts", "format.py"]),
           [uriString]
         );
-      }
 
-<<<<<<< HEAD
-      this._update(uri, false);
-
-      setTimeout(() => {
-        this._saving.delete(uri);
-      }, 1500);
-    } catch (error) {
-      this._saving.delete(uri);
-      console.error("Save failed:", error);
-    } finally {
-      this._editor.updateOptions({ readOnly: false });
-      this._editor.focus();
-    }
-  }
-
-  _close(uri: string) {
-    const model = this._models.get(uri);
-    if (!model) return;
-
-    const _data = { userId: Date.now() };
-    const _event = new CustomEvent("workbench.editor.on.close", {
-      detail: _data,
-    });
-    document.dispatchEvent(_event);
-
-    const watcher = this._watchers.get(uri);
-=======
       this._update(uriString, false);
     } catch {}
   }
@@ -519,7 +420,6 @@ export class Editor {
     if (!model) return;
 
     const watcher = this._watchers.get(key);
->>>>>>> refs/remotes/origin/main
     if (watcher) {
       try {
         fs.unwatchFile(uriString);
@@ -529,7 +429,9 @@ export class Editor {
 
     this._models.delete(key);
     model.dispose();
-    this._tabs = this._tabs.filter((tab) => this._normalizePath(tab.uri) !== key);
+    this._tabs = this._tabs.filter(
+      (tab) => this._normalizePath(tab.uri) !== key
+    );
 
     if (this._editor && this._editor.getModel() === model) {
       if (this._tabs.length > 0) {
@@ -539,8 +441,6 @@ export class Editor {
         this._visiblity(false);
         this._saveActionDisposable?.dispose();
         this._saveActionDisposable = undefined as any;
-
-        this._switch("");
       }
     }
 
@@ -554,7 +454,7 @@ export class Editor {
       try {
         disposable.dispose();
       } catch (error) {
-        
+        console.warn("Error disposing provider:", error);
       }
     });
     this._registeredProviders.clear();
