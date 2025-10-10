@@ -7,7 +7,6 @@ import {
 import { CoreEl } from "../workbench.part.el.js";
 import { _xtermManager } from "../../../common/workbench.dev.panel/workbench.dev.panel.spawn.xterm.js";
 import PerfectScrollbar from "perfect-scrollbar";
-import { select } from "../../../common/workbench.store/workbench.store.selector.js";
 import { registerStandalone } from "../../../common/workbench.standalone.js";
 
 const storage = window.storage;
@@ -33,7 +32,9 @@ export class Terminal extends CoreEl {
       ];
     }
 
-    this._render();
+    setTimeout(() => {
+      this._render();
+    }, 100)
   }
 
   private _createEl() {

@@ -1,7 +1,7 @@
-import { PUBLIC_FOLDER, STORE_JSON_PATH } from "./base.utils.js";
+import { MERIDIA_FOLDER_PATH, PUBLIC_FOLDER, PUBLIC_FOLDER_PATH, STORE_JSON_PATH, USER_FOLDER_PATH } from "./base.utils.js";
 import fs from "fs";
 
-const folders = [PUBLIC_FOLDER!];
+const folders = [PUBLIC_FOLDER!, MERIDIA_FOLDER_PATH, USER_FOLDER_PATH, PUBLIC_FOLDER_PATH];
 
 folders.forEach((folder) => {
   try {

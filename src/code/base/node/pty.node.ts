@@ -7,7 +7,7 @@ const terminals = new Map<string, pty.IPty>();
 
 function getShell(): string {
   if (os.platform() === "win32") {
-    return process.env.COMSPEC || "cmd.exe";
+    return "powershell.exe";
   }
   return process.env.SHELL || "/bin/bash";
 }
@@ -30,11 +30,13 @@ setTimeout(() => {
 
       const shell = _shell ?? getShell();
 
+      console.log("cwd", cwd)
+
       const ptyProcess = pty.spawn(shell, [], {
         name: "xterm-color",
         cols,
         rows,
-        cwd: cwd !== "" ? cwd : os.homedir(),
+        cwd: cwd ?? os.homedir(),
         env: process.env,
       });
 
@@ -99,31 +101,29 @@ setTimeout(() => {
     return false;
   });
 
-  ipcMain.handle(
-    "pty-run-command",
-    (event, id: string, command: string, cwd: string) => {
-      return new Promise<{ success: boolean; error?: string }>((resolve) => {
-        const term = terminals.get(id);
-        if (!term) {
-          resolve({ success: false, error: "Terminal not found" });
-          return;
-        }
+  ipcMain.handle("pty-run-command", (event, id: string, command: string, cwd: string) => {
+  return new Promise<{ success: boolean; error?: string }>((resolve) => {
+    const term = terminals.get(id);
+    if (!term) {
+      resolve({ success: false, error: "Terminal not found" });
+      return;
+    }
 
-        try {
-          setTimeout(() => {
-            term.write(`cd ${cwd}` + "\r");
-            term.write("\x1b[2J\x1b[H");
-            term.write(command + "\r" + "\n" + "\n");
-          }, 200);
+    try {
+      term.write("\x1b[2J\x1b[H");
+      term.write(`cd ${cwd}\r`); 
+      setTimeout(() => {
+        term.write(command + "\r");
 
-          resolve({ success: true });
-        } catch (error) {
-          resolve({
-            success: false,
-            error: error instanceof Error ? error.message : String(error),
-          });
-        }
+      }, 100);
+
+      resolve({ success: true });
+    } catch (error) {
+      resolve({
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
       });
     }
-  );
+  });
+});
 }, 100);

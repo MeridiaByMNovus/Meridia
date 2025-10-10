@@ -170,6 +170,9 @@ export const pathBridge = {
   isAbsolute: (_path: string) => {
     return path.isAbsolute(_path);
   },
+  normalize: (_path: string) => {
+    return path.normalize(_path)
+  }
 };
 
 export const filesBridge = {

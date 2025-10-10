@@ -11,7 +11,8 @@ export class DevPanel extends CoreEl {
     const _collapsed = window.storage.get("dev-panel-tabs-is-collapsed");
     if (_collapsed) this._isCollapsed = _collapsed;
     else this._isCollapsed = false;
-    this._createEl();
+
+    this._createEl();    
   }
 
   private _createEl() {

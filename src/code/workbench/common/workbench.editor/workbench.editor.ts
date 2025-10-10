@@ -63,6 +63,10 @@ export class Editor {
     this._hoverProvider();
   }
 
+  private _normalizePath(p: string) {
+    return p.toLowerCase().replace(/\//g, "\\");
+  }
+
   private _registerProviders() {
     if (this._isProvidersRegistered) return;
 
@@ -74,7 +78,7 @@ export class Editor {
 
       this._isProvidersRegistered = true;
     } catch (error) {
-      console.warn("Failed to register providers:", error);
+      
     }
   }
 
@@ -294,10 +298,12 @@ export class Editor {
     this._ensure();
     this._visiblity(true);
 
-    let model = this._models.get(tab.uri);
+    const key = this._normalizePath(tab.uri);
+    let model = this._models.get(key);
 
     if (!model) {
       const uri = monaco.Uri.file(tab.uri);
+      
       model =
         monaco.editor.getModel(uri) ||
         monaco.editor.createModel(
@@ -306,8 +312,8 @@ export class Editor {
           uri
         );
 
-      this._models.set(tab.uri, model);
-      if (!this._tabs.find((t) => t.uri === tab.uri)) this._tabs.push(tab);
+      this._models.set(key, model);
+      if (!this._tabs.find((t) => this._normalizePath(t.uri) === key)) this._tabs.push(tab);
 
       model.onDidChangeContent(() => {
         if (!this._updating) this._update(tab.uri, true);
@@ -320,31 +326,32 @@ export class Editor {
     this._editor.focus();
   }
 
-  private _watch(uri: string) {
-    if (this._watchers.has(uri)) return;
+  private _watch(uriString: string) {
+    const key = this._normalizePath(uriString);
+    if (this._watchers.has(key)) return;
 
     try {
+      const uri = monaco.Uri.file(uriString);
       const watcher = fs.watchFile(
-        uri,
+        uri.fsPath, // use fsPath for Windows compatibility
         { persistent: true, interval: 1000 },
-        () => this._external(uri)
+        () => this._external(uriString)
       );
-      this._watchers.set(uri, watcher);
+      this._watchers.set(key, watcher);
     } catch {}
   }
 
-  private async _external(uri: string) {
-    const model = this._models.get(uri);
+  private async _external(uriString: string) {
+    const key = this._normalizePath(uriString);
+    const model = this._models.get(key);
     if (!model) return;
 
     try {
-      const [newContent, currentPosition, currentSelection] = await Promise.all(
-        [
-          fs.readFile(uri),
-          Promise.resolve(this._editor.getPosition()),
-          Promise.resolve(this._editor.getSelection()),
-        ]
-      );
+      const [newContent, currentPosition, currentSelection] = await Promise.all([
+        fs.readFile(uriString),
+        Promise.resolve(this._editor.getPosition()),
+        Promise.resolve(this._editor.getSelection()),
+      ]);
 
       this._updating = true;
       model.setValue(newContent);
@@ -355,53 +362,61 @@ export class Editor {
         if (currentSelection) this._editor.setSelection(currentSelection);
       }
 
-      this._update(uri, false);
+      this._update(uriString, false);
     } catch {}
   }
 
-  private _update(uri: string, _touched: boolean) {
+  private _update(uriString: string, _touched: boolean) {
     this._tabs = this._tabs.map((tab) =>
-      tab.uri === uri ? { ...tab, is_touched: _touched } : tab
+      this._normalizePath(tab.uri) === this._normalizePath(uriString) ? { ...tab, is_touched: _touched } : tab
     );
 
+    
     const _updated = select((s) => s.main.editor_tabs).map((tab) =>
-      tab.uri === uri ? { ...tab, is_touched: _touched } : tab
+      this._normalizePath(tab.uri) === this._normalizePath(uriString) ? { ...tab, is_touched: _touched } : tab
     );
 
     dispatch(update_editor_tabs(_updated));
   }
 
-  async _save(uri: string) {
-    const model = this._models.get(uri);
-    if (!model) return;
+  async _save(uriString: string) {
+    const key = this._normalizePath(uriString);
+    const model = this._models.get(key);
+    if (!model) {
+      
+      return;
+    }
+
+    
 
     try {
-      fs.createFile(uri, model.getValue());
-      if (uri.endsWith(".py"))
+      fs.createFile(uriString, model.getValue());
+      if (uriString.endsWith(".py"))
         await python.executeScript(
           path.join([path.__dirname, "scripts", "format.py"]),
-          [uri]
+          [uriString]
         );
 
-      this._update(uri, false);
+      this._update(uriString, false);
     } catch {}
   }
 
-  public _close(uri: string) {
-    const model = this._models.get(uri);
+  public _close(uriString: string) {
+    const key = this._normalizePath(uriString);
+    const model = this._models.get(key);
     if (!model) return;
 
-    const watcher = this._watchers.get(uri);
+    const watcher = this._watchers.get(key);
     if (watcher) {
       try {
-        fs.unwatchFile(uri);
+        fs.unwatchFile(uriString);
       } catch {}
-      this._watchers.delete(uri);
+      this._watchers.delete(key);
     }
 
-    this._models.delete(uri);
+    this._models.delete(key);
     model.dispose();
-    this._tabs = this._tabs.filter((tab) => tab.uri !== uri);
+    this._tabs = this._tabs.filter((tab) => this._normalizePath(tab.uri) !== key);
 
     if (this._editor && this._editor.getModel() === model) {
       if (this._tabs.length > 0) {
@@ -424,7 +439,7 @@ export class Editor {
       try {
         disposable.dispose();
       } catch (error) {
-        console.warn("Error disposing provider:", error);
+        
       }
     });
     this._registeredProviders.clear();
