@@ -11,6 +11,7 @@ import {
   childprocessBridge,
   spawnBridge,
   editorBridge,
+  extensionBridge,
 } from "../code/base/base.preload.js";
 
 declare global {

@@ -69,15 +69,21 @@ export class Editor extends CoreEl {
       const activeTab = _tabs.find((t) => t.active);
 
       setTimeout(() => {
-        if (activeTab && editor) {
-          if (editor._editor) {
-            editor._open(activeTab);
+        if (activeTab) {
+          if (activeTab.uri.startsWith("tab://")) {
+            if (editor) editor._visiblity(false);
           } else {
-            editor._mount();
+            if (editor) {
+              if (editor._editor) {
+                editor._open(activeTab);
+              } else {
+                editor._mount();
 
-            setTimeout(() => {
-              editor._open(activeTab);
-            }, 0);
+                setTimeout(() => {
+                  editor._open(activeTab);
+                }, 0);
+              }
+            }
           }
         }
       }, 50);

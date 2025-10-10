@@ -24,7 +24,7 @@ async function buildAll() {
 
   const electronEntries = [
     "src/main.ts",
-    ...(await fg(["src/code/base/**/*.ts"])),
+    ...(await fg(["src/code/base/**/*.ts", "src/code/editor/**/*.ts"])),
   ];
 
   const workerEntries = {

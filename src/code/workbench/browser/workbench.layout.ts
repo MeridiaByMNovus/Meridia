@@ -9,12 +9,15 @@ import { Splitter } from "./workbench.parts/workbench.part.splitter.js";
 import { Statusbar } from "./workbench.parts/workbench.part.status.js";
 import { DevPanel } from "./workbench.parts/workbench.part.dev.panel/workbench.part.dev.panel.el.js";
 import { Titlebar } from "./workbench.parts/workbench.part.titlebar.js";
-import { runIcon } from "./workbench.media/workbench.icons.js";
+import { runIcon, settingsIcon } from "./workbench.media/workbench.icons.js";
 import { Mira } from "../../platform/mira/mira.workbench/browser/workbench.mira.layout.js";
 import { _xtermManager } from "../common/workbench.dev.panel/workbench.dev.panel.spawn.xterm.js";
 import { runCommand } from "../common/workbench.command.js";
 import { select } from "../common/workbench.store/workbench.store.selector.js";
 import "../common/workbench.init.js";
+import { dispatch } from "../common/workbench.store/workbench.store.js";
+import { update_editor_tabs } from "../common/workbench.store/workbench.store.slice.js";
+import { IEditorTab } from "../workbench.types.js";
 
 export class Layout {
   constructor() {
@@ -135,5 +138,20 @@ export class Layout {
     codeEl.appendChild(statusbar);
 
     document.body.appendChild(codeEl);
+
+    // setTimeout(() => {
+    //   const tabs = select((s) => s.main.editor_tabs);
+    //   const tab: IEditorTab = {
+    //     name: "Settings",
+    //     icon: settingsIcon,
+    //     is_touched: false,
+    //     active: true,
+    //     uri: "tab://settings",
+    //   };
+
+    //   const updated_tabs = [...tabs, tab];
+
+    //   dispatch(update_editor_tabs(updated_tabs));
+    // }, 500);
   }
 }

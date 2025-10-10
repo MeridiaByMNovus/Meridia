@@ -182,9 +182,9 @@ export const filesBridge = {
 };
 
 export const ipcBridge = {
-  send: (channel: any, ...args: any) => ipcRenderer.send(channel, ...args),
+  send: (channel: string, ...args: any) => ipcRenderer.send(channel, ...args),
 
-  invoke: async (channel: any, ...args: any) => {
+  invoke: async (channel: string, ...args: any) => {
     try {
       return await ipcRenderer.invoke(channel, ...args);
     } catch (e) {
@@ -192,15 +192,16 @@ export const ipcBridge = {
     }
   },
 
-  on: (channel: any, func: any) =>
+  on: (channel: string, func: Function) =>
     ipcRenderer.on(channel, (event, ...args) => func(event, ...args)),
 
-  once: (channel: any, func: any) =>
+  once: (channel: string, func: Function) =>
     ipcRenderer.once(channel, (event, ...args) => func(event, ...args)),
 
-  removeAllListeners: (channel: any) => ipcRenderer.removeAllListeners(channel),
+  removeAllListeners: (channel: string) =>
+    ipcRenderer.removeAllListeners(channel),
 
-  removeListener: (channel: any, listener: any) =>
+  removeListener: (channel: string, listener: any) =>
     ipcRenderer.removeListener(channel, listener),
 };
 

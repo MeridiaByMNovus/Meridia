@@ -4,11 +4,13 @@ import "./common/workbench.command.register.js";
 import "./common/workbench.editor/workbench.editor.js";
 import "./common/workbench.scrollbar.js";
 import "./common/workbench.uistate.js";
+import "./common/workbench.extension.listener.js";
 import "./event/workbench.event.statusbar.js";
 import "./event/workbench.event.panel.options.js";
 import "./event/workbench.event.editor.js";
 import "./services/workbench.resources.js";
 import "../platform/mira/mira.workbench/workbench.mira.main.js";
+import "../platform/extension/extension.main.js";
 
 const python = window.python;
 const path = window.path;

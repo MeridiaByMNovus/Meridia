@@ -1,4 +1,4 @@
-const commands = new Map<string, Function>();
+export const commands: Map<string, Function> = new Map();
 
 export function addCommand(_name: string, _action: Function) {
   commands.set(_name, _action);

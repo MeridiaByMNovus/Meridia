@@ -1,6 +1,7 @@
 .code .editor {
   height: 100%;
   overflow: hidden;
+  z-index: 2;
 }
 
 .code .editor .editor-area {

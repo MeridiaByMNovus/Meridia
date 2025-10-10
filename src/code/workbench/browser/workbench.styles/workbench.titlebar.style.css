@@ -22,6 +22,13 @@
   height: 100%;
 }
 
+.code .titlebar .left-panel-section .logo img {
+  width: 25px;
+  height: auto;
+  margin-right: 12px;
+  border-radius: 4px;
+}
+
 .code .titlebar .left-panel-section span {
   display: flex;
   align-items: center;
@@ -32,7 +39,7 @@
   cursor: pointer;
 }
 
-.code .titlebar .left-panel-section > span:not(.dropdown-container):hover,
+.code .titlebar .left-panel-section > span:not(.menu-container):hover,
 .hovered {
   background: var(--workbench-titlebar-item-hover-background);
 }
@@ -42,13 +49,13 @@
   height: auto;
 }
 
-.code .titlebar .left-panel-section .dropdown-container {
+.code .titlebar .left-panel-section .menu-container {
   position: relative;
   margin-left: 24px;
   border-radius: 12px;
 }
 
-.code .titlebar .hamburger-dropdown {
+.code .titlebar .hamburger-menu {
   position: absolute;
   top: calc(100% + 8px);
   left: 0;
@@ -62,30 +69,30 @@
   padding: 6px;
 }
 
-.code .titlebar .hamburger-dropdown.show {
+.code .titlebar .hamburger-menu.show {
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
 }
 
-.code .titlebar .hamburger-dropdown.submenu {
+.code .titlebar .hamburger-menu.submenu {
   top: -8px;
   left: calc(100% + 12px);
 }
 
-.code .titlebar .hamburger-dropdown.submenu.show {
+.code .titlebar .hamburger-menu.submenu.show {
   transform: translateX(0);
 }
 
-.code .titlebar .hamburger-dropdown.submenu.level-2 {
+.code .titlebar .hamburger-menu.submenu.level-2 {
   right: calc(-100% - 12px);
 }
 
-.code .titlebar .hamburger-dropdown.submenu.level-2.show {
+.code .titlebar .hamburger-menu.submenu.level-2.show {
   transform: translateX(0);
 }
 
-.code .titlebar .dropdown-item {
+.code .titlebar .menu-item {
   position: relative;
   cursor: pointer;
   width: 95%;
@@ -98,33 +105,33 @@
   margin-bottom: 2px;
 }
 
-.code .titlebar .dropdown-item:last-child {
+.code .titlebar .menu-item:last-child {
   margin-bottom: 0;
 }
 
-.code .titlebar .dropdown-item:hover,
+.code .titlebar .menu-item:hover,
 .hovered {
   background: var(--workbench-titlebar-menu-item-hover-background);
 }
 
-.code .titlebar .dropdown-item.active {
+.code .titlebar .menu-item.active {
   background: var(--workbench-titlebar-menu-item-active-background) !important;
   color: var(--workbench-titlebar-menu-item-active-foreground) !important;
 }
 
-.code .titlebar .dropdown-item.active:hover,
+.code .titlebar .menu-item.active:hover,
 .hovered {
   background: var(
     --workbench-titlebar-menu-item-active-hover-background
   ) !important;
 }
 
-.code .titlebar .dropdown-item.disabled {
+.code .titlebar .menu-item.disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.code .titlebar .dropdown-item-content {
+.code .titlebar .menu-item-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -134,7 +141,7 @@
   height: 90%;
 }
 
-.code .titlebar .dropdown-item-icon {
+.code .titlebar .menu-item-icon {
   width: 16px;
   height: 16px;
   display: flex;
@@ -144,27 +151,42 @@
   flex-shrink: 0;
 }
 
-.code .titlebar .dropdown-item-label {
+.code .titlebar .menu-item-label {
   color: var(--workbench-titlebar-menu--foreground);
-  font-size: 13px;
-  font-weight: 400;
+  font-size: 14px;
+  font-family: "Inconsolata";
 }
 
-.code .titlebar .dropdown-item.active .dropdown-item-label {
+.code .titlebar .menu-item.active .hamburger-menu.submenu {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateX(0) !important;
+}
+
+.code .titlebar .menu-item.active .hamburger-menu.submenu.show {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.code .titlebar .menu-item.active .hamburger-menu.submenu.level-2 {
+  transform: translateX(0) !important;
+}
+
+.code .titlebar .menu-item.active .menu-item-label {
   color: var(--workbench-titlebar-menu-item-active-foreground) !important;
   font-weight: 500;
 }
 
-.code .titlebar .dropdown-submenu-arrow svg {
+.code .titlebar .menu-submenu-arrow svg {
   width: 16px;
   height: auto;
 }
 
-.code .titlebar .dropdown-item.active .dropdown-submenu-arrow svg {
+.code .titlebar .menu-item.active .menu-submenu-arrow svg {
   fill: var(--workbench-titlebar-menu-item-active-foreground) !important;
 }
 
-.code .titlebar .dropdown-separator {
+.code .titlebar .menu-separator {
   height: 1px;
   background: var(--workbench-border-foreground);
   margin: 4px auto;

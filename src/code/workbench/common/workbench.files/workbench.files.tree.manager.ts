@@ -1,4 +1,4 @@
-import { IFolderStructure, IEditorTab } from "../../workbench.types.js";
+import { IFolderStructure } from "../../workbench.types.js";
 import { Editor } from "../workbench.editor/workbench.editor.js";
 import { getStandalone } from "../workbench.standalone.js";
 import { dispatch } from "../workbench.store/workbench.store.js";

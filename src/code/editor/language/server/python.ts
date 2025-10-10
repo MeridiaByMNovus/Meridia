@@ -1,19 +1,17 @@
 import { WebSocketServer } from "ws";
 import { createServerProcess, forward } from "vscode-ws-jsonrpc/server";
 import { createWebSocketConnection } from "vscode-ws-jsonrpc/server";
-import { Storage } from "../../../../../services/storage.service";
+import { Storage } from "../../../base/services/storage.service.js";
 import path from "path";
 
-export function runPyrightLanguageServer() {
-  Storage.store("pyright-port", 9273);
+export function _run() {
+  Storage.store("language-port", 9273);
 
-  const port = Storage.get("pyright-port");
+  const port = Storage.get("language-port");
 
   const wss = new WebSocketServer({ port: port });
 
   wss.on("connection", (webSocket) => {
-    console.log("WebSocket client connected");
-
     const socket = {
       send: (content: any) => webSocket.send(content),
       onMessage: (cb: any) => webSocket.on("message", cb),
@@ -24,16 +22,12 @@ export function runPyrightLanguageServer() {
 
     const connection = createWebSocketConnection(socket);
 
-    const executablePath = path.join(
-      __dirname,
-      "pyright",
-      "langserver.index.js"
-    );
+    const _pyright = path.join(__dirname, "pyright", "langserver.index.js");
 
     const serverConnection = createServerProcess(
       "Pyright",
       process.execPath,
-      [executablePath, "--stdio"],
+      [_pyright, "--stdio"],
       {
         stdio: ["pipe", "pipe", "pipe"],
         env: {
@@ -46,12 +40,9 @@ export function runPyrightLanguageServer() {
     forward(connection, serverConnection!);
 
     webSocket.on("close", () => {
-      console.log("WebSocket disconnected");
       serverConnection!.dispose();
     });
   });
-
-  console.log("LSP WebSocket server listening on port 3001");
 }
 
-runPyrightLanguageServer();
+_run();

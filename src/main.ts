@@ -1,13 +1,13 @@
-import { app, BrowserWindow } from "electron";
-import { HttpServer } from "./server.js";
 import dotenv from "dotenv";
 import path from "path";
+import { app, BrowserWindow } from "electron";
+import { HttpServer } from "./server.js";
 import "./code/base/common/base.file.create.js";
 import "./code/base/node/files.node.js";
 import "./code/base/node/mira.node.js";
 import "./code/base/node/init.node.js";
 import "./code/base/node/pty.node.js";
-import "./code/base/common/editor/editor.main.js";
+import "./code/editor/editor.main.js";
 
 dotenv.config();
 
@@ -52,6 +52,7 @@ function createWindow() {
       preload: PRELOAD_PATH,
       nodeIntegration: false,
       contextIsolation: true,
+      webSecurity: false,
       sandbox: false,
     },
   });

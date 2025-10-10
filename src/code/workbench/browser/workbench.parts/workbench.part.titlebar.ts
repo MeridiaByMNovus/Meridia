@@ -2,7 +2,7 @@ import { menuItems } from "../../common/workbench.menu.js";
 import { dispatch } from "../../common/workbench.store/workbench.store.js";
 import { select } from "../../common/workbench.store/workbench.store.selector.js";
 import { update_panel_state } from "../../common/workbench.store/workbench.store.slice.js";
-import { DropdownItem } from "../../workbench.types.js";
+import { Menuitems } from "../../workbench.types.js";
 import {
   bottomPanelIcon,
   chevronRightIcon,
@@ -15,8 +15,8 @@ import {
 import { CoreEl } from "./workbench.part.el.js";
 
 export class Titlebar extends CoreEl {
-  private dropdownVisible: boolean = false;
-  private dropdownElement: HTMLDivElement | null = null;
+  private menuVisible: boolean = false;
+  private menuElement: HTMLDivElement | null = null;
   private hamburgerContainer: HTMLSpanElement | null = null;
   private activeSubmenus: Set<HTMLElement> = new Set();
   private activeItems: Map<HTMLElement, HTMLElement> = new Map();
@@ -33,6 +33,10 @@ export class Titlebar extends CoreEl {
 
     const leftPanelSection = document.createElement("div");
     leftPanelSection.className = "left-panel-section";
+
+    const logo = document.createElement("span");
+    logo.className = "logo";
+    logo.innerHTML = `<img src="../../browser/workbench.media/images/logo.png" alt="Meridia" />`;
 
     const leftPanel = document.createElement("span");
     leftPanel.innerHTML = leftPanelIcon;
@@ -56,16 +60,17 @@ export class Titlebar extends CoreEl {
     };
 
     this.hamburgerContainer = document.createElement("span");
-    this.hamburgerContainer.className = "menu-button dropdown-container";
+    this.hamburgerContainer.className = "menu-button menu-container";
     this.hamburgerContainer.innerHTML = hamburgerIcon;
     this.hamburgerContainer.onclick = (e) => {
       e.stopPropagation();
-      this._toggleDropdown();
+      this._toggleMenu();
     };
 
-    this.dropdownElement = this._createDropdownMenu();
-    this.hamburgerContainer.appendChild(this.dropdownElement);
+    this.menuElement = this._createMenuMenu();
+    this.hamburgerContainer.appendChild(this.menuElement);
 
+    leftPanelSection.appendChild(logo);
     leftPanelSection.appendChild(leftPanel);
     leftPanelSection.appendChild(bottomPanel);
     leftPanelSection.appendChild(rightPanel);
@@ -114,54 +119,67 @@ export class Titlebar extends CoreEl {
     this._el.appendChild(rightControlsSection);
   }
 
-  private _createDropdownMenu(): HTMLDivElement {
-    const dropdown = document.createElement("div");
-    dropdown.className = "hamburger-dropdown";
+  private _createMenuMenu(): HTMLDivElement {
+    const menu = document.createElement("div");
+    menu.className = "hamburger-menu";
 
-    this._buildDropdownItems(dropdown, menuItems, 0);
-    return dropdown;
+    this._buildMenuitemss(menu, menuItems, 0);
+    return menu;
   }
 
-  private _buildDropdownItems(
+  private _buildMenuitemss(
     container: HTMLElement,
-    items: DropdownItem[],
+    items: Menuitems[],
     level: number
   ): void {
     items.forEach((item) => {
       if (item.separator) {
         const separator = document.createElement("div");
-        separator.className = "dropdown-separator";
+        separator.className = "menu-separator";
         container.appendChild(separator);
       } else {
-        const dropdownItem = document.createElement("div");
-        dropdownItem.className = `dropdown-item ${
-          item.disabled ? "disabled" : ""
-        }`;
+        const menuItem = document.createElement("div");
+        menuItem.className = `menu-item ${item.disabled ? "disabled" : ""}`;
 
         const content = document.createElement("div");
-        content.className = "dropdown-item-content";
+        content.className = "menu-item-content";
 
         const label = document.createElement("span");
-        label.className = "dropdown-item-label";
+        label.className = "menu-item-label";
         label.textContent = item.label;
         content.appendChild(label);
 
         if (item.submenu && item.submenu.length > 0) {
           const arrow = document.createElement("span");
-          arrow.className = "dropdown-submenu-arrow";
+          arrow.className = "menu-submenu-arrow";
           arrow.innerHTML = chevronRightIcon;
           content.appendChild(arrow);
 
           const submenu = document.createElement("div");
-          submenu.className = `hamburger-dropdown submenu level-${level + 1}`;
-          this._buildDropdownItems(submenu, item.submenu, level + 1);
-          dropdownItem.appendChild(submenu);
+          submenu.className = `hamburger-menu submenu level-${level + 1}`;
+          this._buildMenuitemss(submenu, item.submenu, level + 1);
+          menuItem.appendChild(submenu);
 
-          dropdownItem.addEventListener("mouseenter", () => {
+          menuItem.addEventListener("mouseenter", () => {
+            const currentActive = this.activeItems.get(container);
+            if (currentActive && currentActive !== menuItem) {
+              currentActive.classList.remove("active");
+
+              const prevSubmenu = currentActive.querySelector(".submenu");
+              if (prevSubmenu) {
+                this._hideSubmenu(prevSubmenu as HTMLElement);
+              }
+            }
+
+            this._setActiveItem(menuItem, container);
             this._showSubmenu(submenu);
           });
 
-          dropdownItem.addEventListener("mouseleave", (e) => {
+          menuItem.addEventListener("mouseleave", (e) => {
+            if (menuItem.classList.contains("active")) {
+              return;
+            }
+
             const rect = submenu.getBoundingClientRect();
             const mouseX = e.clientX;
             const mouseY = e.clientY;
@@ -172,36 +190,45 @@ export class Titlebar extends CoreEl {
               mouseY < rect.top ||
               mouseY > rect.bottom
             ) {
-              if (
-                !submenu.matches(":hover") &&
-                !dropdownItem.matches(":hover")
-              ) {
+              if (!submenu.matches(":hover") && !menuItem.matches(":hover")) {
                 this._hideSubmenu(submenu);
               }
             }
           });
 
-          dropdownItem.addEventListener("click", (e) => {
-            if (!item.action) {
-              this._setActiveItem(dropdownItem, container);
+          menuItem.addEventListener("click", (e) => {
+            e.stopPropagation();
+            this._setActiveItem(menuItem, container);
+
+            this._showSubmenu(submenu);
+          });
+        } else {
+          menuItem.addEventListener("mouseenter", () => {
+            const currentActive = this.activeItems.get(container);
+            if (currentActive && currentActive !== menuItem) {
+              currentActive.classList.remove("active");
+
+              const prevSubmenu = currentActive.querySelector(".submenu");
+              if (prevSubmenu) {
+                this._hideSubmenu(prevSubmenu as HTMLElement);
+              }
+
+              this.activeItems.delete(container);
             }
           });
+
+          if (item.action && !item.disabled) {
+            menuItem.onclick = (e) => {
+              e.stopPropagation();
+              this._setActiveItem(menuItem, container);
+              this._handleMenuAction(item.action!);
+              this._closeMenu();
+            };
+          }
         }
 
-        dropdownItem.appendChild(content);
-
-        if (item.action && !item.disabled) {
-          dropdownItem.onclick = (e) => {
-            e.stopPropagation();
-
-            this._setActiveItem(dropdownItem, container);
-
-            this._handleMenuAction(item.action!);
-            this._closeDropdown();
-          };
-        }
-
-        container.appendChild(dropdownItem);
+        menuItem.appendChild(content);
+        container.appendChild(menuItem);
       }
     });
   }
@@ -213,11 +240,20 @@ export class Titlebar extends CoreEl {
     const currentActive = this.activeItems.get(container);
     if (currentActive && currentActive !== selectedItem) {
       currentActive.classList.remove("active");
+
+      const prevSubmenu = currentActive.querySelector(".submenu");
+      if (prevSubmenu) {
+        this._hideSubmenu(prevSubmenu as HTMLElement);
+      }
     }
 
     selectedItem.classList.add("active");
-
     this.activeItems.set(container, selectedItem);
+
+    const newSubmenu = selectedItem.querySelector(".submenu");
+    if (newSubmenu) {
+      this._showSubmenu(newSubmenu as HTMLElement);
+    }
   }
 
   private _clearAllActiveStates(): void {
@@ -268,25 +304,25 @@ export class Titlebar extends CoreEl {
     });
   }
 
-  private _toggleDropdown(): void {
-    if (this.dropdownVisible) {
-      this._closeDropdown();
+  private _toggleMenu(): void {
+    if (this.menuVisible) {
+      this._closeMenu();
     } else {
-      this._openDropdown();
+      this._openMenu();
     }
   }
 
-  private _openDropdown(): void {
-    if (this.dropdownElement) {
-      this.dropdownElement.classList.add("show");
-      this.dropdownVisible = true;
+  private _openMenu(): void {
+    if (this.menuElement) {
+      this.menuElement.classList.add("show");
+      this.menuVisible = true;
     }
   }
 
-  private _closeDropdown(): void {
-    if (this.dropdownElement) {
-      this.dropdownElement.classList.remove("show");
-      this.dropdownVisible = false;
+  private _closeMenu(): void {
+    if (this.menuElement) {
+      this.menuElement.classList.remove("show");
+      this.menuVisible = false;
 
       this.activeSubmenus.forEach((submenu) => {
         submenu.classList.remove("show");
@@ -300,17 +336,17 @@ export class Titlebar extends CoreEl {
   private _addEventListeners(): void {
     document.addEventListener("click", (e) => {
       if (
-        this.dropdownVisible &&
+        this.menuVisible &&
         this.hamburgerContainer &&
         !this.hamburgerContainer.contains(e.target as Node)
       ) {
-        this._closeDropdown();
+        this._closeMenu();
       }
     });
 
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && this.dropdownVisible) {
-        this._closeDropdown();
+      if (e.key === "Escape" && this.menuVisible) {
+        this._closeMenu();
       }
     });
   }

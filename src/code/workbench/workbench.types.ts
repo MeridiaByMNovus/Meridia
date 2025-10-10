@@ -146,12 +146,13 @@ export type TDragState = {
   direction: TSplitterDirection;
 };
 
-export interface DropdownItem {
+export interface Menuitems {
   label: string;
   action?: string;
   separator?: boolean;
-  submenu?: DropdownItem[];
+  submenu?: Menuitems[];
   disabled?: boolean;
+  shortcut?: string[];
 }
 
 export interface IEditorTab {
@@ -230,4 +231,14 @@ export interface IScrollbarState {
   };
   innerHTML: string;
   attributes: Record<string, string>;
+}
+
+export interface IStatusBarAction {
+  _name: string;
+  _action: Function;
+  _condition: "workbench.editor.open" | "workbench.editor.open.file" | "none";
+}
+
+export interface IExtensionModule {
+  activate?(api: any): void;
 }

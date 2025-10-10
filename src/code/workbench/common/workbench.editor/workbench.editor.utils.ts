@@ -133,7 +133,6 @@ export async function getPathCompletions(basePath: string, partial: string) {
     const currentFileName = getCurrentFileName();
     const currentFileDirectory = getCurrentFileDirectory();
 
-    // Filter out the current file if we're in the same directory
     let filteredItems = items;
 
     if (currentFileName && basePath === currentFileDirectory) {
@@ -144,26 +143,21 @@ export async function getPathCompletions(basePath: string, partial: string) {
       return filteredItems;
     }
 
-    // Filter by partial match and exclude current file
     const matchingItems = filteredItems.filter((item) => {
       const name = item.name.toLowerCase();
       const search = partial.toLowerCase();
 
-      // Support both startsWith and contains matching
       return name.startsWith(search) || name.includes(search);
     });
 
-    // Sort by relevance: exact matches first, then startsWith, then contains
     return matchingItems.sort((a, b) => {
       const aName = a.name.toLowerCase();
       const bName = b.name.toLowerCase();
       const search = partial.toLowerCase();
 
-      // Directories first
       if (a.isDirectory && !b.isDirectory) return -1;
       if (!a.isDirectory && b.isDirectory) return 1;
 
-      // Then by match quality
       const aExact = aName === search ? 0 : 1;
       const bExact = bName === search ? 0 : 1;
       if (aExact !== bExact) return aExact - bExact;
@@ -172,7 +166,6 @@ export async function getPathCompletions(basePath: string, partial: string) {
       const bStarts = bName.startsWith(search) ? 0 : 1;
       if (aStarts !== bStarts) return aStarts - bStarts;
 
-      // Finally sort alphabetically
       return aName.localeCompare(bName);
     });
   } catch (error) {
@@ -220,7 +213,7 @@ export function registerFsSuggestion(_monaco: any) {
             insertText: item.name + (item.isDirectory ? "/" : ""),
             detail: item.isDirectory ? "Directory" : "File",
             sortText: item.isDirectory ? "0" + item.name : "1" + item.name,
-            // Add command to retrigger suggestions for directories
+
             command: item.isDirectory
               ? {
                   id: "editor.action.triggerSuggest",
