@@ -15,6 +15,8 @@ import {
 import { chevronRightIcon } from "./workbench.media/workbench.icons.js";
 import { CoreEl } from "./workbench.parts/workbench.part.el.js";
 
+const path = window.path
+
 export class Files extends CoreEl {
   private treeManager: TreeManager;
   private _structure: IFolderStructure;
@@ -227,8 +229,10 @@ export class Files extends CoreEl {
     window.files.openFolder();
   }
 
-  private _openFile(_uri: string, _name: string) {
+  private _openFile(_path: string, _name: string) {
     const stateValue = select((s) => s.main.editor_tabs);
+    const _uri = path.normalize(_path)
+
 
     let currentTabs: IEditorTab[] = [];
 
@@ -265,6 +269,9 @@ export class Files extends CoreEl {
 
       dispatch(update_editor_tabs(updatedTabs));
     }
+
+    console.log("opening", _uri)
+
   }
 
   private _renderNodes(nodes: IFolderStructure[], container: HTMLElement) {

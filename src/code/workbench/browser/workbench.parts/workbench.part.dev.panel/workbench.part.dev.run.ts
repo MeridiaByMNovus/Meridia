@@ -168,8 +168,8 @@ export class Run extends CoreEl {
     this._render();
   }
 
-  public async _run(filePath: string) {
-    const norm = filePath.replace(/\\/g, "/");
+  public async _run(_path: string) {
+    const norm = _path.replace(/\\/g, "/");
     const tabId = `run:${norm}`;
     const existing = this._tabs.find((t) => t.id === tabId);
 
@@ -178,7 +178,7 @@ export class Run extends CoreEl {
         id: tabId,
         name: `${window.path.basename(norm)}`,
         active: false,
-        meta: { filePath: norm, status: "stopped" },
+        meta: { _path: norm, status: "stopped" },
       } as any;
       this._tabs.push(tab);
     }
@@ -193,18 +193,18 @@ export class Run extends CoreEl {
       _xtermManager._get(tabId) || (await _xtermManager._spawn(tabId));
     runArea.appendChild(container!);
 
-    const command = `python ${path.join([
-      path.__dirname,
+    const command = `python "${path.join([
+     path.__dirname,
       "scripts",
       "run_script.py",
-    ])} ${filePath}`;
+    ])}" ${_path}`;
 
-    await _xtermManager._run(tabId, command, path.dirname(filePath));
+    await _xtermManager._run(tabId, command, path.dirname(_path));
     this._set(tabId, "running");
   }
 
-  public async _stop(filePath: string) {
-    const norm = filePath.replace(/\\/g, "/");
+  public async _stop(_path: string) {
+    const norm = _path.replace(/\\/g, "/");
     const tabId = `run:${norm}`;
     const tab = this._tabs.find((t) => t.id === tabId);
     if (!tab) return;

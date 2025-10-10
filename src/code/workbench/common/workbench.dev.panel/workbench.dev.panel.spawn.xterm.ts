@@ -3,7 +3,6 @@ import { Terminal as XTerm } from "@xterm/xterm";
 import { IXTermInstance } from "../../workbench.types.js";
 import { getStandalone } from "../workbench.standalone.js";
 import { Theme } from "../workbench.theme.js";
-import { debounce } from "lodash";
 import { select } from "../workbench.store/workbench.store.selector.js";
 
 const ipcRenderer = window.ipc;
@@ -45,6 +44,8 @@ class XtermManager {
     const structure = select((s) => s.main.folder_structure);
 
     const cwd = structure ? structure.uri : "";
+
+    console.log("pty-spawn", id, term.cols, term.rows, cwd, shell)
 
     await ipcRenderer.invoke("pty-spawn", id, term.cols, term.rows, cwd, shell);
 

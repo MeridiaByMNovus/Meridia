@@ -8,7 +8,6 @@ import {
 } from "../../workbench.media/workbench.icons.js";
 import { CoreEl } from "../workbench.part.el.js";
 import { Panel } from "../workbench.part.panel.js";
-import { DevPanel } from "./workbench.part.dev.panel.el.js";
 import { _terminal } from "./workbench.part.terminal.js";
 import { _run } from "./workbench.part.dev.run.js";
 import { _console } from "./workbench.part.console.js";
