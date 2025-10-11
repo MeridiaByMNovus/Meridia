@@ -48,6 +48,7 @@ export let mainWindow: BrowserWindow;
 const _theme = new Theme(true);
 
 function createWindow() {
+  const _win = process.platform === "win32";
   mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
@@ -58,7 +59,7 @@ function createWindow() {
         _theme.getNodeColor("workbench.titlebar.background") ?? "#00000000",
       symbolColor:
         _theme.getNodeColor("workbench.titlebar.foreground") ?? "#ffffff",
-      height: 40,
+      height: _win ? 40 : 50,
     },
     titleBarStyle: "hidden",
     webPreferences: {
@@ -78,8 +79,7 @@ function createWindow() {
   }
 
   function getTitlebarControlInsets() {
-    const _win = process.platform === "win32";
-    const _inset = _win ? 160 : 80;
+    const _inset = _win ? 160 : 100;
     return _inset;
   }
 
