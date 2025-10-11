@@ -26,14 +26,14 @@ export class Splitter extends CoreEl {
     this._panelsVisible = panels.map(() => true);
     this._storageKey = storageKey || `splitter-${direction}-${panels.length}`;
 
-    this._loadSizesFromStorage(sizes);
+    this._load(sizes);
     this._originalSizes = [...this._sizes];
 
-    this._createSplitter();
+    this._create();
     this._applySizes();
   }
 
-  private _loadSizesFromStorage(defaultSizes?: number[]) {
+  private _load(defaultSizes?: number[]) {
     const storedSizes = window.storage.get(this._storageKey);
 
     if (
@@ -49,11 +49,11 @@ export class Splitter extends CoreEl {
     }
   }
 
-  private _saveSizesToStorage() {
+  private _save() {
     window.storage.store(this._storageKey, [...this._sizes]);
   }
 
-  private _createSplitter() {
+  private _create() {
     this._el = document.createElement("div");
     this._el.className =
       this._direction === "horizontal"
@@ -104,12 +104,12 @@ export class Splitter extends CoreEl {
 
         this._el.appendChild(gutter);
         this._gutters.push(gutter);
-        this._addGutterDragListeners(gutter, i);
+        this._addGutter(gutter, i);
       }
     }
   }
 
-  private _addGutterDragListeners(gutter: HTMLElement, gutterIndex: number) {
+  private _addGutter(gutter: HTMLElement, gutterIndex: number) {
     let dragState: TDragState | null = null;
 
     const onPointerDown = (e: PointerEvent) => {
@@ -163,7 +163,7 @@ export class Splitter extends CoreEl {
       this._originalSizes[dragState.nextPanelIndex] = newNextSize;
 
       this._applySizes();
-      this._saveSizesToStorage();
+      this._save();
 
       if (this._onSizeChangeCallback) this._onSizeChangeCallback();
     };
@@ -178,7 +178,7 @@ export class Splitter extends CoreEl {
     gutter.addEventListener("pointerdown", onPointerDown);
   }
 
-  private _collapsePanel(index: number) {
+  _collapsePanel(index: number) {
     if (index < 0 || index >= this._panels.length) return;
 
     this._panelsVisible[index] = false;
@@ -190,7 +190,7 @@ export class Splitter extends CoreEl {
     const equalSize = 100 / visibleCount;
     this._sizes = this._panelsVisible.map((v) => (v ? equalSize : 0));
     this._applySizes();
-    this._saveSizesToStorage();
+    this._save();
 
     if (this._onSizeChangeCallback) this._onSizeChangeCallback();
   }
@@ -238,7 +238,7 @@ export class Splitter extends CoreEl {
     });
   }
 
-  private _getMiddlePanelIndex(): number {
+  private _getMiddleIndex(): number {
     if (this._panels.length === 3) {
       return 1;
     }
@@ -246,11 +246,8 @@ export class Splitter extends CoreEl {
     return Math.floor(this._panels.length / 2);
   }
 
-  private _redistributeSizesForToggle(
-    toggledIndex: number,
-    isShowing: boolean
-  ) {
-    const middleIndex = this._getMiddlePanelIndex();
+  private _redistribute(toggledIndex: number, isShowing: boolean) {
+    const middleIndex = this._getMiddleIndex();
 
     if (this._panels.length === 3 && middleIndex !== toggledIndex) {
       const currentSizes = [...this._sizes];
@@ -290,7 +287,12 @@ export class Splitter extends CoreEl {
       }
     } else {
       const visibleCount = this._panelsVisible.filter((v) => v).length;
-      if (visibleCount === 0) return;
+
+      if (visibleCount === 0) {
+        this._panelsVisible[0] = true;
+        this._sizes = this._sizes.map((_, i) => (i === 0 ? 100 : 0));
+        return;
+      }
 
       if (isShowing) {
         let targetSize = this._originalSizes[toggledIndex];
@@ -320,26 +322,33 @@ export class Splitter extends CoreEl {
   togglePanel(index: number) {
     if (index < 0 || index >= this._panels.length) return;
 
-    this._panels[index]!.style.transition = "none";
-
     const wasVisible = this._panelsVisible[index];
-    this._panelsVisible[index] = !this._panelsVisible[index];
+    const beforeVisibleCount = this._panelsVisible.filter(Boolean).length;
+    if (wasVisible && beforeVisibleCount === 1) {
+      return;
+    }
 
-    this._redistributeSizesForToggle(index, !wasVisible);
-    this._applySizes();
-    this._saveSizesToStorage();
+    this._panelsVisible[index] = !wasVisible;
 
-    void this._panels[index]!.offsetWidth;
+    this._redistribute(index, !wasVisible);
+    this._save();
 
-    this._panels[index]!.style.transition = "";
-
-    if (this._onSizeChangeCallback) this._onSizeChangeCallback();
+    // Delay size application for smoother UI update
+    setTimeout(() => {
+      this._applySizes();
+      if (this._onSizeChangeCallback) this._onSizeChangeCallback();
+    }, 10);
   }
 
   setPanel(index: number, visibility: boolean) {
     if (index < 0 || index >= this._panels.length) return;
 
     const currentVisibility = this._panelsVisible[index];
+
+    const beforeVisibleCount = this._panelsVisible.filter(Boolean).length;
+    if (currentVisibility && !visibility && beforeVisibleCount === 1) {
+      return;
+    }
 
     if (currentVisibility === visibility) {
       return;
@@ -349,9 +358,9 @@ export class Splitter extends CoreEl {
 
     this._panelsVisible[index] = visibility;
 
-    this._redistributeSizesForToggle(index, visibility);
+    this._redistribute(index, visibility);
     this._applySizes();
-    this._saveSizesToStorage();
+    this._save();
 
     void this._panels[index]!.offsetWidth;
 
@@ -415,7 +424,7 @@ export class Splitter extends CoreEl {
 
     this._applySizes();
 
-    this._saveSizesToStorage();
+    this._save();
 
     if (this._onSizeChangeCallback) {
       this._onSizeChangeCallback();

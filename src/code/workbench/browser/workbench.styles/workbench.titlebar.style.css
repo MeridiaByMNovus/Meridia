@@ -224,6 +224,7 @@
   justify-content: center;
   height: 100%;
   gap: 10px;
+  margin-right: var(--titlebar-window-controls-inset);
 }
 
 .code .titlebar .right-panel-section svg {
@@ -251,20 +252,4 @@
 .code .titlebar .right-panel-section .menu-options-container span:hover,
 .hovered {
   background: var(--workbench-titlebar-item-hover-background);
-}
-
-.code .titlebar .right-panel-section .window-controls {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  gap: 10px;
-}
-
-.code .titlebar .right-panel-section .window-controls .control {
-  width: 18px;
-  height: 18px;
-  border: 2px solid var(--workbench-titlebar-window-controls-circle-foreground);
-  border-radius: 50%;
-  cursor: pointer;
 }

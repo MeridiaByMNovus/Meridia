@@ -21,9 +21,9 @@ export class Theme {
     }
   }
 
-  getNodeColor(_token: IThemeColors): string | null {
-    if (!this._active?.colors) return null;
-    return this._active.colors[_token] || null;
+  getNodeColor(_token: IThemeColors) {
+    if (!this._active?.colors) return "";
+    return this._active.colors[_token] || "";
   }
 
   getColor(_token: IThemeColors) {

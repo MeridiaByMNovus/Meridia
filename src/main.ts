@@ -12,6 +12,7 @@ import "./code/editor/editor.main.js";
 
 dotenv.config();
 
+let BASE_TITLEBAR_HEIGHT = 40;
 let httpServer: HttpServer;
 let PORT: number = 0;
 
@@ -56,7 +57,7 @@ function createWindow() {
         _theme.getNodeColor("workbench.titlebar.background") ?? "#00000000",
       symbolColor:
         _theme.getNodeColor("workbench.titlebar.foreground") ?? "#ffffff",
-      height: 50,
+      height: 40,
     },
     titleBarStyle: "hidden",
     webPreferences: {
@@ -74,6 +75,21 @@ function createWindow() {
   } else {
     mainWindow.loadFile(MAIN_HTML_PATH);
   }
+
+  function getTitlebarControlInsets() {
+    const _win = process.platform === "win32";
+    const _inset = _win ? 160 : 80;
+    return _inset;
+  }
+
+  mainWindow.webContents.on("did-finish-load", () => {
+    const insets = getTitlebarControlInsets();
+    mainWindow.webContents.send("titlebar-insets", insets);
+  });
+
+  mainWindow.on("minimize", () => mainWindow.webContents.send("reset-sizes"));
+  mainWindow.on("maximize", () => mainWindow.webContents.send("reset-sizes"));
+  mainWindow.on("resize", () => mainWindow.webContents.send("reset-sizes"));
 
   mainWindow.maximize();
 }

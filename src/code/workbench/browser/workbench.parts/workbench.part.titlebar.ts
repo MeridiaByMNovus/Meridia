@@ -90,29 +90,12 @@ export class Titlebar extends CoreEl {
     const menuOptionsContainer = document.createElement("div");
     menuOptionsContainer.className = "menu-options-container";
 
-    const windowButtonsContainer = document.createElement("div");
-    windowButtonsContainer.className = "window-controls";
-
     const settings = document.createElement("span");
     settings.innerHTML = settingsIcon;
 
-    const minimize = document.createElement("div");
-    minimize.className = "control";
-
-    const maximize = document.createElement("div");
-    maximize.className = "control";
-
-    const close = document.createElement("div");
-    close.className = "control";
-
     menuOptionsContainer.appendChild(settings);
 
-    windowButtonsContainer.appendChild(minimize);
-    windowButtonsContainer.appendChild(maximize);
-    windowButtonsContainer.appendChild(close);
-
     rightControlsSection.appendChild(menuOptionsContainer);
-    rightControlsSection.appendChild(windowButtonsContainer);
 
     this._el.appendChild(leftPanelSection);
     this._el.appendChild(centerSearchSection);

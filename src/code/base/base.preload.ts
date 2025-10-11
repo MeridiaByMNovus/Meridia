@@ -5,6 +5,7 @@ import { PythonShell } from "python-shell";
 import { contextBridge, ipcRenderer } from "electron";
 import { Storage } from "./services/storage.service.js";
 import { FetchCompletionItemParams } from "../platform/mira/mira.suggestions/types/internal.js";
+import { _xtermManager } from "../workbench/common/workbench.dev.panel/workbench.dev.panel.spawn.xterm.js";
 
 const storage = Storage;
 
@@ -171,8 +172,8 @@ export const pathBridge = {
     return path.isAbsolute(_path);
   },
   normalize: (_path: string) => {
-    return path.normalize(_path)
-  }
+    return path.normalize(_path);
+  },
 };
 
 export const filesBridge = {
@@ -317,6 +318,13 @@ window.addEventListener("beforeunload", () => {
     } catch (error) {}
   });
   activeWatchers.clear();
+});
+
+ipcRenderer.on("titlebar-insets", (_, insets) => {
+  document.documentElement.style.setProperty(
+    "--titlebar-window-controls-inset",
+    `${insets}px`
+  );
 });
 
 contextBridge.exposeInMainWorld("storage", storageBridge);
