@@ -352,7 +352,7 @@ export class Editor {
 
   private _setupCLient() {
     try {
-      const port = window.storage.get("pyright-port");
+      const port = window.storage.get("language-server-port");
 
       const webSocket = new WebSocket(`ws://localhost:${port}`);
 
@@ -405,6 +405,7 @@ export class Editor {
       });
     } catch (error) {
       this._editor.updateOptions({ readOnly: false });
+      console.error(error);
     }
   }
 

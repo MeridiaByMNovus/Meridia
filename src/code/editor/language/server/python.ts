@@ -1,48 +1,18 @@
 import { WebSocketServer } from "ws";
-import { createServerProcess, forward } from "vscode-ws-jsonrpc/server";
-import { createWebSocketConnection } from "vscode-ws-jsonrpc/server";
 import { Storage } from "../../../base/services/storage.service.js";
 import path from "path";
+import { Language } from "../editor.language.js";
 
-export function _run() {
-  Storage.store("language-port", 9273);
+export class Python extends Language {
+  constructor() {
+    super();
 
-  const port = Storage.get("language-port");
+    this._port = Storage.get("language-port");
+    this._websocket = new WebSocketServer({ port: this._port });
+    this._serverCli = path.join(__dirname, "pyright", "langserver.index.js");
 
-  const wss = new WebSocketServer({ port: port });
-
-  wss.on("connection", (webSocket) => {
-    const socket = {
-      send: (content: any) => webSocket.send(content),
-      onMessage: (cb: any) => webSocket.on("message", cb),
-      onError: (cb: any) => webSocket.on("error", cb),
-      onClose: (cb: any) => webSocket.on("close", cb),
-      dispose: () => webSocket.close(),
-    };
-
-    const connection = createWebSocketConnection(socket);
-
-    const _pyright = path.join(__dirname, "pyright", "langserver.index.js");
-
-    const serverConnection = createServerProcess(
-      "Pyright",
-      process.execPath,
-      [_pyright, "--stdio"],
-      {
-        stdio: ["pipe", "pipe", "pipe"],
-        env: {
-          ...process.env,
-          ELECTRON_RUN_AS_NODE: "1",
-        },
-      }
-    );
-
-    forward(connection, serverConnection!);
-
-    webSocket.on("close", () => {
-      serverConnection!.dispose();
-    });
-  });
+    this._start();
+  }
 }
 
-_run();
+const _python = new Python();

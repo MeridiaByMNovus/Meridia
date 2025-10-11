@@ -29,7 +29,6 @@ export const api = {
     },
   },
 
-  // Monaco Editor specific (not in VS Code API but needed for your IDE)
   editor: {
     getActiveEditor: () => {
       return _contextEvent.send("workbench.editor.get.editor");
