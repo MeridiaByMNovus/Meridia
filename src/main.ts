@@ -52,6 +52,7 @@ function createWindow() {
     width: 800,
     height: 600,
     frame: false,
+    backgroundColor: _theme.getNodeColor("workbench.background"),
     titleBarOverlay: {
       color:
         _theme.getNodeColor("workbench.titlebar.background") ?? "#00000000",
