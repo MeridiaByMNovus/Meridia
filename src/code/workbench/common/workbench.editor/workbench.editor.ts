@@ -16,7 +16,7 @@ import { update_editor_tabs } from "../workbench.store/workbench.store.slice.js"
 import { select } from "../workbench.store/workbench.store.selector.js";
 import { getLanguage } from "../workbench.utils.js";
 import { registerTheme } from "./workbench.editor.theme.js";
-import { registerCompletion } from "../../../platform/mira/mira.suggestions/register.js";
+// import { registerCompletion } from "../../../platform/mira/mira.suggestions/register.js";
 import { registerFsSuggestion } from "./workbench.editor.utils.js";
 
 const fs = window.fs;
@@ -77,9 +77,7 @@ export class Editor {
       }
 
       this._isProvidersRegistered = true;
-    } catch (error) {
-      console.warn("Failed to register providers:", error);
-    }
+    } catch (error) {}
   }
 
   private _hoverProvider() {
@@ -147,6 +145,10 @@ export class Editor {
       fixedOverflowWidgets: true,
     });
 
+    // registerCompletion(monaco, this._editor, {
+    //   language: "python",
+    // });
+
     this._mounted = true;
     this._visiblity(false);
 
@@ -156,7 +158,7 @@ export class Editor {
     this._saveAction();
   }
 
-  private _visiblity(visible: boolean) {
+  public _visiblity(visible: boolean) {
     const editorElement = document.querySelector(
       ".monaco-editor"
     ) as HTMLDivElement;
@@ -216,7 +218,6 @@ export class Editor {
               initializationOptions: {
                 settings: {
                   python: {
-                    pythonPath: "/usr/bin/python",
                     analysis: {
                       autoSearchPaths: true,
                       useLibraryCodeForTypes: true,
@@ -304,7 +305,7 @@ export class Editor {
 
     if (!model) {
       const uri = monaco.Uri.file(tab.uri);
-      console.log(uri, tab.uri);
+
       model =
         monaco.editor.getModel(uri) ||
         monaco.editor.createModel(
@@ -335,7 +336,7 @@ export class Editor {
     try {
       const uri = monaco.Uri.file(uriString);
       const watcher = fs.watchFile(
-        uri.fsPath, // use fsPath for Windows compatibility
+        uri.fsPath,
         { persistent: true, interval: 1000 },
         () => this._external(uriString)
       );
@@ -347,27 +348,25 @@ export class Editor {
     const key = this._normalizePath(uriString);
     const model = this._models.get(key);
     if (!model) return;
-
     try {
-      const [newContent, currentPosition, currentSelection] = await Promise.all(
-        [
-          fs.readFile(uriString),
-          Promise.resolve(this._editor.getPosition()),
-          Promise.resolve(this._editor.getSelection()),
-        ]
-      );
-
+      const newContent = await fs.readFile(uriString);
+      const currentContent = model.getValue();
+      if (currentContent === newContent) return;
       this._updating = true;
-      model.setValue(newContent);
+      const fullRange = model.getFullModelRange();
+      const editOperation = {
+        range: fullRange,
+        text: newContent,
+        forceMoveMarkers: true,
+      };
+      model.pushEditOperations([], [editOperation], () => {
+        return null;
+      });
       this._updating = false;
-
-      if (currentPosition && this._editor.getModel() === model) {
-        this._editor.setPosition(currentPosition);
-        if (currentSelection) this._editor.setSelection(currentSelection);
-      }
-
       this._update(uriString, false);
-    } catch {}
+    } catch (error) {
+      console.error("External file update failed:", error);
+    }
   }
 
   private _update(uriString: string, _touched: boolean) {
@@ -377,7 +376,6 @@ export class Editor {
         : tab
     );
 
-    console.log(path.normalize(uriString), this._tabs);
     const _updated = select((s) => s.main.editor_tabs).map((tab) =>
       this._normalizePath(tab.uri) === this._normalizePath(uriString)
         ? { ...tab, is_touched: _touched }
@@ -391,16 +389,8 @@ export class Editor {
     const key = this._normalizePath(uriString);
     const model = this._models.get(key);
     if (!model) {
-      console.warn(
-        "Model not found for save key",
-        key,
-        "original uri",
-        uriString
-      );
       return;
     }
-
-    console.log("saving", model, uriString, this._models);
 
     try {
       fs.createFile(uriString, model.getValue());
@@ -453,9 +443,7 @@ export class Editor {
     this._registeredProviders.forEach((disposable) => {
       try {
         disposable.dispose();
-      } catch (error) {
-        console.warn("Error disposing provider:", error);
-      }
+      } catch (error) {}
     });
     this._registeredProviders.clear();
     this._isProvidersRegistered = false;

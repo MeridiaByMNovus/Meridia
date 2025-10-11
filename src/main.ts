@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 import path from "path";
 import { app, BrowserWindow } from "electron";
 import { HttpServer } from "./server.js";
+import { Theme } from "./code/workbench/common/workbench.theme.js";
 import "./code/base/common/base.file.create.js";
 import "./code/base/node/files.node.js";
 import "./code/base/node/mira.node.js";
@@ -43,11 +44,21 @@ export const MAIN_HTML_PATH =
 
 export let mainWindow: BrowserWindow;
 
+const _theme = new Theme(true);
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
     frame: false,
+    titleBarOverlay: {
+      color:
+        _theme.getNodeColor("workbench.titlebar.background") ?? "#00000000",
+      symbolColor:
+        _theme.getNodeColor("workbench.titlebar.foreground") ?? "#ffffff",
+      height: 50,
+    },
+    titleBarStyle: "hidden",
     webPreferences: {
       preload: PRELOAD_PATH,
       nodeIntegration: false,
@@ -60,7 +71,9 @@ function createWindow() {
   if (process.env.NODE_ENV === "development") {
     mainWindow.loadURL(MAIN_HTML_PATH);
     mainWindow.webContents.openDevTools();
-  } else mainWindow.loadFile(MAIN_HTML_PATH);
+  } else {
+    mainWindow.loadFile(MAIN_HTML_PATH);
+  }
 
   mainWindow.maximize();
 }

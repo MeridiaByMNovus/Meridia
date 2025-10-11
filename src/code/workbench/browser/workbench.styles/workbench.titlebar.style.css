@@ -22,6 +22,12 @@
   height: 100%;
 }
 
+.code .titlebar .left-panel-section .logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .code .titlebar .left-panel-section .logo img {
   width: 25px;
   height: auto;

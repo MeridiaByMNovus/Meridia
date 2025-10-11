@@ -39,6 +39,14 @@ export function _run() {
 
     forward(connection, serverConnection!);
 
+    webSocket.on("open", () => {
+      console.log("Websocked Connected");
+    });
+
+    webSocket.on("message", (data) => {
+      console.log("pyright", data);
+    });
+
     webSocket.on("close", () => {
       serverConnection!.dispose();
     });

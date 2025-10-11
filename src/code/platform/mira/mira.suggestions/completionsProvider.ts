@@ -46,7 +46,6 @@ export const createInlineCompletionsProvider = (
         });
       },
       handleItemDidShow: (completions, item) => {
-        // Only 2 parameters
         state.isExplicitlyTriggered = false;
         state.hasRejectedCurrentCompletion = false;
 

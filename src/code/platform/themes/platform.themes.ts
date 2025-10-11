@@ -16,7 +16,6 @@ export const Light: ITheme = {
     "workbench.button.border": "#d4d4d4",
     "workbench.button.separator": "#d4d4d4",
     "workbench.secondary.button.border": "#d4d4d4",
-
     "workbench.input.background": "#ffffff",
     "workbench.input.foreground": "#1e1e1e",
     "workbench.input.active.outline": "#007acc",
@@ -71,7 +70,6 @@ export const Light: ITheme = {
     "workbench.terminal.foreground": "#1e1e1e",
     "workbench.terminal.cursor.foreground": "#1e1e1e",
     "workbench.terminal.selection.background": "#f0f8ff",
-
     "workbench.terminal.black": "#333333",
     "workbench.terminal.red": "#d73a49",
     "workbench.terminal.green": "#116329",
@@ -88,7 +86,6 @@ export const Light: ITheme = {
     "workbench.terminal.bright.magenta": "#6f42c1",
     "workbench.terminal.bright.cyan": "#116329",
     "workbench.terminal.bright.white": "#1e1e1e",
-
     "workbench.mira.voice.color.violet": "102, 51, 153",
     "workbench.mira.voice.color.orange": "255, 120, 0",
     "workbench.mira.voice.color.black": "0, 0, 0",
@@ -216,7 +213,6 @@ export const Dark: ITheme = {
     "workbench.terminal.bright.magenta": "#AD99FF",
     "workbench.terminal.bright.cyan": "#779E9E",
     "workbench.terminal.bright.white": "#fffff1",
-
     "workbench.mira.voice.color.violet": "0, 20, 255",
     "workbench.mira.voice.color.orange": "255, 120, 0",
     "workbench.mira.voice.color.black": "10, 10, 10",

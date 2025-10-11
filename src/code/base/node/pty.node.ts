@@ -30,8 +30,6 @@ setTimeout(() => {
 
       const shell = _shell ?? getShell();
 
-      console.log("cwd", cwd)
-
       const ptyProcess = pty.spawn(shell, [], {
         name: "xterm-color",
         cols,
@@ -101,29 +99,31 @@ setTimeout(() => {
     return false;
   });
 
-  ipcMain.handle("pty-run-command", (event, id: string, command: string, cwd: string) => {
-  return new Promise<{ success: boolean; error?: string }>((resolve) => {
-    const term = terminals.get(id);
-    if (!term) {
-      resolve({ success: false, error: "Terminal not found" });
-      return;
-    }
+  ipcMain.handle(
+    "pty-run-command",
+    (event, id: string, command: string, cwd: string) => {
+      return new Promise<{ success: boolean; error?: string }>((resolve) => {
+        const term = terminals.get(id);
+        if (!term) {
+          resolve({ success: false, error: "Terminal not found" });
+          return;
+        }
 
-    try {
-      term.write("\x1b[2J\x1b[H");
-      term.write(`cd ${cwd}\r`); 
-      setTimeout(() => {
-        term.write(command + "\r");
+        try {
+          term.write("\x1b[2J\x1b[H");
+          term.write(`cd ${cwd}\r`);
+          setTimeout(() => {
+            term.write(command + "\r");
+          }, 100);
 
-      }, 100);
-
-      resolve({ success: true });
-    } catch (error) {
-      resolve({
-        success: false,
-        error: error instanceof Error ? error.message : String(error),
+          resolve({ success: true });
+        } catch (error) {
+          resolve({
+            success: false,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
       });
     }
-  });
-});
+  );
 }, 100);

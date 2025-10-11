@@ -194,10 +194,10 @@ export class Run extends CoreEl {
     runArea.appendChild(container!);
 
     const command = `python "${path.join([
-     path.__dirname,
+      path.__dirname,
       "scripts",
       "run_script.py",
-    ])}" ${_path}`;
+    ])}" "${_path}"`;
 
     await _xtermManager._run(tabId, command, path.dirname(_path));
     this._set(tabId, "running");

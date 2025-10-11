@@ -15,7 +15,7 @@ import {
 import { chevronRightIcon } from "./workbench.media/workbench.icons.js";
 import { CoreEl } from "./workbench.parts/workbench.part.el.js";
 
-const path = window.path
+const path = window.path;
 
 export class Files extends CoreEl {
   private treeManager: TreeManager;
@@ -90,7 +90,6 @@ export class Files extends CoreEl {
         }
       ) => {
         if (!data || !data.parentUri || !data.nodeName || !data.nodeType) {
-          console.error("Invalid IPC data for files-node-added:", data);
           return;
         }
         this.addNode(data.parentUri, data.nodeName, data.nodeType);
@@ -101,7 +100,6 @@ export class Files extends CoreEl {
       "files-node-removed",
       (event: any, data: { nodeUri: string }) => {
         if (!data || !data.nodeUri) {
-          console.error("Invalid IPC data for files-node-removed:", data);
           return;
         }
         this.removeNode(data.nodeUri);
@@ -112,7 +110,6 @@ export class Files extends CoreEl {
       "files-node-renamed",
       (event: any, data: { nodeUri: string; newName: string }) => {
         if (!data || !data.nodeUri || !data.newName) {
-          console.error("Invalid IPC data for files-node-renamed:", data);
           return;
         }
         this.renameNode(data.nodeUri, data.newName);
@@ -123,7 +120,6 @@ export class Files extends CoreEl {
       "files-node-moved",
       (event: any, data: { sourceUri: string; targetParentUri: string }) => {
         if (!data || !data.sourceUri || !data.targetParentUri) {
-          console.error("Invalid IPC data for files-node-moved:", data);
           return;
         }
         this.moveNode(data.sourceUri, data.targetParentUri);
@@ -134,7 +130,6 @@ export class Files extends CoreEl {
       "files-node-changed",
       (event: any, data: { nodeUri: string }) => {
         if (data && data.nodeUri) {
-          console.log("File changed:", data.nodeUri);
         }
       }
     );
@@ -149,14 +144,14 @@ export class Files extends CoreEl {
       const expandedFolders = Array.from(this._expandedFolders);
 
       for (const folderUri of expandedFolders) {
-        await this._loadFolderContentsIfNeeded(folderUri);
+        await this._loadIfNeeded(folderUri);
       }
 
       this._refreshTree();
     }
   }
 
-  private async _loadFolderContentsIfNeeded(folderUri: string) {
+  private async _loadIfNeeded(folderUri: string) {
     const node = this._findNodeByUri(this._structure, folderUri);
     if (node && node.type === "folder" && !this._loadedFolders.has(folderUri)) {
       try {
@@ -174,7 +169,6 @@ export class Files extends CoreEl {
           );
         }
       } catch (error) {
-        console.error("Error loading folder contents:", error);
         this._expandedFolders.delete(folderUri);
         window.storage.store(
           "files-expanded-folder",
@@ -220,7 +214,7 @@ export class Files extends CoreEl {
     _tree.className = "tree";
 
     if (this._structure.children && this._structure.children.length > 0) {
-      this._renderNodes(this._structure.children, _tree);
+      this._render(this._structure.children, _tree, 0);
     }
     this._el!.appendChild(_tree);
   }
@@ -229,10 +223,9 @@ export class Files extends CoreEl {
     window.files.openFolder();
   }
 
-  private _openFile(_path: string, _name: string) {
+  private _open(_path: string, _name: string) {
     const stateValue = select((s) => s.main.editor_tabs);
-    const _uri = path.normalize(_path)
-
+    const _uri = path.normalize(_path);
 
     let currentTabs: IEditorTab[] = [];
 
@@ -269,25 +262,27 @@ export class Files extends CoreEl {
 
       dispatch(update_editor_tabs(updatedTabs));
     }
-
-    console.log("opening", _uri)
-
   }
 
-  private _renderNodes(nodes: IFolderStructure[], container: HTMLElement) {
+  private _render(
+    nodes: IFolderStructure[],
+    container: HTMLElement,
+    depth: number = 0
+  ) {
     if (!Array.isArray(nodes)) {
       return;
     }
 
     nodes.forEach((_node) => {
       if (!_node || !_node.name || !_node.uri) {
-        console.warn("Invalid node structure:", _node);
         return;
       }
 
       const _nodeEl = document.createElement("div");
       _nodeEl.className = "node";
       _nodeEl.dataset.nodeId = _node.uri;
+
+      _nodeEl.style.setProperty("--nesting-depth", depth.toString());
 
       const _icon = document.createElement("span");
       _icon.className = "icon";
@@ -332,7 +327,7 @@ export class Files extends CoreEl {
         if (_node.type === "folder") {
           this._toggleFolder(nodeId, _nodeEl);
         } else {
-          this._openFile(_node.uri, _node.name);
+          this._open(_node.uri, _node.name);
         }
       };
 
@@ -352,7 +347,7 @@ export class Files extends CoreEl {
         }
 
         if (_node.children && _node.children.length > 0) {
-          this._renderNodes(_node.children, _childrenContainer);
+          this._render(_node.children, _childrenContainer, depth + 1);
           this._loadedFolders.add(nodeId);
         }
 
@@ -361,7 +356,7 @@ export class Files extends CoreEl {
     });
   }
 
-  private async _loadFolderContents(folderUri: string, container: HTMLElement) {
+  private async _load(folderUri: string, container: HTMLElement) {
     try {
       const result = await window.files.openChildFolder(folderUri);
 
@@ -380,7 +375,10 @@ export class Files extends CoreEl {
 
         if (updatedNode && updatedNode.children) {
           container.innerHTML = "";
-          this._renderNodes(updatedNode.children, container);
+
+          const currentDepth = this._calculateDepth(container);
+          this._render(updatedNode.children, container, currentDepth);
+
           container.offsetHeight;
           container.style.height = "auto";
           container.style.opacity = "1";
@@ -388,9 +386,21 @@ export class Files extends CoreEl {
 
         dispatch(update_folder_structure(this._structure));
       }
-    } catch (error) {
-      console.error("Error loading folder contents:", error);
+    } catch (error) {}
+  }
+
+  private _calculateDepth(container: HTMLElement): number {
+    let depth = 0;
+    let parent = container.parentElement;
+
+    while (parent && !parent.classList.contains("tree")) {
+      if (parent.classList.contains("child-nodes")) {
+        depth++;
+      }
+      parent = parent.parentElement;
     }
+
+    return depth;
   }
 
   private async _toggleFolder(nodeId: string, nodeEl: HTMLElement) {
@@ -434,7 +444,7 @@ export class Files extends CoreEl {
 
       if (_childrenContainer) {
         if (!this._loadedFolders.has(nodeId)) {
-          await this._loadFolderContents(nodeId, _childrenContainer);
+          await this._load(nodeId, _childrenContainer);
         }
 
         _childrenContainer.style.height = "0px";
@@ -523,9 +533,7 @@ export class Files extends CoreEl {
 
     if (result.success) {
       this._syncWithTreeManager();
-      console.log(`Successfully added node: ${nodeName} to ${parentUri}`);
     } else {
-      console.error(`Error adding node: ${result.error}`);
     }
 
     return result.success;
@@ -536,9 +544,7 @@ export class Files extends CoreEl {
 
     if (result.success) {
       this._syncWithTreeManager();
-      console.log(`Successfully removed node: ${nodeUri}`);
     } else {
-      console.error(`Error removing node: ${result.error}`);
     }
 
     return result.success;
@@ -549,9 +555,7 @@ export class Files extends CoreEl {
 
     if (result.success) {
       this._syncWithTreeManager();
-      console.log(`Successfully renamed node from ${nodeUri} to ${newName}`);
     } else {
-      console.error(`Error renaming node: ${result.error}`);
     }
 
     return result.success;
@@ -568,11 +572,7 @@ export class Files extends CoreEl {
 
     if (result.success) {
       this._syncWithTreeManager();
-      console.log(
-        `Successfully moved node from ${sourceUri} to ${targetParentUri}`
-      );
     } else {
-      console.error(`Error moving node: ${result.error}`);
     }
 
     return result.success;

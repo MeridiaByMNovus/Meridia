@@ -37,6 +37,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: relative;
 }
 
 .code .files .tree .node,
@@ -50,6 +51,7 @@
   display: flex;
   align-items: center;
   padding: 4px 0;
+  align-self: center;
   cursor: pointer;
   position: relative;
   overflow: visible;
@@ -58,21 +60,21 @@
 .code .files .tree .child-nodes {
   display: flex;
   flex-direction: column;
-  align-items: stretch;
   padding-left: 1.4rem;
-  overflow: hidden;
-  box-sizing: border-box;
   transition: height 0.25s ease, opacity 0.25s ease;
 }
 
 .code .files .tree .node::before {
   content: "";
   position: absolute;
-  width: 100%;
+  right: 0;
+  top: 0;
+  left: -100vw;
   height: 100%;
   background-color: var(--workbench-hover-background);
   opacity: 0;
   transition: opacity 0.3s ease;
+  z-index: 0;
 }
 
 .code .files .tree .node:hover::before {

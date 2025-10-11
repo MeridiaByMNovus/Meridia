@@ -6,31 +6,58 @@ import { tokensToCssVariables } from "./workbench.utils.js";
 export class Theme {
   private _active!: ITheme;
   private registeredThemes: Map<string, ITheme> = new Map();
+  private _mainProcess: boolean;
 
-  constructor() {
+  constructor(_main?: boolean) {
+    this._mainProcess = _main || typeof window === "undefined";
+
     this.registerTheme(Dark);
     this.registerTheme(Light);
-    this.setTheme("Dark");
+
+    this._active = this.registeredThemes.get("Dark")!;
+
+    if (!this._mainProcess) {
+      this.setTheme("Dark");
+    }
   }
 
-  public getColor(_token: IThemeColors) {
+  getNodeColor(_token: IThemeColors): string | null {
+    if (!this._active?.colors) return null;
+    return this._active.colors[_token] || null;
+  }
+
+  getColor(_token: IThemeColors) {
+    if (this._mainProcess) {
+      return this.getNodeColor(_token);
+    }
+
     const _key = tokensToCssVariables[_token];
     const _root = document.documentElement;
     const _value = getComputedStyle(_root).getPropertyValue(_key).trim();
     return _value;
   }
 
-  public registerTheme(_theme: ITheme) {
+  registerTheme(_theme: ITheme) {
     this.registeredThemes.set(_theme.name, _theme);
   }
 
-  public getActiveTheme() {
+  getActiveTheme() {
     return this._active as ITheme;
   }
 
-  public setTheme(_themeName: string) {
+  setTheme(_themeName: string) {
     const _theme = this.registeredThemes.get(_themeName);
     if (!_theme?.colors) return;
+
+    this._active = _theme;
+
+    if (!this._mainProcess) {
+      this._applyThemeToDOM(_theme);
+    }
+  }
+
+  private _applyThemeToDOM(_theme: ITheme) {
+    if (this._mainProcess || typeof document === "undefined") return;
 
     const _root = document.documentElement;
 
@@ -43,11 +70,10 @@ export class Theme {
     if (_theme.tokenColors) {
       this._setTokenColors(_theme.tokenColors);
     }
-
-    this._active = _theme;
   }
 
   private _setTokenColors(tokenColors: ITheme["tokenColors"]) {
+    if (this._mainProcess || typeof document === "undefined") return;
     if (!tokenColors) return;
 
     const _root = document.documentElement;
@@ -98,5 +124,10 @@ export class Theme {
   }
 }
 
-export const _theme = new Theme();
-registerStandalone("theme", _theme);
+let _theme: Theme;
+if (typeof window !== "undefined") {
+  _theme = new Theme();
+  registerStandalone("theme", _theme);
+}
+
+export { _theme };
