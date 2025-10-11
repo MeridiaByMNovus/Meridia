@@ -2,7 +2,8 @@ import { menuItems } from "../../common/workbench.menu.js";
 import { dispatch } from "../../common/workbench.store/workbench.store.js";
 import { select } from "../../common/workbench.store/workbench.store.selector.js";
 import { update_panel_state } from "../../common/workbench.store/workbench.store.slice.js";
-import { Menuitems } from "../../workbench.types.js";
+import { openTab } from "../../common/workbench.utils.js";
+import { IEditorTab, Menuitems } from "../../workbench.types.js";
 import {
   bottomPanelIcon,
   chevronRightIcon,
@@ -92,6 +93,17 @@ export class Titlebar extends CoreEl {
 
     const settings = document.createElement("span");
     settings.innerHTML = settingsIcon;
+    settings.onclick = () => {
+      const _tab: IEditorTab = {
+        name: "Settings",
+        icon: settingsIcon,
+        uri: "tab://settings",
+        is_touched: false,
+        active: true,
+      };
+
+      openTab(_tab);
+    };
 
     menuOptionsContainer.appendChild(settings);
 

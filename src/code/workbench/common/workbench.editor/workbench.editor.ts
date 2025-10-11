@@ -16,8 +16,8 @@ import { update_editor_tabs } from "../workbench.store/workbench.store.slice.js"
 import { select } from "../workbench.store/workbench.store.selector.js";
 import { getLanguage } from "../workbench.utils.js";
 import { registerTheme } from "./workbench.editor.theme.js";
-// import { registerCompletion } from "../../../platform/mira/mira.suggestions/register.js";
 import { registerFsSuggestion } from "./workbench.editor.utils.js";
+import { asyncDebounce } from "../../../platform/mira/mira.suggestions/common/utils/async-debounce.js";
 
 const fs = window.fs;
 const path = window.path;
@@ -53,7 +53,6 @@ export class Editor {
   private _updating = false;
   private _saveActionDisposable?: monaco.IDisposable;
   private _mounted = false;
-
   private _registeredProviders = new Map<string, monaco.IDisposable>();
   private _isProvidersRegistered = false;
 
@@ -116,6 +115,158 @@ export class Editor {
     }
   }
 
+  private async _openFile(
+    _path: string,
+    position?: { line: number; column: number }
+  ) {
+    let cleanPath = _path;
+    if (_path.startsWith("file://")) {
+      cleanPath = _path.replace("file://", "");
+    } else if (_path.startsWith("file:")) {
+      cleanPath = _path.replace("file:", "");
+    }
+
+    if (position) {
+    }
+
+    const stateValue = select((s) => s.main.editor_tabs);
+    const _uri = path.normalize(cleanPath);
+
+    let currentTabs: IEditorTab[] = [];
+
+    if (Array.isArray(stateValue)) {
+      currentTabs = stateValue;
+    } else if (stateValue && typeof stateValue === "object") {
+      currentTabs = Object.values(stateValue);
+    }
+
+    const existingTabIndex = currentTabs.findIndex((tab) => tab.uri === _uri);
+
+    if (existingTabIndex !== -1) {
+      const updatedTabs = currentTabs.map((tab, index) => ({
+        ...tab,
+        active: index === existingTabIndex,
+      }));
+
+      dispatch(update_editor_tabs(updatedTabs));
+
+      await this._open(updatedTabs[existingTabIndex]!);
+
+      if (position && this._editor) {
+        this._editor.setPosition({
+          lineNumber: position.line,
+          column: position.column,
+        });
+        this._editor.revealLineInCenter(position.line);
+      }
+    } else {
+      const newTab: IEditorTab = {
+        name: path.basename(_uri),
+        uri: _uri,
+        active: true,
+        is_touched: false,
+      };
+
+      const updatedTabs = [
+        ...currentTabs.map((tab) => ({
+          ...tab,
+          active: false,
+        })),
+        newTab,
+      ];
+
+      dispatch(update_editor_tabs(updatedTabs));
+
+      await this._open(newTab);
+
+      if (position && this._editor) {
+        setTimeout(() => {
+          this._editor.setPosition({
+            lineNumber: position.line,
+            column: position.column,
+          });
+          this._editor.revealLineInCenter(position.line);
+        }, 100);
+      }
+    }
+  }
+
+  private _setupMouse() {
+    if (!this._editor) return;
+
+    const mouseDownDisposable = this._editor.onMouseDown(async (e) => {
+      if (!e.event.ctrlKey && !e.event.metaKey) {
+        return;
+      }
+
+      if (e.event.leftButton !== true) {
+        return;
+      }
+
+      const model = this._editor.getModel();
+      if (!model || !e.target.position) {
+        return;
+      }
+
+      const position = e.target.position;
+
+      try {
+        if (this._client) {
+          const definitions = (await this._client.sendRequest(
+            "textDocument/definition",
+            {
+              textDocument: { uri: model.uri.toString() },
+              position: {
+                line: position.lineNumber - 1,
+                character: position.column - 1,
+              },
+            }
+          )) as any[];
+
+          if (definitions && definitions.length > 0) {
+            const def = definitions[0];
+            const defPosition = {
+              line: def.range.start.line + 1,
+              column: def.range.start.character + 1,
+            };
+
+            await this._openFile(def.uri, defPosition);
+            return;
+          }
+        } else {
+        }
+
+        const word = model.getWordAtPosition(position);
+        const lineText = model.getLineContent(position.lineNumber);
+
+        if (word && this._isFileReference(lineText, word.word)) {
+          const resolvedPath = path.resolve([word.word, model.uri.fsPath]);
+          if (resolvedPath) {
+            await this._openFile(`file://${resolvedPath}`);
+          } else {
+          }
+        } else {
+        }
+      } catch (error) {}
+    });
+
+    this._registeredProviders.set("mouse-down-listener", mouseDownDisposable);
+  }
+
+  private _isFileReference(lineText: string, word: string): boolean {
+    if (lineText.includes("import") || lineText.includes("from")) {
+      return true;
+    }
+
+    if (lineText.includes(`"${word}"`) || lineText.includes(`'${word}'`)) {
+      if (word.includes("/") || word.includes("\\") || word.includes(".py")) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   private _ensure() {
     const editorElement = document.querySelector(".monaco-editor");
     const needsMount = !this._editor || !this._mounted || !editorElement;
@@ -141,18 +292,18 @@ export class Editor {
       cursorBlinking: "smooth",
       cursorSmoothCaretAnimation: true,
       minimap: { enabled: false },
-      renderWhitespace: "none",
+      renderWhitespace: "selection",
       fixedOverflowWidgets: true,
-    });
 
-    // registerCompletion(monaco, this._editor, {
-    //   language: "python",
-    // });
+      links: true,
+    });
 
     this._mounted = true;
     this._visiblity(false);
 
     if (!this._client) this._setupCLient();
+
+    this._setupMouse();
 
     this._setupCursorTracking();
     this._saveAction();
@@ -202,6 +353,7 @@ export class Editor {
   private _setupCLient() {
     try {
       const port = window.storage.get("pyright-port");
+
       const webSocket = new WebSocket(`ws://localhost:${port}`);
 
       listen({
@@ -218,6 +370,7 @@ export class Editor {
               initializationOptions: {
                 settings: {
                   python: {
+                    pythonPath: "/usr/bin/python",
                     analysis: {
                       autoSearchPaths: true,
                       useLibraryCodeForTypes: true,
@@ -275,6 +428,25 @@ export class Editor {
     }
   }
 
+  private async _getDocumentStructure(
+    model: monaco.editor.ITextModel
+  ): Promise<any[] | null> {
+    if (!this._client) return null;
+
+    try {
+      const symbols = (await this._client.sendRequest(
+        "textDocument/documentSymbol",
+        {
+          textDocument: { uri: model.uri.toString() },
+        }
+      )) as any[];
+
+      return symbols.length ? symbols : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
   private _findSymbol(symbols: any[], lineNumber: number): any | null {
     for (const symbol of symbols) {
       const range = symbol.range || symbol.location?.range;
@@ -325,6 +497,22 @@ export class Editor {
       this._watch(tab.uri);
     }
 
+    // const debouncedUpdateStructure = asyncDebounce(
+    //   async (model: monaco.editor.ITextModel, uri: string) => {
+    //     if (this._client) {
+    //       const structure = await this._getDocumentStructure(model);
+    //       if (structure) {
+    //         document.dispatchEvent(
+    //           new CustomEvent("editor.structure.update", {
+    //             detail: { uri, symbols: structure },
+    //           })
+    //         );
+    //       }
+    //     }
+    //   },
+    //   600
+    // );
+
     this._editor.setModel(model);
     this._editor.focus();
   }
@@ -364,9 +552,7 @@ export class Editor {
       });
       this._updating = false;
       this._update(uriString, false);
-    } catch (error) {
-      console.error("External file update failed:", error);
-    }
+    } catch (error) {}
   }
 
   private _update(uriString: string, _touched: boolean) {
@@ -417,7 +603,6 @@ export class Editor {
       this._watchers.delete(key);
     }
 
-    this._models.delete(key);
     model.dispose();
     this._tabs = this._tabs.filter(
       (tab) => this._normalizePath(tab.uri) !== key

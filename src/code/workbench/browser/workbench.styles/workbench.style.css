@@ -37,7 +37,7 @@
 }
 
 .code svg.markdown path {
-  fill: var(--workbench-icon-foreground);
+  fill: var(--workbench-terminal-color4);
 }
 
 .code svg.license path {
@@ -73,6 +73,10 @@
   stroke: var(--workbench-icon-foreground);
 }
 
+.code svg.gear path {
+  fill: var(--workbench-icon-foreground);
+}
+
 .cursor {
   position: absolute;
   z-index: 99;
@@ -85,6 +89,14 @@
 
 * {
   user-select: none;
+}
+
+.monaco-editor * {
+  user-select: text;
+}
+
+::selection {
+  background-color: var(--workbench-terminal-selection-background);
 }
 
 body {

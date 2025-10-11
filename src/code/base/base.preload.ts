@@ -29,12 +29,21 @@ const activeWatchers = new Map<string, fs.FSWatcher>();
 
 export const fsBridge = {
   readFile: (_path: string, encoding?: fs.EncodingOption) => {
+    if (!fs.existsSync(_path)) {
+      return "";
+    }
     return fs.readFileSync(_path, { encoding: encoding as any }).toString();
   },
   readFileBuffer: (_path: string, encoding?: fs.EncodingOption) => {
+    if (!fs.existsSync(_path)) {
+      return "";
+    }
     return fs.readFileSync(_path, { encoding: encoding as any });
   },
   deleteFile: (_path: string) => {
+    if (!fs.existsSync(_path)) {
+      return "";
+    }
     fs.rmSync(_path);
   },
   createFile: (_path: string, _content?: string) => {
@@ -44,9 +53,15 @@ export const fsBridge = {
     fs.mkdirSync(_path, { recursive: true });
   },
   deleteFolder: (_path: string) => {
+    if (!fs.existsSync(_path)) {
+      return "";
+    }
     fs.rmSync(_path, { recursive: true, force: true });
   },
   rename: (_path: string, _new: string) => {
+    if (!fs.existsSync(_path)) {
+      return "";
+    }
     fs.renameSync(_path, _new);
   },
   watchFile: (

@@ -1,4 +1,7 @@
-import { IThemeColors, ThemeColors } from "../workbench.types.js";
+import { IEditorTab, IThemeColors, ThemeColors } from "../workbench.types.js";
+import { dispatch } from "./workbench.store/workbench.store.js";
+import { select } from "./workbench.store/workbench.store.selector.js";
+import { update_editor_tabs } from "./workbench.store/workbench.store.slice.js";
 
 export const tokensToCssVariables: Record<IThemeColors, string> = {
   "workbench.background": "--workbench-background",
@@ -134,20 +137,24 @@ export function parseTokensToCssVariables(
 }
 
 export function getFileIcon(_name: string) {
-  const dotCount = (_name.match(/\./g) || []).length;
+  let _ext: string;
 
-  let _ext;
-
-  const specificPatterns = [".d.ts"];
-  const hasSpecificPattern = specificPatterns.some((pattern) =>
-    _name.endsWith(pattern)
-  );
-
-  if (dotCount >= 2 && hasSpecificPattern) {
-    const firstDotIndex = _name.indexOf(".");
-    _ext = _name.substring(firstDotIndex + 1).toLowerCase();
+  if (_name.indexOf(".") === -1) {
+    _ext = "binary";
   } else {
-    _ext = (_name.split(".").pop() || _name).toLowerCase();
+    const dotCount = (_name.match(/\./g) || []).length;
+
+    const specificPatterns = [".d.ts"];
+    const hasSpecificPattern = specificPatterns.some((pattern) =>
+      _name.endsWith(pattern)
+    );
+
+    if (dotCount >= 2 && hasSpecificPattern) {
+      const firstDotIndex = _name.indexOf(".");
+      _ext = _name.substring(firstDotIndex + 1).toLowerCase();
+    } else {
+      _ext = (_name.split(".").pop() || "").toLowerCase();
+    }
   }
 
   const _supported = [
@@ -186,31 +193,21 @@ export function getFileIcon(_name: string) {
     "docx",
     "doc",
     "pdf",
+    "pyc",
+    "binary",
   ];
 
-  let _iconPath: string;
+  const iconName = _supported.includes(_ext) ? _ext : "default";
 
-  if (_supported.includes(_ext)) {
-    _iconPath = window.path.join([
-      window.path.__dirname,
-      "..",
-      "workbench",
-      "browser",
-      "workbench.media",
-      "icons",
-      `file.type.${_ext}.svg`,
-    ]);
-  } else {
-    _iconPath = window.path.join([
-      window.path.__dirname,
-      "..",
-      "workbench",
-      "browser",
-      "workbench.media",
-      "icons",
-      `file.type.default.svg`,
-    ]);
-  }
+  const _iconPath = window.path.join([
+    window.path.__dirname,
+    "..",
+    "workbench",
+    "browser",
+    "workbench.media",
+    "icons",
+    `file.type.${iconName}.svg`,
+  ]);
 
   const _content = window.fs.readFile(_iconPath);
 
@@ -272,4 +269,40 @@ export function getRelativePath(basePath: string, targetPath: string): string {
   }
 
   return targetPath;
+}
+
+export function openTab(_tab: IEditorTab) {
+  const stateValue = select((s) => s.main.editor_tabs);
+  const _uri = _tab.uri;
+
+  let currentTabs: IEditorTab[] = [];
+
+  if (Array.isArray(stateValue)) {
+    currentTabs = stateValue;
+  } else if (stateValue && typeof stateValue === "object") {
+    currentTabs = Object.values(stateValue);
+  }
+
+  const existingTabIndex = currentTabs.findIndex((tab) => tab.uri === _uri);
+
+  if (existingTabIndex !== -1) {
+    const updatedTabs = currentTabs.map((tab, index) => ({
+      ...tab,
+      active: index === existingTabIndex,
+    }));
+
+    dispatch(update_editor_tabs(updatedTabs));
+  } else {
+    const newTab = _tab;
+
+    const updatedTabs = [
+      ...currentTabs.map((tab) => ({
+        ...tab,
+        active: false,
+      })),
+      newTab,
+    ];
+
+    dispatch(update_editor_tabs(updatedTabs));
+  }
 }

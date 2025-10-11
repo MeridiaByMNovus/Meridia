@@ -1,4 +1,3 @@
-import { TreeManager } from "../common/workbench.files/workbench.files.tree.manager.js";
 import { _generateUUID } from "../common/workbench.files/workbench.files.utils.js";
 import { dispatch } from "../common/workbench.store/workbench.store.js";
 import { select } from "../common/workbench.store/workbench.store.selector.js";
@@ -7,18 +6,13 @@ import {
   update_folder_structure,
 } from "../common/workbench.store/workbench.store.slice.js";
 import { getFileIcon } from "../common/workbench.utils.js";
-import {
-  IEditorTab,
-  IFolderStructure,
-  TreeOperation,
-} from "../workbench.types.js";
+import { IEditorTab, IFolderStructure } from "../workbench.types.js";
 import { chevronRightIcon } from "./workbench.media/workbench.icons.js";
 import { CoreEl } from "./workbench.parts/workbench.part.el.js";
 
 const path = window.path;
 
 export class Files extends CoreEl {
-  private treeManager: TreeManager;
   private _structure: IFolderStructure;
   private _expandedFolders: Set<string> = new Set();
   private _loadedFolders: Set<string> = new Set();
@@ -32,7 +26,7 @@ export class Files extends CoreEl {
     dispatch(update_folder_structure(_structure));
 
     if (_structure) {
-      this._structure = this._createMutableCopy(_structure);
+      this._structure = _structure;
     }
 
     if (_expanded && Array.isArray(_expanded)) {
@@ -48,91 +42,18 @@ export class Files extends CoreEl {
       }
     }
 
-    this.treeManager = new TreeManager(
-      this._structure,
-      this._expandedFolders,
-      this._loadedFolders
-    );
-
     this._createEl();
     this._restore();
-    this._changeLinst();
-  }
 
-  private _createMutableCopy<T>(obj: T): T {
-    if (obj === null || typeof obj !== "object") {
-      return obj;
-    }
-
-    if (Array.isArray(obj)) {
-      return obj.map((item) => this._createMutableCopy(item)) as unknown as T;
-    }
-
-    const copy = {} as T;
-    for (const key in obj) {
-      if (Object.prototype.hasOwnProperty.call(obj, key)) {
-        copy[key] = this._createMutableCopy(obj[key]);
-      }
-    }
-
-    return copy;
-  }
-
-  private _changeLinst(): void {
-    window.ipc.on(
-      "files-node-added",
-      (
-        event: any,
-        data: {
-          parentUri: string;
-          nodeName: string;
-          nodeType: "file" | "folder";
-        }
-      ) => {
-        if (!data || !data.parentUri || !data.nodeName || !data.nodeType) {
-          return;
-        }
-        this.addNode(data.parentUri, data.nodeName, data.nodeType);
-      }
-    );
-
-    window.ipc.on(
-      "files-node-removed",
-      (event: any, data: { nodeUri: string }) => {
-        if (!data || !data.nodeUri) {
-          return;
-        }
-        this.removeNode(data.nodeUri);
-      }
-    );
-
-    window.ipc.on(
-      "files-node-renamed",
-      (event: any, data: { nodeUri: string; newName: string }) => {
-        if (!data || !data.nodeUri || !data.newName) {
-          return;
-        }
-        this.renameNode(data.nodeUri, data.newName);
-      }
-    );
-
-    window.ipc.on(
-      "files-node-moved",
-      (event: any, data: { sourceUri: string; targetParentUri: string }) => {
-        if (!data || !data.sourceUri || !data.targetParentUri) {
-          return;
-        }
-        this.moveNode(data.sourceUri, data.targetParentUri);
-      }
-    );
-
-    window.ipc.on(
-      "files-node-changed",
-      (event: any, data: { nodeUri: string }) => {
-        if (data && data.nodeUri) {
-        }
-      }
-    );
+    setTimeout(() => {
+      this._addNode(window.path.join([this._structure.uri]), {
+        name: "newFile.txt",
+        uri: "/path/to/newFile.txt",
+        type: "file",
+        children: [],
+        isRoot: false,
+      });
+    }, 100);
   }
 
   private async _restore() {
@@ -158,15 +79,9 @@ export class Files extends CoreEl {
         const result = await window.files.openChildFolder(folderUri);
 
         if (result && result.success) {
-          this._structure = this._createMutableCopy(result.structure);
+          this._structure = result.structure;
           this._loadedFolders.add(folderUri);
           window.storage.store("files-structure", this._structure);
-
-          this.treeManager = new TreeManager(
-            this._structure,
-            this._expandedFolders,
-            this._loadedFolders
-          );
         }
       } catch (error) {
         this._expandedFolders.delete(folderUri);
@@ -361,15 +276,9 @@ export class Files extends CoreEl {
       const result = await window.files.openChildFolder(folderUri);
 
       if (result && result.success) {
-        this._structure = this._createMutableCopy(result.structure);
+        this._structure = result.structure;
         window.storage.store("files-structure", this._structure);
         this._loadedFolders.add(folderUri);
-
-        this.treeManager = new TreeManager(
-          this._structure,
-          this._expandedFolders,
-          this._loadedFolders
-        );
 
         const updatedNode = this._findNodeByUri(this._structure, folderUri);
 
@@ -432,11 +341,18 @@ export class Files extends CoreEl {
       _icon.classList.remove("expanded");
 
       if (_childrenContainer) {
-        _childrenContainer.style.height =
-          _childrenContainer.scrollHeight + "px";
+        const height = _childrenContainer.scrollHeight;
+        _childrenContainer.style.height = height + "px";
+
         _childrenContainer.offsetHeight;
+
+        _childrenContainer.style.transition =
+          "height 0.25s ease, opacity 0.25s ease";
         _childrenContainer.style.height = "0px";
         _childrenContainer.style.opacity = "0";
+        _childrenContainer.style.pointerEvents = "none";
+
+        _childrenContainer.classList.remove("expanded");
       }
     } else {
       this._expandedFolders.add(nodeId);
@@ -447,19 +363,26 @@ export class Files extends CoreEl {
           await this._load(nodeId, _childrenContainer);
         }
 
+        _childrenContainer.style.transition = "none";
         _childrenContainer.style.height = "0px";
         _childrenContainer.style.opacity = "0";
+        _childrenContainer.style.pointerEvents = "none";
+
         _childrenContainer.offsetHeight;
 
-        const targetHeight = _childrenContainer.scrollHeight;
-        _childrenContainer.style.height = targetHeight + "px";
+        const height = _childrenContainer.scrollHeight;
+        _childrenContainer.style.transition =
+          "height 0.25s ease, opacity 0.25s ease";
+        _childrenContainer.style.height = height + "px";
         _childrenContainer.style.opacity = "1";
+        _childrenContainer.style.pointerEvents = "auto";
 
         setTimeout(() => {
           if (_childrenContainer && this._expandedFolders.has(nodeId)) {
             _childrenContainer.style.height = "auto";
+            _childrenContainer.classList.add("expanded");
           }
-        }, 300);
+        }, 250);
       }
     }
 
@@ -513,98 +436,5 @@ export class Files extends CoreEl {
     dispatch(update_folder_structure(this._structure));
   }
 
-  private _syncWithTreeManager() {
-    this._structure = this.treeManager.getStructure();
-    this._expandedFolders = this.treeManager.getExpandedFolders();
-    this._loadedFolders = this.treeManager.getLoadedFolders();
-    this._refreshTree();
-  }
-
-  public async addNode(
-    parentUri: string,
-    nodeName: string,
-    nodeType: "file" | "folder"
-  ): Promise<boolean> {
-    const result: TreeOperation = this.treeManager.addNode(
-      parentUri,
-      nodeName,
-      nodeType
-    );
-
-    if (result.success) {
-      this._syncWithTreeManager();
-    } else {
-    }
-
-    return result.success;
-  }
-
-  public async removeNode(nodeUri: string): Promise<boolean> {
-    const result: TreeOperation = this.treeManager.removeNode(nodeUri);
-
-    if (result.success) {
-      this._syncWithTreeManager();
-    } else {
-    }
-
-    return result.success;
-  }
-
-  public async renameNode(nodeUri: string, newName: string): Promise<boolean> {
-    const result: TreeOperation = this.treeManager.renameNode(nodeUri, newName);
-
-    if (result.success) {
-      this._syncWithTreeManager();
-    } else {
-    }
-
-    return result.success;
-  }
-
-  public async moveNode(
-    sourceUri: string,
-    targetParentUri: string
-  ): Promise<boolean> {
-    const result: TreeOperation = this.treeManager.moveNode(
-      sourceUri,
-      targetParentUri
-    );
-
-    if (result.success) {
-      this._syncWithTreeManager();
-    } else {
-    }
-
-    return result.success;
-  }
-
-  public getStructure(): IFolderStructure {
-    return this.treeManager.getStructure();
-  }
-
-  public refreshTree(): void {
-    this._refreshTree();
-  }
-
-  public isNodeExpanded(nodeUri: string): boolean {
-    return this._expandedFolders.has(nodeUri);
-  }
-
-  public expandNode(nodeUri: string): void {
-    this._expandedFolders.add(nodeUri);
-    window.storage.store(
-      "files-expanded-folder",
-      Array.from(this._expandedFolders)
-    );
-    this._refreshTree();
-  }
-
-  public collapseNode(nodeUri: string): void {
-    this._expandedFolders.delete(nodeUri);
-    window.storage.store(
-      "files-expanded-folder",
-      Array.from(this._expandedFolders)
-    );
-    this._refreshTree();
-  }
+  private _addNode(parentUri: string, newNode: IFolderStructure) {}
 }

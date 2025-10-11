@@ -55,10 +55,9 @@ function createWindow() {
     frame: false,
     backgroundColor: _theme.getNodeColor("workbench.background"),
     titleBarOverlay: {
-      color:
-        _theme.getNodeColor("workbench.titlebar.background") ?? "#00000000",
+      color: _theme.getNodeColor("workbench.titlebar.background") ?? "#ffffff",
       symbolColor:
-        _theme.getNodeColor("workbench.titlebar.foreground") ?? "#ffffff",
+        _theme.getNodeColor("workbench.titlebar.foreground") ?? "#000000",
       height: _win ? 40 : 50,
     },
     titleBarStyle: "hidden",

@@ -214,12 +214,6 @@ export interface IMiraResponse {
   error?: string;
 }
 
-export interface TreeOperation {
-  success: boolean;
-  error?: string;
-  data?: any;
-}
-
 export interface IScrollbarState {
   id?: string | undefined;
   className: string;
