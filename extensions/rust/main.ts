@@ -32,7 +32,7 @@ export function activate(context: context) {
       {
         port: _port,
       },
-      "-v",
+      ["-v"],
       _serverCli
     );
 
