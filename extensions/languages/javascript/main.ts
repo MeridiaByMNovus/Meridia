@@ -1,27 +1,35 @@
-import { context } from "../../src/code/platform/extension/common/extension.context.js";
+import { context } from "../../../src/code/platform/extension/common/extension.context.js";
 
 export function activate(context: context) {
   try {
-    const _port = 5784;
+    const _port = 3216;
 
     const _serverCli = context.workbench.workspace.utils.path.join(
       context.workbench.workspace.utils.path.__dirname,
       "language",
-      "bash",
-      "out",
-      "cli.js"
+      "typescript",
+      "lib",
+      "cli.mjs"
+    );
+
+    const _tsServerPath = context.workbench.workspace.utils.path.join(
+      context.workbench.workspace.utils.path.__dirname,
+      "..",
+      "node_modules",
+      "typescript",
+      "lib"
     );
 
     const _server = context.workbench.workspace.language.createLanguageServer(
-      "bash",
-      "sh",
+      "javascript",
+      "js",
       _port,
       _serverCli,
       "node",
       {
         port: _port,
       },
-      ["start"]
+      ["--stdio"]
     );
 
     context.workbench.workspace.language.registerLanguageServer(_server);

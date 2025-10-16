@@ -1,8 +1,8 @@
-import { context } from "../../src/code/platform/extension/common/extension.context.js";
+import { context } from "../../../src/code/platform/extension/common/extension.context.js";
 
 export function activate(context: context) {
   try {
-    const _port = 3216;
+    const _port = 8161;
 
     const _serverCli = context.workbench.workspace.utils.path.join(
       context.workbench.workspace.utils.path.__dirname,
@@ -12,17 +12,9 @@ export function activate(context: context) {
       "cli.mjs"
     );
 
-    const _tsServerPath = context.workbench.workspace.utils.path.join(
-      context.workbench.workspace.utils.path.__dirname,
-      "..",
-      "node_modules",
-      "typescript",
-      "lib"
-    );
-
     const _server = context.workbench.workspace.language.createLanguageServer(
-      "javascript",
-      "js",
+      "typescript",
+      "ts",
       _port,
       _serverCli,
       "node",
