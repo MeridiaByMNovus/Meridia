@@ -163,7 +163,6 @@ export class Files extends CoreEl {
           newName: string;
         }
       ) => {
-        console.log("renaming", data);
         this._renameNode(data.oldUri, data.newName);
       }
     );
@@ -1199,7 +1198,7 @@ export class Files extends CoreEl {
       }, 500);
     } catch (error) {
       this._isRenamingInProgress = false;
-      console.error("Failed to rename:", error);
+
       alert("Failed to rename. Please try again.");
     }
   }
@@ -1235,11 +1234,19 @@ export class Files extends CoreEl {
       return;
     }
 
-    let childContainer = this._renderedChildContainers.get(parentUri);
+    let escapedUri = parentUri;
+    if (window.node.platform === "win32") {
+      escapedUri = parentUri.replace(/\//g, "\\");
+    }
+
+    const cssEscapedUri = CSS.escape(escapedUri);
+
+    let childContainer = document.querySelector(
+      `.child-nodes[data-node-id="${cssEscapedUri}"]`
+    ) as HTMLDivElement;
+
     if (!childContainer) {
-      childContainer = this._el?.querySelector(".tree") as
-        | HTMLElement
-        | undefined;
+      childContainer = this._el?.querySelector(".tree") as HTMLDivElement;
       if (!childContainer) {
         return;
       }
